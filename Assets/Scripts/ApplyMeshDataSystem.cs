@@ -1,9 +1,10 @@
-﻿using Unity.Entities;
+﻿using UnityEngine;
+
+using Unity.Entities;
 using Unity.Collections;
 using Unity.Mathematics;
 using Unity.Rendering;
 using Unity.Transforms;
-using UnityEngine;
 using UnityEditor;
 
 [UpdateInGroup(typeof(PresentationSystemGroup))]
