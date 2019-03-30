@@ -12,23 +12,22 @@ using Unity.Rendering;
 public class PlayerEntitySystem : ComponentSystem
 {
     EntityManager entityManager;
+    CellSystem cellSystem;
     int squareWidth;
 
     Camera camera;
     float cameraSwivelSpeed = 1;
     float3 currentOffset = new float3(0, 10, 10);
 
-    GameObject player;
+    public GameObject player;
 
     const float playerSpeed = 20f;
 
     protected override void OnCreateManager()
     {
         entityManager = World.Active.GetOrCreateManager<EntityManager>();
+        cellSystem = World.Active.GetOrCreateManager<CellSystem>();
         squareWidth = TerrainSettings.mapSquareWidth;
-
-        
-        Debug.Log(player, player);
     }
 
     protected override void OnStartRunning()
@@ -42,6 +41,8 @@ public class PlayerEntitySystem : ComponentSystem
        MoveCamera();
 
        MovePlayer();
+
+       ClampToTerrainHeight();
     }
 
     void MovePlayer()
@@ -58,6 +59,17 @@ public class PlayerEntitySystem : ComponentSystem
         //  Update movement component
         float3 move = (x + z) * playerSpeed;
         player.transform.Translate(new float3(move.x, 0, move.z) * Time.deltaTime);
+    }
+
+    void ClampToTerrainHeight()
+    {   
+        float3 playerPosition = player.transform.position;
+
+        float height = cellSystem.GetHeight(playerPosition);
+
+        float3 newPosition = new float3(playerPosition.x, height, playerPosition.z);
+
+        player.transform.position = newPosition;
     }
 
     void MoveCamera()

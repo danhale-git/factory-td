@@ -27,7 +27,7 @@ public struct WorleyNoise
 		public float3 pointWorldPosition;
 
 		public float3 currentCellPosition;
-		public int2 currentCellIndex;
+		public int2 currentCellIndex, adjacentCellIndex;
 		public float currentCellValue, distance2Edge, adjacentCellValue;
 	}
 	public struct CellData : IComponentData, System.IComparable<CellData>
@@ -166,6 +166,7 @@ public struct WorleyNoise
 		//	Final closest adjacent cell values
 		float adjacentEdgeDistance = 999999;
 		float adjacentCellValue = 0;
+		int2 adjacentCellIndex = int2.zero;
 
 		//	Iterate over all adjacent cells
 		for(int i = 0; i < 9; i++)
@@ -182,6 +183,7 @@ public struct WorleyNoise
 				{
 					adjacentEdgeDistance = dist2Edge;
 					adjacentCellValue = otherCellValue;
+					adjacentCellIndex = new int2(otherX[i], otherY[i]);
 				}
 			}
 		}
@@ -194,6 +196,7 @@ public struct WorleyNoise
 		cell.adjacentCellValue = adjacentCellValue;
 		cell.currentCellPosition = currentCellPosition;
 		cell.currentCellIndex = currentCellIndex;
+		cell.adjacentCellIndex = adjacentCellIndex;
 
 		//	Data for use in terrain generation
 		return cell;

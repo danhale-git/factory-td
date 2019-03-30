@@ -17,6 +17,8 @@ public struct Matrix<T> where T : struct
 
     ArrayUtil util;
 
+    bool job;
+
     public int Length{ get{ return matrix.Length; } }
 
     public void Dispose()
@@ -25,17 +27,25 @@ public struct Matrix<T> where T : struct
         if(isSet.IsCreated) isSet.Dispose();
     }
 
-    public Matrix(int width, Allocator label, float3 rootPosition, int itemWorldSize = 1)
+    public Matrix(int width, Allocator label, float3 rootPosition, int itemWorldSize = 1, bool job = false)
     {
-        matrix = new NativeArray<T>((int)math.pow(width, 2), label);
-        isSet = new NativeArray<sbyte>(matrix.Length, label);
+        this.job = job;
+
+        matrix = new NativeArray<T>((int)math.pow(width, 2), job ? Allocator.TempJob : label);
+        isSet = new NativeArray<sbyte>(matrix.Length, job ? Allocator.TempJob : label);
 
         this.width = width;
-        this.label = Allocator.Temp;
+
+        this.label = job ? Allocator.Temp : label;
         this.rootPosition = rootPosition;
         this.itemWorldSize = itemWorldSize;
 
         util = new ArrayUtil();
+    }
+
+    public void AddItem(T item, int2 worldPosition)
+    {
+        AddItem(item, new float3(worldPosition.x, 0, worldPosition.y));
     }
 
     public void AddItem(T item, float3 worldPosition)
@@ -85,6 +95,11 @@ public struct Matrix<T> where T : struct
     {
         matrix[index] = new T();
         isSet[index] = 0;
+    }
+
+    public bool ItemIsSet(int2 worldPosition)
+    {
+        return ItemIsSet(new float3(worldPosition.x, 0, worldPosition.y));
     }
 
     public bool ItemIsSet(float3 worldPosition)
@@ -213,7 +228,7 @@ public struct Matrix<T> where T : struct
 
         width = newWidth;
 
-        //Dispose();
+        if(!job) Dispose();
 
         matrix = newMatrix;
         isSet = newIsSet;

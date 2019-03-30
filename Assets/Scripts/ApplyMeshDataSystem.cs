@@ -66,7 +66,6 @@ public class ApplyMeshDataSystem : ComponentSystem
 				commandBuffer.RemoveComponent(entity, typeof(VertColor));
 
 				commandBuffer.RemoveComponent(entity, typeof(WorleyNoise.PointData));
-				commandBuffer.RemoveComponent(entity, typeof(TopologySystem.Topology));
 
 				commandBuffer.AddComponent(entity, new CellSystem.CellComplete());
             }
