@@ -7,36 +7,13 @@ using Unity.Collections;
 
 using Unity.Transforms;
 
+using ECSMesh;
+
 public class MeshDataSystem : ComponentSystem
 {
     EntityManager entityManager;
 
     ComponentGroup meshDataGroup;
-
-    [InternalBufferCapacity(0)]
-	public struct MeshVertex : IBufferElementData
-	{
-		public float3 vertex;
-	}
-
-	[InternalBufferCapacity(0)]
-	public struct MeshNormal : IBufferElementData
-	{
-		public float3 normal;
-	}
-
-    [InternalBufferCapacity(0)]
-	public struct MeshVertColor : IBufferElementData
-	{
-		public float4 color;
-	}
-
-	[InternalBufferCapacity(0)]
-	public struct MeshTriangle : IBufferElementData
-	{
-		public int triangle;
-	}
-	
 
     protected override void OnCreateManager()
     {
@@ -44,7 +21,7 @@ public class MeshDataSystem : ComponentSystem
 
         EntityArchetypeQuery meshDataQuery = new EntityArchetypeQuery{
             All = new ComponentType[] { typeof(WorleyNoise.CellData), typeof(TopologySystem.Topology) },
-            None = new ComponentType[] { typeof(WorleyCellSystem.CellComplete), typeof(MeshVertex) }
+            None = new ComponentType[] { typeof(CellSystem.CellComplete), typeof(Vertex) }
         };
         meshDataGroup = GetComponentGroup(meshDataQuery);
     }
@@ -61,7 +38,7 @@ public class MeshDataSystem : ComponentSystem
         NativeArray<ArchetypeChunk> chunks = meshDataGroup.CreateArchetypeChunkArray(Allocator.TempJob);
 
         ArchetypeChunkEntityType entityType = GetArchetypeChunkEntityType();
-        ArchetypeChunkComponentType<WorleyCellSystem.CellMatrix> matrixType = GetArchetypeChunkComponentType<WorleyCellSystem.CellMatrix>(true);
+        ArchetypeChunkComponentType<CellSystem.CellMatrix> matrixType = GetArchetypeChunkComponentType<CellSystem.CellMatrix>(true);
         ArchetypeChunkComponentType<WorleyNoise.CellData> cellType = GetArchetypeChunkComponentType<WorleyNoise.CellData>(true);
 
         ArchetypeChunkBufferType<WorleyNoise.PointData> worleyType = GetArchetypeChunkBufferType<WorleyNoise.PointData>(true);
@@ -72,7 +49,7 @@ public class MeshDataSystem : ComponentSystem
             ArchetypeChunk chunk = chunks[c];
 
             NativeArray<Entity> entities = chunk.GetNativeArray(entityType);
-            NativeArray<WorleyCellSystem.CellMatrix> matrices = chunk.GetNativeArray(matrixType);
+            NativeArray<CellSystem.CellMatrix> matrices = chunk.GetNativeArray(matrixType);
             NativeArray<WorleyNoise.CellData> cells = chunk.GetNativeArray(cellType);
 
             BufferAccessor<WorleyNoise.PointData> worleyBuffers = chunk.GetBufferAccessor(worleyType);
@@ -83,14 +60,15 @@ public class MeshDataSystem : ComponentSystem
                 ArrayUtil arrayUtil = new ArrayUtil();
 
                 Entity entity = entities[e];
-                WorleyCellSystem.CellMatrix matrix = matrices[e];
+                CellSystem.CellMatrix matrix = matrices[e];
                 WorleyNoise.CellData cell = cells[e];
 
                 DynamicBuffer<WorleyNoise.PointData> worley = worleyBuffers[e];
                 DynamicBuffer<TopologySystem.Topology> topology = TopologyBuffers[e];
 
-                DynamicBuffer<MeshVertex> vertices = commandBuffer.AddBuffer<MeshVertex>(entity);
-                DynamicBuffer<MeshTriangle> triangles = commandBuffer.AddBuffer<MeshTriangle>(entity);
+                DynamicBuffer<Vertex> vertices = commandBuffer.AddBuffer<Vertex>(entity);
+                DynamicBuffer<VertColor> colors = commandBuffer.AddBuffer<VertColor>(entity);
+                DynamicBuffer<Triangle> triangles = commandBuffer.AddBuffer<Triangle>(entity);
 
                 int indexOffset = 0;
 
@@ -112,28 +90,32 @@ public class MeshDataSystem : ComponentSystem
                             continue;
                         }
 
-
                         TopologySystem.Topology bottomLeft    = matrix.GetItem<TopologySystem.Topology>(bl, topology, arrayUtil);
                         TopologySystem.Topology topLeft       = matrix.GetItem<TopologySystem.Topology>(tl, topology, arrayUtil);
                         TopologySystem.Topology topRight      = matrix.GetItem<TopologySystem.Topology>(tr, topology, arrayUtil);
                         TopologySystem.Topology bottomRight   = matrix.GetItem<TopologySystem.Topology>(br, topology, arrayUtil);
 
-                        float3 bottomLeftOffset =   new float3(bl.x, bottomLeft.height, bl.y);
-                        float3 topLeftOffset =      new float3(tl.x, topLeft.height, tl.y);
-                        float3 topRightOffset =     new float3(tr.x, topRight.height, tr.y);
-                        float3 bottomRightOffset =  new float3(br.x, bottomRight.height, br.y);
+                        float3 bottomLeftOffset =   new float3(bl.x, bottomLeft.height,     bl.y);
+                        float3 topLeftOffset =      new float3(tl.x, topLeft.height,        tl.y);
+                        float3 topRightOffset =     new float3(tr.x, topRight.height,       tr.y);
+                        float3 bottomRightOffset =  new float3(br.x, bottomRight.height,    br.y);
 
-                        vertices.Add(new MeshVertex{ vertex = bottomLeftOffset });
-                        vertices.Add(new MeshVertex{ vertex = topLeftOffset });
-                        vertices.Add(new MeshVertex{ vertex = topRightOffset });
-                        vertices.Add(new MeshVertex{ vertex = bottomRightOffset });
+                        vertices.Add(new Vertex{ vertex = bottomLeftOffset });
+                        vertices.Add(new Vertex{ vertex = topLeftOffset });
+                        vertices.Add(new Vertex{ vertex = topRightOffset });
+                        vertices.Add(new Vertex{ vertex = bottomRightOffset });
 
-                        triangles.Add(new MeshTriangle{ triangle = 0 + indexOffset });
-                        triangles.Add(new MeshTriangle{ triangle = 1 + indexOffset });
-                        triangles.Add(new MeshTriangle{ triangle = 2 + indexOffset });
-                        triangles.Add(new MeshTriangle{ triangle = 0 + indexOffset });
-                        triangles.Add(new MeshTriangle{ triangle = 2 + indexOffset });
-                        triangles.Add(new MeshTriangle{ triangle = 3 + indexOffset });
+                        triangles.Add(new Triangle{ triangle = 0 + indexOffset });
+                        triangles.Add(new Triangle{ triangle = 1 + indexOffset });
+                        triangles.Add(new Triangle{ triangle = 2 + indexOffset });
+                        triangles.Add(new Triangle{ triangle = 0 + indexOffset });
+                        triangles.Add(new Triangle{ triangle = 2 + indexOffset });
+                        triangles.Add(new Triangle{ triangle = 3 + indexOffset });
+
+                        colors.Add(new VertColor{ color = new float4(0.7f, 0.7f, 0.7f, 1) });
+                        colors.Add(new VertColor{ color = new float4(0.7f, 0.7f, 0.7f, 1) });
+                        colors.Add(new VertColor{ color = new float4(0.7f, 0.7f, 0.7f, 1) });
+                        colors.Add(new VertColor{ color = new float4(0.7f, 0.7f, 0.7f, 1) });
 
                         indexOffset += 4;
                     }

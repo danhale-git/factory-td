@@ -21,7 +21,7 @@ namespace MapGeneration
             
             AddBufferFromMatrix();
 
-            WorleyCellSystem.CellMatrix cellMatrix = AddCellMatrixComponent();
+            CellSystem.CellMatrix cellMatrix = AddCellMatrixComponent();
 
             SetPosition(cellMatrix.root);
         }
@@ -38,13 +38,13 @@ namespace MapGeneration
             worleyBuffer.CopyFrom(matrix.matrix);
         }
 
-        WorleyCellSystem.CellMatrix AddCellMatrixComponent()
+        CellSystem.CellMatrix AddCellMatrixComponent()
         {
-            WorleyCellSystem.CellMatrix cellMatrix = new WorleyCellSystem.CellMatrix{
+            CellSystem.CellMatrix cellMatrix = new CellSystem.CellMatrix{
                 root = matrix.rootPosition,
                 width = matrix.width
             };
-            commandBuffer.AddComponent<WorleyCellSystem.CellMatrix>(cellEntity, cellMatrix);
+            commandBuffer.AddComponent<CellSystem.CellMatrix>(cellEntity, cellMatrix);
             return cellMatrix;
         }
 

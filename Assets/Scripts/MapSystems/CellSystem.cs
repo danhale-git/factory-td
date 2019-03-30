@@ -11,7 +11,7 @@ using Unity.Rendering;
 using MapGeneration;
 
 [AlwaysUpdateSystem]
-public class WorleyCellSystem : ComponentSystem
+public class CellSystem : ComponentSystem
 {
     EntityManager entityManager;
 
@@ -74,8 +74,9 @@ public class WorleyCellSystem : ComponentSystem
     void DiscoverCellJob(int2 index)
     {
         EntityCommandBuffer commandBuffer = new EntityCommandBuffer(Allocator.TempJob);
+        
+        Entity cellEntity = entityManager.CreateEntity(cellArchetype);
         WorleyNoise.CellData cell = worley.GetCellData(index);
-        Entity cellEntity = CreateCellEntity(cell.position);
         entityManager.AddComponentData<WorleyNoise.CellData>(cellEntity, cell);
 
         DiscoverCellJob job = new DiscoverCellJob{
@@ -87,47 +88,7 @@ public class WorleyCellSystem : ComponentSystem
         };
         job.Schedule().Complete();
 
-
-
         commandBuffer.Playback(entityManager);
         commandBuffer.Dispose();
-
-    }
-
-    public static string PrintMatrix(Matrix<WorleyNoise.PointData> matrix)
-    {
-        string mat = "";
-
-        for(int z = matrix.width-1; z >= 0; z--)
-        {
-            for(int x = 0; x < matrix.width; x++)
-            {
-                int index = matrix.PositionToIndex(new float3(x, 0, z));
-                mat += matrix.ItemIsSet(index) ? "x " : "o ";
-            }
-            mat += '\n';
-        }
-        return mat;
-    }
-
-    Entity CreateCellEntity(float3 worldPosition)
-    {
-        Entity entity = entityManager.CreateEntity(cellArchetype);
-        entityManager.SetComponentData<Translation>(entity, new Translation{ Value = worldPosition } );
-        return entity;
-    }
-
-    public static Color NoiseToColor(float noise)
-    {
-        if(noise < 0.1f) return Color.black;
-        else if(noise < 0.2f) return Color.blue;
-        else if(noise < 0.3f) return Color.clear;
-        else if(noise < 0.4f) return Color.cyan;
-        else if(noise < 0.5f) return Color.gray;
-        else if(noise < 0.6f) return Color.green;
-        else if(noise < 0.7f) return Color.grey;
-        else if(noise < 0.8f) return Color.magenta;
-        else if(noise < 0.9f) return Color.red;
-        else return Color.yellow;
     }
 }
