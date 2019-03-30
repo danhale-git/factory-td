@@ -72,8 +72,6 @@ public class ApplyMeshDataSystem : ComponentSystem
             }
         }
 
-		Debug.Log("playback");
-
         commandBuffer.Playback(entityManager);
         commandBuffer.Dispose();
 

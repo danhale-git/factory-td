@@ -61,8 +61,9 @@ public class WorleyCellSystem : ComponentSystem
             for(int z = 0; z < 5; z++)
             {
                 DiscoverCellJob(new int2(x, z));
-            }
+            } 
 
+        //DiscoverCellJob(int2.zero);
     }
 
     protected override void OnUpdate()
@@ -86,8 +87,27 @@ public class WorleyCellSystem : ComponentSystem
         };
         job.Schedule().Complete();
 
+
+
         commandBuffer.Playback(entityManager);
         commandBuffer.Dispose();
+
+    }
+
+    public static string PrintMatrix(Matrix<WorleyNoise.PointData> matrix)
+    {
+        string mat = "";
+
+        for(int z = matrix.width-1; z >= 0; z--)
+        {
+            for(int x = 0; x < matrix.width; x++)
+            {
+                int index = matrix.PositionToIndex(new float3(x, 0, z));
+                mat += matrix.ItemIsSet(index) ? "x " : "o ";
+            }
+            mat += '\n';
+        }
+        return mat;
     }
 
     Entity CreateCellEntity(float3 worldPosition)
