@@ -57,10 +57,11 @@ public class WorleyCellSystem : ComponentSystem
             ComponentType.ReadWrite<RenderMeshProxy>()
         );
 
-        DiscoverCellJob(int2.zero);
-        DiscoverCellJob(new int2(0, 1));
-        DiscoverCellJob(new int2(1, 0));
-        DiscoverCellJob(new int2(1, 1));
+        for(int x = 0; x < 5; x++)
+            for(int z = 0; z < 5; z++)
+            {
+                DiscoverCellJob(new int2(x, z));
+            }
 
     }
 

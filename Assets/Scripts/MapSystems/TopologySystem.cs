@@ -61,7 +61,6 @@ public class TopologySystem : ComponentSystem
                 for(int i = 0; i < topologyBuffer.Length; i++)
                 {
                     topologyBuffer[i] = new Topology{ height = worley[i].currentCellValue * 5 };
-                    GameObject testCube = GameObject.CreatePrimitive(PrimitiveType.Cube);
                 }
             }
         }
