@@ -4,7 +4,9 @@ using UnityEngine;
 
 public struct Matrix<T> where T : struct
 {
+    [DeallocateOnJobCompletion]
     public NativeArray<T> matrix;
+    [DeallocateOnJobCompletion]
     public NativeArray<sbyte> isSet;
 
     public int width;
@@ -29,7 +31,7 @@ public struct Matrix<T> where T : struct
         isSet = new NativeArray<sbyte>(matrix.Length, label);
 
         this.width = width;
-        this.label = label;
+        this.label = Allocator.Temp;
         this.rootPosition = rootPosition;
         this.itemWorldSize = itemWorldSize;
 
@@ -211,7 +213,7 @@ public struct Matrix<T> where T : struct
 
         width = newWidth;
 
-        Dispose();
+        //Dispose();
 
         matrix = newMatrix;
         isSet = newIsSet;

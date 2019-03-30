@@ -18,8 +18,6 @@ public class WorleyCellSystem : ComponentSystem
     WorleyNoise worley;
     float cellValue;
 
-    Matrix<WorleyNoise.PointData> matrix;
-
     EntityArchetype cellArchetype;
 
     public struct CellComplete : IComponentData { }
@@ -56,16 +54,11 @@ public class WorleyCellSystem : ComponentSystem
         cellArchetype = entityManager.CreateArchetype(
             ComponentType.ReadWrite<LocalToWorld>(),
             ComponentType.ReadWrite<Translation>(),
-            ComponentType.ReadWrite<RenderMeshProxy>(),
-            ComponentType.ReadWrite<WorleyNoise.PointData>()
+            ComponentType.ReadWrite<RenderMeshProxy>()
         );
 
-        DiscoverCell(int2.zero);
-    }
-
-    protected override void OnDestroyManager()
-    {
-        matrix.Dispose();
+        //DiscoverCell(int2.zero);
+        DiscoverCellJob(int2.zero);
     }
 
     protected override void OnUpdate()
@@ -75,69 +68,22 @@ public class WorleyCellSystem : ComponentSystem
 
     void DiscoverCellJob(int2 index)
     {
-        DiscoverCellJob job = new DiscoverCellJob{
-            matrix = this.matrix
-        };
-        job.Schedule().Complete();
-    }
-
-    void DiscoverCell(int2 index)
-    {
-        
+        EntityCommandBuffer commandBuffer = new EntityCommandBuffer(Allocator.TempJob);
         WorleyNoise.CellData cell = worley.GetCellData(index);
-
-        matrix = new Matrix<WorleyNoise.PointData>(10, Allocator.Persistent, cell.position);
-
-        cellValue = worley.GetPointData(0,0).currentCellValue;
-
         Entity cellEntity = CreateCellEntity(cell.position);
-
-        DynamicBuffer<WorleyNoise.PointData> worleyBuffer = entityManager.GetBuffer<WorleyNoise.PointData>(cellEntity);
-        Discover(cell.position);
-
-        worleyBuffer.CopyFrom(matrix.matrix);
-
         entityManager.AddComponentData<WorleyNoise.CellData>(cellEntity, cell);
 
-        CellMatrix CellMatrix = new CellMatrix{
-            root = matrix.rootPosition,
-            width = matrix.width
+        DiscoverCellJob job = new DiscoverCellJob{
+            commandBuffer = commandBuffer,
+            cellEntity = cellEntity,
+            matrix = new Matrix<WorleyNoise.PointData>(10, Allocator.TempJob, cell.position),
+            worley = this.worley,
+            cell = cell
         };
-        
-        entityManager.AddComponentData<CellMatrix>(cellEntity, CellMatrix);
-        float3 pos = new float3(CellMatrix.root.x, 0, CellMatrix.root.z);
-		entityManager.SetComponentData(cellEntity, new Translation{ Value = pos });
-        
-    }
+        job.Schedule().Complete();
 
-    void Discover(float3 position)
-    {
-        WorleyNoise.PointData data = worley.GetPointData(position.x, position.z);
-        data.pointWorldPosition = position;
-        data.isSet = 1;
-
-        if(matrix.ItemIsSet(position) || data.currentCellValue != cellValue)
-            return;
-
-        matrix.AddItem(data, position);
-
-        for(int x = -1; x <= 1; x++)
-            for(int z = -1; z <= 1; z++)
-            {
-                if(x + z == 0) continue;
-
-                float3 adjacent = new float3(x, 0, z) + position;
-
-                Discover(adjacent);
-            }
-    }
-
-    GameObject CreatePlane(float3 position)
-    {
-        GameObject plane = GameObject.CreatePrimitive(PrimitiveType.Plane);
-        plane.transform.localScale = new float3(0.1f);
-        plane.transform.Translate(position);
-        return plane;
+        commandBuffer.Playback(entityManager);
+        commandBuffer.Dispose();
     }
 
     Entity CreateCellEntity(float3 worldPosition)
