@@ -16,11 +16,33 @@ public class DiscoverCell : ComponentSystem
     WorleyNoise worley;
     float cellValue;
 
-    Matrix<int> matrix;
+    Matrix<WorleyNoise.PointData> matrix;
 
     EntityArchetype cellArchetype;
 
     DynamicBuffer<WorleyNoise.PointData> worleyBuffer;
+
+    struct CellMatrix<T> : IComponentData where T : struct, IComponentData
+    {
+        public float3 root;
+        public int width;
+
+        public T GetItem(float3 worlPosition, DynamicBuffer<T> data, ArrayUtil util)
+        {
+            int index = util.Flatten2D(worlPosition - root, width);
+            return data[index];
+        }
+
+        public bool ItemIsSet(float3 worlPosition, DynamicBuffer<int> isSet, ArrayUtil util)
+        {
+            int index = util.Flatten2D(worlPosition - root, width);
+
+            if(index < 0 || index >= isSet.Length)
+                return false;
+
+            return isSet[index] > 0;
+        }
+    }
 
     protected override void OnCreateManager()
     {
@@ -42,7 +64,7 @@ public class DiscoverCell : ComponentSystem
 
 
 
-        matrix = new Matrix<int>(10, Allocator.Persistent, float3.zero);
+        matrix = new Matrix<WorleyNoise.PointData>(10, Allocator.Persistent, float3.zero);
 
         cellValue = worley.GetPointData(0,0).currentCellValue;
 
@@ -77,7 +99,7 @@ public class DiscoverCell : ComponentSystem
 
         buffer.Add(data);
 
-        matrix.AddItem(1, position);
+        matrix.AddItem(data, position);
 
         for(int x = -1; x <= 1; x++)
             for(int z = -1; z <= 1; z++)

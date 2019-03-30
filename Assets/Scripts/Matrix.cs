@@ -4,8 +4,8 @@ using UnityEngine;
 
 public struct Matrix<T> where T : struct
 {
-    NativeArray<T> matrix;
-    NativeArray<sbyte> isSet;
+    public NativeArray<T> matrix;
+    public NativeArray<sbyte> isSet;
 
     public int width;
     public Allocator label;
