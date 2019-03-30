@@ -24,7 +24,7 @@ public class TopologySystem : ComponentSystem
 
         EntityArchetypeQuery topologyQuery = new EntityArchetypeQuery{
             All = new ComponentType[] { typeof(WorleyNoise.CellData) },
-            None = new ComponentType[] { typeof(DiscoverCell.CellComplete), typeof(Topology) }
+            None = new ComponentType[] { typeof(WorleyCellSystem.CellComplete), typeof(Topology) }
         };
         topologyGroup = GetComponentGroup(topologyQuery);
     }

@@ -9,7 +9,7 @@ using Unity.Transforms;
 using Unity.Rendering;
 
 [AlwaysUpdateSystem]
-public class DiscoverCell : ComponentSystem
+public class WorleyCellSystem : ComponentSystem
 {
     EntityManager entityManager;
 
@@ -58,37 +58,7 @@ public class DiscoverCell : ComponentSystem
             ComponentType.ReadWrite<WorleyNoise.PointData>()
         );
 
-
-
-        float3 startPosition = float3.zero;
-
-        matrix = new Matrix<WorleyNoise.PointData>(10, Allocator.Persistent, startPosition);
-
-        cellValue = worley.GetPointData(0,0).currentCellValue;
-
-        Entity cell = CreateCellEntity(startPosition);
-
-        WorleyNoise.PointData initialPoint = worley.GetPointData(startPosition.x, startPosition.z);
-
-        DynamicBuffer<WorleyNoise.PointData> worleyBuffer = entityManager.GetBuffer<WorleyNoise.PointData>(cell);
-        Discover(startPosition);
-
-        worleyBuffer.CopyFrom(matrix.matrix);
-
-        /*for(int i = 0; i < worleyBuffer.Length; i++)
-            if(worleyBuffer[i].isSet > 0)
-                CreatePlane(worleyBuffer[i].pointWorldPosition); */
-
-        entityManager.AddComponentData<WorleyNoise.CellData>(cell, worley.GetCellData(initialPoint.currentCellIndex));
-
-        CellMatrix CellMatrix = new CellMatrix{
-            root = matrix.rootPosition,
-            width = matrix.width
-        };
-        
-        entityManager.AddComponentData<CellMatrix>(cell, CellMatrix);
-        float3 pos = new float3(CellMatrix.root.x, 0, CellMatrix.root.z);
-		entityManager.SetComponentData(cell, new Translation{ Value = pos });
+        DiscoverCell(int2.zero);
     }
 
     protected override void OnDestroyManager()
@@ -99,6 +69,35 @@ public class DiscoverCell : ComponentSystem
     protected override void OnUpdate()
     {
         
+    }
+
+    void DiscoverCell(int2 index)
+    {
+        WorleyNoise.CellData cell = worley.GetCellData(index);
+
+        matrix = new Matrix<WorleyNoise.PointData>(10, Allocator.Persistent, cell.position);
+
+        cellValue = worley.GetPointData(0,0).currentCellValue;
+
+        Entity cellEntity = CreateCellEntity(cell.position);
+
+        WorleyNoise.PointData initialPoint = worley.GetPointData(cell.position.x, cell.position.z);
+
+        DynamicBuffer<WorleyNoise.PointData> worleyBuffer = entityManager.GetBuffer<WorleyNoise.PointData>(cellEntity);
+        Discover(cell.position);
+
+        worleyBuffer.CopyFrom(matrix.matrix);
+
+        entityManager.AddComponentData<WorleyNoise.CellData>(cellEntity, worley.GetCellData(initialPoint.currentCellIndex));
+
+        CellMatrix CellMatrix = new CellMatrix{
+            root = matrix.rootPosition,
+            width = matrix.width
+        };
+        
+        entityManager.AddComponentData<CellMatrix>(cellEntity, CellMatrix);
+        float3 pos = new float3(CellMatrix.root.x, 0, CellMatrix.root.z);
+		entityManager.SetComponentData(cellEntity, new Translation{ Value = pos });
     }
 
     void Discover(float3 position)

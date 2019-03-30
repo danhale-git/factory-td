@@ -44,7 +44,7 @@ public class MeshDataSystem : ComponentSystem
 
         EntityArchetypeQuery meshDataQuery = new EntityArchetypeQuery{
             All = new ComponentType[] { typeof(WorleyNoise.CellData), typeof(TopologySystem.Topology) },
-            None = new ComponentType[] { typeof(DiscoverCell.CellComplete), typeof(MeshVertex) }
+            None = new ComponentType[] { typeof(WorleyCellSystem.CellComplete), typeof(MeshVertex) }
         };
         meshDataGroup = GetComponentGroup(meshDataQuery);
     }
@@ -61,7 +61,7 @@ public class MeshDataSystem : ComponentSystem
         NativeArray<ArchetypeChunk> chunks = meshDataGroup.CreateArchetypeChunkArray(Allocator.TempJob);
 
         ArchetypeChunkEntityType entityType = GetArchetypeChunkEntityType();
-        ArchetypeChunkComponentType<DiscoverCell.CellMatrix> matrixType = GetArchetypeChunkComponentType<DiscoverCell.CellMatrix>(true);
+        ArchetypeChunkComponentType<WorleyCellSystem.CellMatrix> matrixType = GetArchetypeChunkComponentType<WorleyCellSystem.CellMatrix>(true);
         ArchetypeChunkComponentType<WorleyNoise.CellData> cellType = GetArchetypeChunkComponentType<WorleyNoise.CellData>(true);
 
         ArchetypeChunkBufferType<WorleyNoise.PointData> worleyType = GetArchetypeChunkBufferType<WorleyNoise.PointData>(true);
@@ -72,7 +72,7 @@ public class MeshDataSystem : ComponentSystem
             ArchetypeChunk chunk = chunks[c];
 
             NativeArray<Entity> entities = chunk.GetNativeArray(entityType);
-            NativeArray<DiscoverCell.CellMatrix> matrices = chunk.GetNativeArray(matrixType);
+            NativeArray<WorleyCellSystem.CellMatrix> matrices = chunk.GetNativeArray(matrixType);
             NativeArray<WorleyNoise.CellData> cells = chunk.GetNativeArray(cellType);
 
             BufferAccessor<WorleyNoise.PointData> worleyBuffers = chunk.GetBufferAccessor(worleyType);
@@ -83,7 +83,7 @@ public class MeshDataSystem : ComponentSystem
                 ArrayUtil arrayUtil = new ArrayUtil();
 
                 Entity entity = entities[e];
-                DiscoverCell.CellMatrix matrix = matrices[e];
+                WorleyCellSystem.CellMatrix matrix = matrices[e];
                 WorleyNoise.CellData cell = cells[e];
 
                 DynamicBuffer<WorleyNoise.PointData> worley = worleyBuffers[e];

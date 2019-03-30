@@ -25,7 +25,7 @@ public class ApplyMeshDataSystem : ComponentSystem
 
         EntityArchetypeQuery applyMeshQuery = new EntityArchetypeQuery{
 			All = new ComponentType[] { typeof(MeshDataSystem.MeshVertex) },
-			None = new ComponentType[] { typeof(DiscoverCell.CellComplete) }
+			None = new ComponentType[] { typeof(WorleyCellSystem.CellComplete) }
 		};
         applyMeshGroup = GetComponentGroup(applyMeshQuery);
     }
@@ -70,7 +70,7 @@ public class ApplyMeshDataSystem : ComponentSystem
 				commandBuffer.RemoveComponent(entity, typeof(WorleyNoise.PointData));
 				commandBuffer.RemoveComponent(entity, typeof(TopologySystem.Topology));
 
-				commandBuffer.AddComponent(entity, new DiscoverCell.CellComplete());
+				commandBuffer.AddComponent(entity, new WorleyCellSystem.CellComplete());
             }
         }
 
