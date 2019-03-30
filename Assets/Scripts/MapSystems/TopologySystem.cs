@@ -60,10 +60,8 @@ public class TopologySystem : ComponentSystem
 
                 for(int i = 0; i < topologyBuffer.Length; i++)
                 {
-                    topologyBuffer[i] = new Topology{ height = worley[i].currentCellValue };
+                    topologyBuffer[i] = new Topology{ height = /*worley[i].currentCellValue * 5 */0 };
                 }
-
-                Debug.Log("worley.Length: "+worley.Length);
             }
         }
 

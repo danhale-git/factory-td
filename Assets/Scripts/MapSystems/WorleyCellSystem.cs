@@ -59,6 +59,10 @@ public class WorleyCellSystem : ComponentSystem
 
         //DiscoverCell(int2.zero);
         DiscoverCellJob(int2.zero);
+        DiscoverCellJob(new int2(0, 1));
+        DiscoverCellJob(new int2(1, 0));
+        DiscoverCellJob(new int2(1, 1));
+
     }
 
     protected override void OnUpdate()

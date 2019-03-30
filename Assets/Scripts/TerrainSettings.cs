@@ -15,7 +15,8 @@ public static class TerrainSettings
 	public const int seed = 5678;
 
 	public const float cellFrequency = 0.05f;
-	public const float cellEdgeSmoothing = 10.0f;
+	//public const float cellEdgeSmoothing = 10.0f;
+	public const float cellEdgeSmoothing = 0;
 	public const float cellularJitter = 0.15f;
 
 	public const int levelHeight = 5;

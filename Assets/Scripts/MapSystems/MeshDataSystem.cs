@@ -92,13 +92,6 @@ public class MeshDataSystem : ComponentSystem
                 DynamicBuffer<MeshVertex> vertices = commandBuffer.AddBuffer<MeshVertex>(entity);
                 DynamicBuffer<MeshTriangle> triangles = commandBuffer.AddBuffer<MeshTriangle>(entity);
 
-                GameObject test1 = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                test1.transform.Translate(matrix.root);
-
-                GameObject test2 = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                test2.transform.Translate(matrix.root + matrix.width);
-
-
                 int indexOffset = 0;
 
                 for(int x = 0; x < matrix.width-1; x++)
@@ -109,6 +102,16 @@ public class MeshDataSystem : ComponentSystem
                         int2 tl = new int2(x,   z+1);
                         int2 tr = new int2(x+1, z+1);
                         int2 br = new int2(x+1, z  );
+
+                        if( matrix.GetItem<WorleyNoise.PointData>(bl, worley, arrayUtil).isSet == 0 ||
+                            matrix.GetItem<WorleyNoise.PointData>(tl, worley, arrayUtil).isSet == 0 ||
+                            matrix.GetItem<WorleyNoise.PointData>(tr, worley, arrayUtil).isSet == 0 ||
+                            matrix.GetItem<WorleyNoise.PointData>(br, worley, arrayUtil).isSet == 0
+                        )
+                        {
+                            continue;
+                        }
+
 
                         TopologySystem.Topology bottomLeft    = matrix.GetItem<TopologySystem.Topology>(bl, topology, arrayUtil);
                         TopologySystem.Topology topLeft       = matrix.GetItem<TopologySystem.Topology>(tl, topology, arrayUtil);
@@ -134,9 +137,6 @@ public class MeshDataSystem : ComponentSystem
 
                         indexOffset += 4;
                     }
-
-                Debug.Log("vertices.Length: "+vertices.Length);
-                Debug.Log("triangles.Length: "+triangles.Length);
             }
         }
 

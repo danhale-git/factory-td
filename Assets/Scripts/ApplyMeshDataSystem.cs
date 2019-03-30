@@ -60,8 +60,6 @@ public class ApplyMeshDataSystem : ComponentSystem
                 Mesh mesh = MakeMesh(vertBuffers[e], /*normBuffers[e], */ triBuffers[e]/*, colorBuffers[e] */);
                 SetMeshComponent(mesh, entity, commandBuffer);
 
-				Debug.Log("mesh verts: "+mesh.vertexCount);
-
 				commandBuffer.RemoveComponent(entity, typeof(MeshDataSystem.MeshVertex));
 				//commandBuffer.RemoveComponent(entity, typeof(MeshDataSystem.MeshNormal));
 				commandBuffer.RemoveComponent(entity, typeof(MeshDataSystem.MeshTriangle));
