@@ -33,9 +33,7 @@ namespace MapGeneration
 
         void Discover(float3 position)
         {
-            WorleyNoise.PointData data = worley.GetPointData(position.x, position.z);
-            data.pointWorldPosition = position;
-            data.isSet = 1;
+            WorleyNoise.PointData data = GetPointData(position);
 
             if(matrix.ItemIsSet(position) || data.currentCellValue != cell.value)
                 return;
@@ -51,6 +49,14 @@ namespace MapGeneration
 
                     Discover(adjacent);
                 }
+        }
+
+        WorleyNoise.PointData GetPointData(float3 position)
+        {
+            WorleyNoise.PointData data = worley.GetPointData(position.x, position.z);
+            data.pointWorldPosition = position;
+            data.isSet = 1;
+            return data;
         }
     }
 }
