@@ -119,9 +119,9 @@ public class MeshDataSystem : ComponentSystem
                         TopologySystem.Topology bottomRight   = matrix.GetItem<TopologySystem.Topology>(br, topology, arrayUtil);
 
                         float3 bottomLeftOffset =   new float3(bl.x, bottomLeft.height, bl.y);
-                        float3 topLeftOffset =      new float3(tl.x, bottomLeft.height, tl.y);
-                        float3 topRightOffset =     new float3(tr.x, bottomLeft.height, tr.y);
-                        float3 bottomRightOffset =  new float3(br.x, bottomLeft.height, br.y);
+                        float3 topLeftOffset =      new float3(tl.x, topLeft.height, tl.y);
+                        float3 topRightOffset =     new float3(tr.x, topRight.height, tr.y);
+                        float3 bottomRightOffset =  new float3(br.x, bottomRight.height, br.y);
 
                         vertices.Add(new MeshVertex{ vertex = bottomLeftOffset });
                         vertices.Add(new MeshVertex{ vertex = topLeftOffset });

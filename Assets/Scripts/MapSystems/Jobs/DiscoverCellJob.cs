@@ -35,10 +35,12 @@ namespace MapGeneration
         {
             WorleyNoise.PointData data = GetPointData(position);
 
-            if(matrix.ItemIsSet(position) || data.currentCellValue != cell.value)
+            if(matrix.ItemIsSet(position))
                 return;
 
             matrix.AddItem(data, position);
+
+            bool inCell = data.currentCellValue == cell.value;
 
             for(int x = -1; x <= 1; x++)
                 for(int z = -1; z <= 1; z++)
@@ -46,6 +48,8 @@ namespace MapGeneration
                     if(x + z == 0) continue;
 
                     float3 adjacent = new float3(x, 0, z) + position;
+
+                    if(!inCell && GetPointData(adjacent).currentCellValue!= cell.value) continue;
 
                     Discover(adjacent);
                 }
