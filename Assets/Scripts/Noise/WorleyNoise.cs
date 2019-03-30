@@ -22,6 +22,8 @@ public struct WorleyNoise
 		public int CompareTo(PointData other)
 		{ return currentCellValue.CompareTo(other.currentCellValue); }
 
+		public sbyte isSet;
+
 		public float3 pointWorldPosition;
 
 		public float3 currentCellPosition;

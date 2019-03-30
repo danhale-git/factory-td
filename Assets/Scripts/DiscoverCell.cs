@@ -20,8 +20,6 @@ public class DiscoverCell : ComponentSystem
 
     EntityArchetype cellArchetype;
 
-    DynamicBuffer<WorleyNoise.PointData> worleyBuffer;
-
     struct CellMatrix<T> : IComponentData where T : struct, IComponentData
     {
         public float3 root;
@@ -31,16 +29,6 @@ public class DiscoverCell : ComponentSystem
         {
             int index = util.Flatten2D(worlPosition - root, width);
             return data[index];
-        }
-
-        public bool ItemIsSet(float3 worlPosition, DynamicBuffer<int> isSet, ArrayUtil util)
-        {
-            int index = util.Flatten2D(worlPosition - root, width);
-
-            if(index < 0 || index >= isSet.Length)
-                return false;
-
-            return isSet[index] > 0;
         }
     }
 
@@ -72,11 +60,14 @@ public class DiscoverCell : ComponentSystem
 
         Entity cell = CreateCellEntity(float3.zero);
 
-        worleyBuffer = entityManager.GetBuffer<WorleyNoise.PointData>(cell);
-        Discover(float3.zero, worleyBuffer);
+        DynamicBuffer<WorleyNoise.PointData> worleyBuffer = entityManager.GetBuffer<WorleyNoise.PointData>(cell);
+        Discover(float3.zero);
+
+        worleyBuffer.CopyFrom(matrix.matrix);
 
         for(int i = 0; i < worleyBuffer.Length; i++)
-            CreatePlane(worleyBuffer[i].pointWorldPosition);
+            if(worleyBuffer[i].isSet > 0)
+                CreatePlane(worleyBuffer[i].pointWorldPosition);
     }
 
     protected override void OnDestroyManager()
@@ -89,15 +80,14 @@ public class DiscoverCell : ComponentSystem
         
     }
 
-    void Discover(float3 position, DynamicBuffer<WorleyNoise.PointData> buffer)
+    void Discover(float3 position)
     {
         WorleyNoise.PointData data = worley.GetPointData(position.x, position.z);
         data.pointWorldPosition = position;
+        data.isSet = 1;
 
         if(matrix.ItemIsSet(position) || data.currentCellValue != cellValue)
             return;
-
-        buffer.Add(data);
 
         matrix.AddItem(data, position);
 
@@ -108,7 +98,7 @@ public class DiscoverCell : ComponentSystem
 
                 float3 adjacent = new float3(x, 0, z) + position;
 
-                Discover(adjacent, buffer);
+                Discover(adjacent);
             }
     }
 
