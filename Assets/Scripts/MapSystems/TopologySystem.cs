@@ -15,7 +15,7 @@ public class TopologySystem : ComponentSystem
 
     public struct Topology : IBufferElementData
     {
-        float height;
+        public float height;
     }
 
     protected override void OnCreateManager()
@@ -31,7 +31,7 @@ public class TopologySystem : ComponentSystem
 
     protected override void OnUpdate()
     {
-        
+        ScheduleTopologyJobs();
     }
 
     void ScheduleTopologyJobs()
@@ -55,9 +55,21 @@ public class TopologySystem : ComponentSystem
                 Entity entity = entities[e];
                 DynamicBuffer<WorleyNoise.PointData> worley = worleyBuffers[e];
 
-                DynamicBuffer<Topology> topologyBuffer = entityManager.AddBuffer<Topology>(entity);
+                DynamicBuffer<Topology> topologyBuffer = commandBuffer.AddBuffer<Topology>(entity);
                 topologyBuffer.ResizeUninitialized(worley.Length);
+
+                for(int i = 0; i < topologyBuffer.Length; i++)
+                {
+                    topologyBuffer[i] = new Topology{ height = worley[i].currentCellValue };
+                }
+
+                Debug.Log("worley.Length: "+worley.Length);
             }
         }
+
+        commandBuffer.Playback(entityManager);
+        commandBuffer.Dispose();
+
+        chunks.Dispose();
     }
 }

@@ -67,7 +67,7 @@ public struct WorleyNoise
 		CellData cell = new CellData();
 
         cell.index = cellIndex;
-        cell.position = new float3(cellX, 0, cellY) / TerrainSettings.cellFrequency;
+        cell.position = math.round(new float3(cellX, 0, cellY) / TerrainSettings.cellFrequency);
 		cell.value =  To01(ValCoord2D(TerrainSettings.seed, cellIndex.x, cellIndex.y));
 		
 		return cell;

@@ -22,14 +22,20 @@ public class DiscoverCell : ComponentSystem
 
     public struct CellComplete : IComponentData { }
 
-    public struct CellMatrix<T> : IComponentData where T : struct, IComponentData
+    public struct CellMatrix : IComponentData
     {
         public float3 root;
         public int width;
 
-        public T GetItem(float3 worlPosition, DynamicBuffer<T> data, ArrayUtil util)
+        public T GetItem<T>(float3 worlPosition, DynamicBuffer<T> data, ArrayUtil util) where T : struct, IBufferElementData
         {
             int index = util.Flatten2D(worlPosition - root, width);
+            return data[index];
+        }
+
+        public T GetItem<T>(int2 matrixPosition, DynamicBuffer<T> data, ArrayUtil util) where T : struct, IBufferElementData
+        {
+            int index = util.Flatten2D(matrixPosition.x, matrixPosition.y, width);
             return data[index];
         }
     }
@@ -46,6 +52,7 @@ public class DiscoverCell : ComponentSystem
         );
 
         cellArchetype = entityManager.CreateArchetype(
+            ComponentType.ReadWrite<LocalToWorld>(),
             ComponentType.ReadWrite<Translation>(),
             ComponentType.ReadWrite<RenderMeshProxy>(),
             ComponentType.ReadWrite<WorleyNoise.PointData>()
@@ -59,9 +66,6 @@ public class DiscoverCell : ComponentSystem
 
         cellValue = worley.GetPointData(0,0).currentCellValue;
 
-        //Testing(startPosition);
-
-
         Entity cell = CreateCellEntity(startPosition);
 
         WorleyNoise.PointData initialPoint = worley.GetPointData(startPosition.x, startPosition.z);
@@ -71,11 +75,20 @@ public class DiscoverCell : ComponentSystem
 
         worleyBuffer.CopyFrom(matrix.matrix);
 
+        /*for(int i = 0; i < worleyBuffer.Length; i++)
+            if(worleyBuffer[i].isSet > 0)
+                CreatePlane(worleyBuffer[i].pointWorldPosition); */
+
         entityManager.AddComponentData<WorleyNoise.CellData>(cell, worley.GetCellData(initialPoint.currentCellIndex));
 
-        for(int i = 0; i < worleyBuffer.Length; i++)
-            if(worleyBuffer[i].isSet > 0)
-                CreatePlane(worleyBuffer[i].pointWorldPosition);
+        CellMatrix CellMatrix = new CellMatrix{
+            root = matrix.rootPosition,
+            width = matrix.width
+        };
+        
+        entityManager.AddComponentData<CellMatrix>(cell, CellMatrix);
+        float3 pos = new float3(CellMatrix.root.x, 0, CellMatrix.root.z);
+		entityManager.SetComponentData(cell, new Translation{ Value = pos });
     }
 
     protected override void OnDestroyManager()
