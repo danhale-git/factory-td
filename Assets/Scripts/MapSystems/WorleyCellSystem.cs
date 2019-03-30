@@ -8,6 +8,8 @@ using Unity.Collections;
 using Unity.Transforms;
 using Unity.Rendering;
 
+using MapGeneration;
+
 [AlwaysUpdateSystem]
 public class WorleyCellSystem : ComponentSystem
 {
@@ -71,8 +73,17 @@ public class WorleyCellSystem : ComponentSystem
         
     }
 
+    void DiscoverCellJob(int2 index)
+    {
+        DiscoverCellJob job = new DiscoverCellJob{
+            matrix = this.matrix
+        };
+        job.Schedule().Complete();
+    }
+
     void DiscoverCell(int2 index)
     {
+        
         WorleyNoise.CellData cell = worley.GetCellData(index);
 
         matrix = new Matrix<WorleyNoise.PointData>(10, Allocator.Persistent, cell.position);
@@ -81,14 +92,12 @@ public class WorleyCellSystem : ComponentSystem
 
         Entity cellEntity = CreateCellEntity(cell.position);
 
-        WorleyNoise.PointData initialPoint = worley.GetPointData(cell.position.x, cell.position.z);
-
         DynamicBuffer<WorleyNoise.PointData> worleyBuffer = entityManager.GetBuffer<WorleyNoise.PointData>(cellEntity);
         Discover(cell.position);
 
         worleyBuffer.CopyFrom(matrix.matrix);
 
-        entityManager.AddComponentData<WorleyNoise.CellData>(cellEntity, worley.GetCellData(initialPoint.currentCellIndex));
+        entityManager.AddComponentData<WorleyNoise.CellData>(cellEntity, cell);
 
         CellMatrix CellMatrix = new CellMatrix{
             root = matrix.rootPosition,
@@ -98,6 +107,7 @@ public class WorleyCellSystem : ComponentSystem
         entityManager.AddComponentData<CellMatrix>(cellEntity, CellMatrix);
         float3 pos = new float3(CellMatrix.root.x, 0, CellMatrix.root.z);
 		entityManager.SetComponentData(cellEntity, new Translation{ Value = pos });
+        
     }
 
     void Discover(float3 position)
