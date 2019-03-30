@@ -20,7 +20,9 @@ public class DiscoverCell : ComponentSystem
 
     EntityArchetype cellArchetype;
 
-    struct CellMatrix<T> : IComponentData where T : struct, IComponentData
+    public struct CellComplete : IComponentData { }
+
+    public struct CellMatrix<T> : IComponentData where T : struct, IComponentData
     {
         public float3 root;
         public int width;
@@ -51,19 +53,25 @@ public class DiscoverCell : ComponentSystem
 
 
 
+        float3 startPosition = float3.zero;
 
-        matrix = new Matrix<WorleyNoise.PointData>(10, Allocator.Persistent, float3.zero);
+        matrix = new Matrix<WorleyNoise.PointData>(10, Allocator.Persistent, startPosition);
 
         cellValue = worley.GetPointData(0,0).currentCellValue;
 
-        //Testing(float3.zero);
+        //Testing(startPosition);
 
-        Entity cell = CreateCellEntity(float3.zero);
+
+        Entity cell = CreateCellEntity(startPosition);
+
+        WorleyNoise.PointData initialPoint = worley.GetPointData(startPosition.x, startPosition.z);
 
         DynamicBuffer<WorleyNoise.PointData> worleyBuffer = entityManager.GetBuffer<WorleyNoise.PointData>(cell);
-        Discover(float3.zero);
+        Discover(startPosition);
 
         worleyBuffer.CopyFrom(matrix.matrix);
+
+        entityManager.AddComponentData<WorleyNoise.CellData>(cell, worley.GetCellData(initialPoint.currentCellIndex));
 
         for(int i = 0; i < worleyBuffer.Length; i++)
             if(worleyBuffer[i].isSet > 0)

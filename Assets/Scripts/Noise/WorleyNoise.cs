@@ -30,8 +30,7 @@ public struct WorleyNoise
 		public int2 currentCellIndex;
 		public float currentCellValue, distance2Edge, adjacentCellValue;
 	}
-	[InternalBufferCapacity(0)]
-	public struct CellData : IBufferElementData, System.IComparable<CellData>
+	public struct CellData : IComponentData, System.IComparable<CellData>
 	{
 		public int CompareTo(CellData other)
 		{ return value.CompareTo(other.value); }
