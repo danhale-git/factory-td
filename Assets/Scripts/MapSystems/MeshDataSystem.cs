@@ -112,10 +112,15 @@ public class MeshDataSystem : ComponentSystem
                         triangles.Add(new Triangle{ triangle = 2 + indexOffset });
                         triangles.Add(new Triangle{ triangle = 3 + indexOffset });
 
-                        colors.Add(new VertColor{ color = new float4(0.7f, 0.7f, 0.7f, 1) });
-                        colors.Add(new VertColor{ color = new float4(0.7f, 0.7f, 0.7f, 1) });
-                        colors.Add(new VertColor{ color = new float4(0.7f, 0.7f, 0.7f, 1) });
-                        colors.Add(new VertColor{ color = new float4(0.7f, 0.7f, 0.7f, 1) });
+                        float4 color;
+                        float difference = LargestHeightDifference(bottomLeft.height, topLeft.height, topRight.height, bottomRight.height);
+                        if(difference > 1) color = new float4(0.7f, 0.7f, 0.7f, 1);
+                        else color = new float4(0.4f, 0.8f, 0f, 1);
+
+                        colors.Add(new VertColor{ color = color });
+                        colors.Add(new VertColor{ color = color });
+                        colors.Add(new VertColor{ color = color });
+                        colors.Add(new VertColor{ color = color });
 
                         indexOffset += 4;
                     }
@@ -126,5 +131,12 @@ public class MeshDataSystem : ComponentSystem
         commandBuffer.Dispose();
 
         chunks.Dispose();
+    }
+
+    float LargestHeightDifference(float a, float b, float c, float d)
+    {
+        float largest = math.max(a, math.max(b, math.max(c, d)));
+        float smallest = math.min(a, math.min(b, math.min(c, d)));
+        return largest - smallest;
     }
 }
