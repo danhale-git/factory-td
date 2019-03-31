@@ -14,6 +14,8 @@ public class TopologySystem : ComponentSystem
     ComponentGroup topologyGroup;
 
     SimplexNoiseGenerator simplex;
+    
+    Biomes biomes;
 
     public struct Topology : IBufferElementData
     {
@@ -25,6 +27,8 @@ public class TopologySystem : ComponentSystem
         entityManager = World.Active.GetOrCreateManager<EntityManager>();
 
         simplex = new SimplexNoiseGenerator(TerrainSettings.seed, 0.1f);
+
+        biomes = new Biomes();
 
         EntityArchetypeQuery topologyQuery = new EntityArchetypeQuery{
             All = new ComponentType[] { typeof(WorleyNoise.CellData) },
@@ -69,7 +73,12 @@ public class TopologySystem : ComponentSystem
                     float3 position = worley[i].pointWorldPosition;
                     float noise = simplex.GetSimplex(position.x, position.z);
 
-                    topologyBuffer[i] = new Topology{ height = worley[i].currentCellValue * 10 + noise };
+                    float height = worley[i].currentCellValue * (2*biomes.GetIndex(worley[i].currentCellValue)) + noise;
+
+                    //float height = biomes.GetIndex(worley[i].currentCellValue) * 5;
+
+
+                    topologyBuffer[i] = new Topology{ height = height };
                 }
             }
         }

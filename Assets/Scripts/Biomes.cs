@@ -4,9 +4,12 @@ public struct Biomes
 {
     public int GetIndex(float cellNoise)
     {
-        if(cellNoise > 0.5f)
+        if(cellNoise < 0.25f)
             return 0;
-        else    
+        if(cellNoise < 0.5f)
             return 1;
+        else if(cellNoise < 0.75f)    
+            return 2;
+        else return 3;
     }
 }

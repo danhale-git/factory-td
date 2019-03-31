@@ -114,8 +114,12 @@ public class MeshDataSystem : ComponentSystem
 
                         float4 color;
                         float difference = LargestHeightDifference(bottomLeft.height, topLeft.height, topRight.height, bottomRight.height);
+                        
+                        float distance = matrix.GetItem<WorleyNoise.PointData>(new int2(x, z), worley, arrayUtil).distance2Edge;
+
                         if(difference > 1) color = new float4(0.7f, 0.7f, 0.7f, 1);
                         else color = new float4(0.4f, 0.8f, 0f, 1);
+                        //else color = new float4(distance, distance, distance, 1);
 
                         colors.Add(new VertColor{ color = color });
                         colors.Add(new VertColor{ color = color });
