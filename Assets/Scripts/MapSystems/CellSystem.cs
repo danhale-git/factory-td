@@ -73,6 +73,7 @@ public class CellSystem : ComponentSystem
     protected override void OnDestroyManager()
     {
         cellMatrix.Dispose();
+        if(runningCommandBuffer.IsCreated) runningCommandBuffer.Dispose();
     }
 
     protected override void OnUpdate()
@@ -119,6 +120,8 @@ public class CellSystem : ComponentSystem
 
         for(int x = -2; x < 2; x++)
             for(int z = -2; z < 2; z++)
+        //for(int x = 0; x < 1; x++)
+        //    for(int z = 0; z < 1; z++)
             {
                 int2 index = currentCellIndex + new int2(x, z);
                 if(!cellMatrix.ItemIsSet(index))
@@ -127,7 +130,7 @@ public class CellSystem : ComponentSystem
                     allHandles = JobHandle.CombineDependencies(newHandle, allHandles);
                     previousHandle = newHandle;
                 } 
-            }
+            } 
 
         runningCommandBuffer = commandBuffer;
         runningJobHandle = allHandles; 
@@ -135,6 +138,8 @@ public class CellSystem : ComponentSystem
 
     JobHandle DiscoverCellJob(int2 index, EntityCommandBuffer commandBuffer, JobHandle previousHandle)
     { 
+        DebugSystem.Count("Cells");
+
         Entity cellEntity = entityManager.CreateEntity(cellArchetype);
         WorleyNoise.CellData cell = worley.GetCellData(index);
         entityManager.AddComponentData<WorleyNoise.CellData>(cellEntity, cell);
