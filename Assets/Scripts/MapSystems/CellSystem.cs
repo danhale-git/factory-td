@@ -17,13 +17,15 @@ public class CellSystem : ComponentSystem
     PlayerEntitySystem playerSystem;
 
     WorleyNoise worley;
-    float cellValue;
 
     EntityArchetype cellArchetype;
-
     Matrix<Entity> cellMatrix;
+
     int2 currentCellIndex;
     int2 previousCellIndex;
+
+    JobHandle runningJobHandle;
+	EntityCommandBuffer runningCommandBuffer;
 
     public struct CellComplete : IComponentData { }
 
@@ -75,10 +77,23 @@ public class CellSystem : ComponentSystem
 
     protected override void OnUpdate()
     {
-        if(!UpdateCurrentCellIndex()) return; 
+        if(runningCommandBuffer.IsCreated)
+        {
+            if(!runningJobHandle.IsCompleted) return;
+            else JobCompleteAndBufferPlayback();
+        }
 
-        DiscoverSurroundingCells();
+        if(!UpdateCurrentCellIndex()) return;
+        else DiscoverSurroundingCells();
     }
+
+    void JobCompleteAndBufferPlayback()
+	{
+		runningJobHandle.Complete();
+
+		runningCommandBuffer.Playback(entityManager);
+		runningCommandBuffer.Dispose();
+	}
 
     bool UpdateCurrentCellIndex()
     {
@@ -98,21 +113,28 @@ public class CellSystem : ComponentSystem
 
     void DiscoverSurroundingCells()
     {
+        EntityCommandBuffer commandBuffer = new EntityCommandBuffer(Allocator.TempJob);
+        JobHandle allHandles		= new JobHandle();
+		JobHandle previousHandle	= new JobHandle();
+
         for(int x = -2; x < 2; x++)
             for(int z = -2; z < 2; z++)
             {
                 int2 index = currentCellIndex + new int2(x, z);
                 if(!cellMatrix.ItemIsSet(index))
                 {
-                    DiscoverCellJob(index);
+                    JobHandle newHandle = DiscoverCellJob(index, commandBuffer, previousHandle);
+                    allHandles = JobHandle.CombineDependencies(newHandle, allHandles);
+                    previousHandle = newHandle;
                 } 
-            }  
+            }
+
+        runningCommandBuffer = commandBuffer;
+        runningJobHandle = allHandles; 
     }
 
-    void DiscoverCellJob(int2 index)
-    {
-        EntityCommandBuffer commandBuffer = new EntityCommandBuffer(Allocator.TempJob);
-        
+    JobHandle DiscoverCellJob(int2 index, EntityCommandBuffer commandBuffer, JobHandle previousHandle)
+    { 
         Entity cellEntity = entityManager.CreateEntity(cellArchetype);
         WorleyNoise.CellData cell = worley.GetCellData(index);
         entityManager.AddComponentData<WorleyNoise.CellData>(cellEntity, cell);
@@ -126,10 +148,7 @@ public class CellSystem : ComponentSystem
             worley = this.worley,
             cell = cell
         };
-        job.Schedule().Complete();
-
-        commandBuffer.Playback(entityManager);
-        commandBuffer.Dispose();
+        return job.Schedule(previousHandle);
     }
 
     public float GetHeight(float3 position)
