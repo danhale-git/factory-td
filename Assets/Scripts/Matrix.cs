@@ -252,24 +252,6 @@ public struct Matrix<T> where T : struct
 			return false;
 	}
 
-    bool InDistanceFromWorldPosition(float3 inDistanceFromWorld, float3 positionWorld, int offset)
-    {
-        float3 inDistanceFrom = WorldToMatrixPosition(inDistanceFromWorld);
-        float3 position = WorldToMatrixPosition(positionWorld);
-        return InDistancceFromPosition(inDistanceFrom, position, offset);
-    }
-
-    bool InDistancceFromPosition(float3 inDistanceFrom, float3 position, int offset)
-    {
-        if(	inDistanceFrom.x >= position.x - offset &&
-            inDistanceFrom.z >= position.z - offset &&
-			inDistanceFrom.x <= position.x + offset &&
-            inDistanceFrom.z <= position.z + offset )
-			return true;
-		else
-			return false;
-    }
-
     int WorldPositionToFlatIndex(float3 worldPosition)
     {
         return PositionToIndex(WorldToMatrixPosition(worldPosition));
