@@ -30,10 +30,12 @@ public class DebugSystem : ComponentSystem
 
     public static void Text(string key, string value)
     {
+        if(monoBehaviour == null) return;
         monoBehaviour.debugTextEntries[key] = value;
     }
     public static void Count(string key)
     {
+        if(monoBehaviour == null) return;
         int currenCount = 0;
         monoBehaviour.debugTextCountEntries.TryGetValue(key, out currenCount);
         monoBehaviour.debugTextCountEntries[key] = currenCount + 1;
