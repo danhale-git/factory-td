@@ -2,6 +2,7 @@
 using Unity.Mathematics;
 using Unity.Entities;
 using Unity.Transforms;
+using Unity.Collections;
 
 namespace MapGeneration
 {
@@ -29,8 +30,41 @@ namespace MapGeneration
         void PopulateMatrix()
         {
             WorleyNoise.PointData initialPointData = GetPointData(cell.position);
-            DiscoverPointsRecursively(cell.position, initialPointData);
+
+            NativeQueue<float3> positionsToCheck = new NativeQueue<float3>(Allocator.Temp);
+            NativeQueue<WorleyNoise.PointData> dataToCheck = new NativeQueue<WorleyNoise.PointData>(Allocator.Temp);
+
+            positionsToCheck.Enqueue(cell.position);
+            dataToCheck.Enqueue(initialPointData);
+            matrix.AddItem(initialPointData, cell.position);
+
+            while(positionsToCheck.Count > 0)
+            {
+                float3 position = positionsToCheck.Dequeue();
+                WorleyNoise.PointData data = dataToCheck.Dequeue();
+
+                bool currentInCell = data.currentCellValue == cell.value;
+
+                for(int x = -1; x <= 1; x++)
+                    for(int z = -1; z <= 1; z++)
+                    {
+                        float3 adjacentPosition = new float3(x, 0, z) + position;
+                        WorleyNoise.PointData adjacentData = GetPointData(adjacentPosition);
+
+                        bool adjacentInCell = adjacentData.currentCellValue == cell.value;
+                        if(matrix.ItemIsSet(adjacentPosition) || (!currentInCell && !adjacentInCell)) continue;
+
+                        positionsToCheck.Enqueue(adjacentPosition);
+                        dataToCheck.Enqueue(adjacentData);
+                        matrix.AddItem(adjacentData, adjacentPosition);
+                    }
+
+            }
+
+            positionsToCheck.Dispose();
+            dataToCheck.Dispose();
         }
+
 
         void AddBufferFromMatrix()
         {
@@ -54,7 +88,7 @@ namespace MapGeneration
             commandBuffer.SetComponent(cellEntity, new Translation{ Value = pos });
         }
 
-        void DiscoverPointsRecursively(float3 position, WorleyNoise.PointData data)
+        /*void DiscoverPointsRecursively(float3 position, WorleyNoise.PointData data)
         {
             DebugSystem.Count("Discovery recursion");
 
@@ -65,8 +99,6 @@ namespace MapGeneration
             for(int x = -1; x <= 1; x++)
                 for(int z = -1; z <= 1; z++)
                 {
-                    if(x + z == 0) continue;
-
                     float3 adjacent = new float3(x, 0, z) + position;
 
                     WorleyNoise.PointData adjacentData = GetPointData(adjacent);
@@ -75,9 +107,10 @@ namespace MapGeneration
 
                     if(matrix.ItemIsSet(adjacent) || (!currentInCell && !adjacentInCell)) continue;
 
+
                     DiscoverPointsRecursively(adjacent, adjacentData);
                 }
-        }
+        } */
 
         WorleyNoise.PointData GetPointData(float3 position)
         {
