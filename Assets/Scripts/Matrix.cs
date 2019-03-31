@@ -160,7 +160,7 @@ public struct Matrix<T> where T : struct
         }
 
         rootPositionChange -= 3;
-        widthChange += 3;
+        widthChange += 6;
 
         int newWidth = width;
         if(widthChange.x+widthChange.z > 0)
@@ -228,7 +228,7 @@ public struct Matrix<T> where T : struct
 
         width = newWidth;
 
-        if(!job) Dispose();
+        if(!job)   Dispose();
 
         matrix = newMatrix;
         isSet = newIsSet;
