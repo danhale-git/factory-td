@@ -56,6 +56,8 @@ namespace MapGeneration
 
         void DiscoverPointsRecursively(float3 position, WorleyNoise.PointData data)
         {
+            DebugSystem.Count("Discovery recursion");
+
             matrix.AddItem(data, position);
 
             bool currentInCell = data.currentCellValue == cell.value;

@@ -11,6 +11,13 @@ public class DebugSystem : ComponentSystem
     static List<float3> cubePositions = new List<float3>();
     static List<float4> cubeColors = new List<float4>();
 
+    static DebugMonoBehaviour monoBehaviour;
+
+    protected override void OnCreateManager()
+    {
+        monoBehaviour = GameObject.FindObjectOfType<DebugMonoBehaviour>();
+    }
+
     protected override void OnUpdate()
     {
         for(int i = 0; i < cubePositions.Count; i++)
@@ -21,7 +28,18 @@ public class DebugSystem : ComponentSystem
         cubeColors.Clear();
     }
 
-    public static void AddCube(float3 position, float4 color)
+    public static void Text(string key, string value)
+    {
+        monoBehaviour.debugTextEntries[key] = value;
+    }
+    public static void Count(string key)
+    {
+        int currenCount = 0;
+        monoBehaviour.debugTextCountEntries.TryGetValue(key, out currenCount);
+        monoBehaviour.debugTextCountEntries[key] = currenCount + 1;
+    }
+
+    public static void Cube(float3 position, float4 color)
     {
         cubePositions.Add(position);
         cubeColors.Add(color);
