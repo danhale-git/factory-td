@@ -14,8 +14,6 @@ public class ApplyMeshDataSystem : ComponentSystem
 {
     EntityManager entityManager;
 
-    int squareWidth;
-
     ComponentGroup applyMeshGroup;
 
 	public static Material material = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/DefaultMaterial.mat");
@@ -23,8 +21,6 @@ public class ApplyMeshDataSystem : ComponentSystem
     protected override void OnCreateManager()
     {
         entityManager = World.Active.GetOrCreateManager<EntityManager>();
-
-        squareWidth = TerrainSettings.mapSquareWidth;
 
         EntityArchetypeQuery applyMeshQuery = new EntityArchetypeQuery{
 			All = new ComponentType[] { typeof(Vertex) },
