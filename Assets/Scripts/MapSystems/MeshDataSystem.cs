@@ -20,7 +20,7 @@ public class MeshDataSystem : ComponentSystem
         entityManager = World.Active.GetOrCreateManager<EntityManager>();
 
         EntityArchetypeQuery meshDataQuery = new EntityArchetypeQuery{
-            All = new ComponentType[] { typeof(WorleyNoise.CellData), typeof(TopologySystem.Topology) },
+            All = new ComponentType[] { typeof(WorleyNoise.CellData), typeof(TopologySystem.Height) },
             None = new ComponentType[] { typeof(CellSystem.CellComplete), typeof(Vertex) }
         };
         meshDataGroup = GetComponentGroup(meshDataQuery);
@@ -42,7 +42,7 @@ public class MeshDataSystem : ComponentSystem
         ArchetypeChunkComponentType<WorleyNoise.CellData> cellType = GetArchetypeChunkComponentType<WorleyNoise.CellData>(true);
 
         ArchetypeChunkBufferType<WorleyNoise.PointData> worleyType = GetArchetypeChunkBufferType<WorleyNoise.PointData>(true);
-        ArchetypeChunkBufferType<TopologySystem.Topology> topologyType = GetArchetypeChunkBufferType<TopologySystem.Topology>(true);
+        ArchetypeChunkBufferType<TopologySystem.Height> topologyType = GetArchetypeChunkBufferType<TopologySystem.Height>(true);
 
         for(int c = 0; c < chunks.Length; c++)
         {
@@ -53,7 +53,7 @@ public class MeshDataSystem : ComponentSystem
             NativeArray<WorleyNoise.CellData> cells = chunk.GetNativeArray(cellType);
 
             BufferAccessor<WorleyNoise.PointData> worleyBuffers = chunk.GetBufferAccessor(worleyType);
-            BufferAccessor<TopologySystem.Topology> TopologyBuffers = chunk.GetBufferAccessor(topologyType);
+            BufferAccessor<TopologySystem.Height> TopologyBuffers = chunk.GetBufferAccessor(topologyType);
 
             for(int e = 0; e < entities.Length; e++)
             {
@@ -64,7 +64,7 @@ public class MeshDataSystem : ComponentSystem
                 WorleyNoise.CellData cell = cells[e];
 
                 DynamicBuffer<WorleyNoise.PointData> worley = worleyBuffers[e];
-                DynamicBuffer<TopologySystem.Topology> topology = TopologyBuffers[e];
+                DynamicBuffer<TopologySystem.Height> topology = TopologyBuffers[e];
 
                 DynamicBuffer<Vertex> vertices = commandBuffer.AddBuffer<Vertex>(entity);
                 DynamicBuffer<VertColor> colors = commandBuffer.AddBuffer<VertColor>(entity);
@@ -90,10 +90,10 @@ public class MeshDataSystem : ComponentSystem
                             continue;
                         }
 
-                        TopologySystem.Topology bottomLeft    = matrix.GetItem<TopologySystem.Topology>(bl, topology, arrayUtil);
-                        TopologySystem.Topology topLeft       = matrix.GetItem<TopologySystem.Topology>(tl, topology, arrayUtil);
-                        TopologySystem.Topology topRight      = matrix.GetItem<TopologySystem.Topology>(tr, topology, arrayUtil);
-                        TopologySystem.Topology bottomRight   = matrix.GetItem<TopologySystem.Topology>(br, topology, arrayUtil);
+                        TopologySystem.Height bottomLeft    = matrix.GetItem<TopologySystem.Height>(bl, topology, arrayUtil);
+                        TopologySystem.Height topLeft       = matrix.GetItem<TopologySystem.Height>(tl, topology, arrayUtil);
+                        TopologySystem.Height topRight      = matrix.GetItem<TopologySystem.Height>(tr, topology, arrayUtil);
+                        TopologySystem.Height bottomRight   = matrix.GetItem<TopologySystem.Height>(br, topology, arrayUtil);
 
                         float3 bottomLeftOffset =   new float3(bl.x, bottomLeft.height,     bl.y);
                         float3 topLeftOffset =      new float3(tl.x, topLeft.height,        tl.y);

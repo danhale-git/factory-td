@@ -17,7 +17,7 @@ public class TopologySystem : ComponentSystem
     
     Biomes biomes;
 
-    public struct Topology : IBufferElementData
+    public struct Height : IBufferElementData
     {
         public float height;
     }
@@ -32,7 +32,7 @@ public class TopologySystem : ComponentSystem
 
         EntityArchetypeQuery topologyQuery = new EntityArchetypeQuery{
             All = new ComponentType[] { typeof(WorleyNoise.CellData), typeof(WorleyNoise.PointData) },
-            None = new ComponentType[] { typeof(CellSystem.CellComplete), typeof(Topology) }
+            None = new ComponentType[] { typeof(CellSystem.CellComplete), typeof(Height) }
         };
         topologyGroup = GetComponentGroup(topologyQuery);
     }
@@ -63,7 +63,7 @@ public class TopologySystem : ComponentSystem
                 Entity entity = entities[e];
                 DynamicBuffer<WorleyNoise.PointData> worley = worleyBuffers[e];
 
-                DynamicBuffer<Topology> topologyBuffer = commandBuffer.AddBuffer<Topology>(entity);
+                DynamicBuffer<Height> topologyBuffer = commandBuffer.AddBuffer<Height>(entity);
                 topologyBuffer.ResizeUninitialized(worley.Length);
 
                 for(int i = 0; i < topologyBuffer.Length; i++)
@@ -78,7 +78,7 @@ public class TopologySystem : ComponentSystem
                     //float height = biomes.GetIndex(worley[i].currentCellValue) * 5;
 
 
-                    topologyBuffer[i] = new Topology{ height = height };
+                    topologyBuffer[i] = new Height{ height = height };
                 }
             }
         }

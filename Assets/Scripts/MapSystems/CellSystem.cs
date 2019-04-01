@@ -160,10 +160,10 @@ public class CellSystem : ComponentSystem
         int2 cellIndex = worley.GetPointData(roundedPosition.x, roundedPosition.z).currentCellIndex;
         Entity cellEntity = cellMatrix.GetItem(cellIndex);
 
-        if(!entityManager.HasComponent<TopologySystem.Topology>(cellEntity))
+        if(!entityManager.HasComponent<TopologySystem.Height>(cellEntity))
             return 0;
 
-        DynamicBuffer<TopologySystem.Topology> heightData = entityManager.GetBuffer<TopologySystem.Topology>(cellEntity);
+        DynamicBuffer<TopologySystem.Height> heightData = entityManager.GetBuffer<TopologySystem.Height>(cellEntity);
         CellMatrix matrix = entityManager.GetComponentData<CellMatrix>(cellEntity);
 
         return matrix.GetItem(roundedPosition, heightData, new ArrayUtil()).height;
