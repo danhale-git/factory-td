@@ -75,6 +75,12 @@ public struct Matrix<T> where T : struct
         return true;
 	}
 
+    public T GetItem(int2 worldPosition)
+    {
+		int index = WorldPositionToFlatIndex(new float3(worldPosition.x, 0, worldPosition.y));
+        return GetItem(index);
+    }
+
     public T GetItem(float3 worldPosition)
     {
         int index = WorldPositionToFlatIndex(worldPosition);

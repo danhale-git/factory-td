@@ -3,22 +3,23 @@ using Unity.Mathematics;
 using Unity.Entities;
 using Unity.Transforms;
 using Unity.Collections;
+using Unity.Burst;
 
 namespace MapGeneration
 {
-    public struct DiscoverCellJob : IJob
+    public struct FloodFillCellJob : IJob
     {
         public EntityCommandBuffer commandBuffer;
 
-        public Entity cellEntity;
-
         public Matrix<WorleyNoise.PointData> matrix;
+
+        public Entity cellEntity;
         public WorleyNoise worley;
         public WorleyNoise.CellData cell;
 
         public void Execute()
         {
-            PopulateMatrix();
+            FloodFillCell();
             
             AddBufferFromMatrix();
 
@@ -27,7 +28,7 @@ namespace MapGeneration
             SetPosition(cellMatrix.root);
         }
 
-        void PopulateMatrix()
+        void FloodFillCell()
         {
             NativeQueue<WorleyNoise.PointData> dataToCheck = new NativeQueue<WorleyNoise.PointData>(Allocator.Temp);
 

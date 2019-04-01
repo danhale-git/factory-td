@@ -85,7 +85,7 @@ public class CellSystem : ComponentSystem
         }
 
         if(!UpdateCurrentCellIndex()) return;
-        else DiscoverSurroundingCells();
+        else GenerateSurroundingCells();
     }
 
     void JobCompleteAndBufferPlayback()
@@ -112,7 +112,7 @@ public class CellSystem : ComponentSystem
         }
     }
 
-    void DiscoverSurroundingCells()
+    void GenerateSurroundingCells()
     {
         EntityCommandBuffer commandBuffer = new EntityCommandBuffer(Allocator.TempJob);
         JobHandle allHandles		= new JobHandle();
@@ -120,13 +120,11 @@ public class CellSystem : ComponentSystem
 
         for(int x = -2; x < 2; x++)
             for(int z = -2; z < 2; z++)
-        //for(int x = 0; x < 1; x++)
-        //    for(int z = 0; z < 1; z++)
             {
                 int2 index = currentCellIndex + new int2(x, z);
                 if(!cellMatrix.ItemIsSet(index))
                 {
-                    JobHandle newHandle = DiscoverCellJob(index, commandBuffer, previousHandle);
+                    JobHandle newHandle = GenerateCellJob(index, commandBuffer, previousHandle);
                     allHandles = JobHandle.CombineDependencies(newHandle, allHandles);
                     previousHandle = newHandle;
                 } 
@@ -136,7 +134,7 @@ public class CellSystem : ComponentSystem
         runningJobHandle = allHandles; 
     }
 
-    JobHandle DiscoverCellJob(int2 index, EntityCommandBuffer commandBuffer, JobHandle previousHandle)
+    JobHandle GenerateCellJob(int2 index, EntityCommandBuffer commandBuffer, JobHandle previousHandle)
     { 
         DebugSystem.Count("Cells");
 
@@ -146,7 +144,7 @@ public class CellSystem : ComponentSystem
 
         cellMatrix.AddItem(cellEntity, cell.index);
 
-        DiscoverCellJob job = new DiscoverCellJob{
+        FloodFillCellJob job = new FloodFillCellJob{
             commandBuffer = commandBuffer,
             cellEntity = cellEntity,
             matrix = new Matrix<WorleyNoise.PointData>(10, Allocator.TempJob, cell.position, job: true),
@@ -160,7 +158,7 @@ public class CellSystem : ComponentSystem
     {
         float3 roundedPosition = math.round(position);
         int2 cellIndex = worley.GetPointData(roundedPosition.x, roundedPosition.z).currentCellIndex;
-        Entity cellEntity = cellMatrix.GetItem(new float3(cellIndex.x, 0, cellIndex.y));
+        Entity cellEntity = cellMatrix.GetItem(cellIndex);
 
         if(!entityManager.HasComponent<TopologySystem.Topology>(cellEntity))
             return 0;
@@ -168,8 +166,6 @@ public class CellSystem : ComponentSystem
         DynamicBuffer<TopologySystem.Topology> heightData = entityManager.GetBuffer<TopologySystem.Topology>(cellEntity);
         CellMatrix matrix = entityManager.GetComponentData<CellMatrix>(cellEntity);
 
-        float height = matrix.GetItem(roundedPosition, heightData, new ArrayUtil()).height;
-
-        return height;
+        return matrix.GetItem(roundedPosition, heightData, new ArrayUtil()).height;
     }
 }
