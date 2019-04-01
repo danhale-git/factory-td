@@ -75,7 +75,6 @@ public class MeshDataSystem : ComponentSystem
                 for(int x = 0; x < matrix.width-1; x++)
                     for(int z = 0; z < matrix.width-1; z++)
                     {
-
                         int2 bl = new int2(x,   z  );
                         int2 tl = new int2(x,   z+1);
                         int2 tr = new int2(x+1, z+1);
@@ -112,6 +111,8 @@ public class MeshDataSystem : ComponentSystem
                         triangles.Add(new Triangle{ triangle = 2 + indexOffset });
                         triangles.Add(new Triangle{ triangle = 3 + indexOffset });
 
+                        //  COLOR
+
                         float4 color;
                         float difference = LargestHeightDifference(bottomLeft.height, topLeft.height, topRight.height, bottomRight.height);
                         
@@ -119,12 +120,19 @@ public class MeshDataSystem : ComponentSystem
 
                         if(math.round(difference) > 1) color = new float4(0.7f, 0.7f, 0.7f, 1);
                         else color = new float4(0.4f, 0.8f, 0f, 1);
-                        //else color = new float4(distance, distance, distance, 1);
+                        
+                        color -= new float4(distance/2, distance/2, distance/2, 1);
+
+                        float3 worldPosition = new float3(x, 0, z) + matrix.root;
+                        if(worldPosition.x == cell.position.x && worldPosition.z == cell.position.z)
+                            color = new float4(1, 0, 0, 1);
 
                         colors.Add(new VertColor{ color = color });
                         colors.Add(new VertColor{ color = color });
                         colors.Add(new VertColor{ color = color });
                         colors.Add(new VertColor{ color = color });
+
+                        //  COLOR
 
                         indexOffset += 4;
                     }
