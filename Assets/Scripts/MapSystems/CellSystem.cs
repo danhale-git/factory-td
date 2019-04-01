@@ -124,7 +124,7 @@ public class CellSystem : ComponentSystem
                 int2 index = currentCellIndex + new int2(x, z);
                 if(!cellMatrix.ItemIsSet(index))
                 {
-                    JobHandle newHandle = GenerateCellJob(index, commandBuffer, previousHandle);
+                    JobHandle newHandle = ScheduleCellJob(index, commandBuffer, previousHandle);
                     allHandles = JobHandle.CombineDependencies(newHandle, allHandles);
                     previousHandle = newHandle;
                 } 
@@ -134,7 +134,7 @@ public class CellSystem : ComponentSystem
         runningJobHandle = allHandles; 
     }
 
-    JobHandle GenerateCellJob(int2 index, EntityCommandBuffer commandBuffer, JobHandle previousHandle)
+    JobHandle ScheduleCellJob(int2 index, EntityCommandBuffer commandBuffer, JobHandle previousHandle)
     { 
         DebugSystem.Count("Cells");
 
@@ -154,7 +154,7 @@ public class CellSystem : ComponentSystem
         return job.Schedule(previousHandle);
     }
 
-    public float GetHeight(float3 position)
+    public float GetHeightAtPosition(float3 position)
     {
         float3 roundedPosition = math.round(position);
         int2 cellIndex = worley.GetPointData(roundedPosition.x, roundedPosition.z).currentCellIndex;

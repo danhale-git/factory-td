@@ -65,7 +65,7 @@ public class PlayerEntitySystem : ComponentSystem
     {   
         float3 playerPosition = player.transform.position;
 
-        float height = cellSystem.GetHeight(playerPosition);
+        float height = cellSystem.GetHeightAtPosition(playerPosition);
 
         float3 newPosition = new float3(playerPosition.x, height, playerPosition.z);
 
