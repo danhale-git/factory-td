@@ -29,42 +29,43 @@ namespace MapGeneration
 
         void PopulateMatrix()
         {
-            WorleyNoise.PointData initialPointData = GetPointData(cell.position);
-
-            NativeQueue<float3> positionsToCheck = new NativeQueue<float3>(Allocator.Temp);
             NativeQueue<WorleyNoise.PointData> dataToCheck = new NativeQueue<WorleyNoise.PointData>(Allocator.Temp);
 
-            positionsToCheck.Enqueue(cell.position);
+            WorleyNoise.PointData initialPointData = GetPointData(cell.position);
             dataToCheck.Enqueue(initialPointData);
-            matrix.AddItem(initialPointData, cell.position);
+            matrix.AddItem(initialPointData, initialPointData.pointWorldPosition);
 
-            while(positionsToCheck.Count > 0)
+            while(dataToCheck.Count > 0)
             {
-                float3 position = positionsToCheck.Dequeue();
                 WorleyNoise.PointData data = dataToCheck.Dequeue();
 
-                bool currentInCell = data.currentCellValue == cell.value;
+                bool currentPositionInCell = data.currentCellValue == cell.value;
 
                 for(int x = -1; x <= 1; x++)
                     for(int z = -1; z <= 1; z++)
                     {
-                        float3 adjacentPosition = new float3(x, 0, z) + position;
+                        float3 adjacentPosition = new float3(x, 0, z) + data.pointWorldPosition;
                         WorleyNoise.PointData adjacentData = GetPointData(adjacentPosition);
 
-                        bool adjacentInCell = adjacentData.currentCellValue == cell.value;
-                        if(matrix.ItemIsSet(adjacentPosition) || (!currentInCell && !adjacentInCell)) continue;
+                        bool adjacentPositionInCell = adjacentData.currentCellValue == cell.value;
+                        if(matrix.ItemIsSet(adjacentPosition) || (!currentPositionInCell && !adjacentPositionInCell)) continue;
 
-                        positionsToCheck.Enqueue(adjacentPosition);
                         dataToCheck.Enqueue(adjacentData);
-                        matrix.AddItem(adjacentData, adjacentPosition);
+                        matrix.AddItem(adjacentData, adjacentData.pointWorldPosition);
                     }
 
             }
 
-            positionsToCheck.Dispose();
             dataToCheck.Dispose();
         }
 
+        WorleyNoise.PointData GetPointData(float3 position)
+        {
+            WorleyNoise.PointData data = worley.GetPointData(position.x, position.z);
+            data.pointWorldPosition = position;
+            data.isSet = 1;
+            return data;
+        }
 
         void AddBufferFromMatrix()
         {
@@ -86,38 +87,6 @@ namespace MapGeneration
         {
             float3 pos = new float3(position.x, 0, position.z);
             commandBuffer.SetComponent(cellEntity, new Translation{ Value = pos });
-        }
-
-        /*void DiscoverPointsRecursively(float3 position, WorleyNoise.PointData data)
-        {
-            DebugSystem.Count("Discovery recursion");
-
-            matrix.AddItem(data, position);
-
-            bool currentInCell = data.currentCellValue == cell.value;
-
-            for(int x = -1; x <= 1; x++)
-                for(int z = -1; z <= 1; z++)
-                {
-                    float3 adjacent = new float3(x, 0, z) + position;
-
-                    WorleyNoise.PointData adjacentData = GetPointData(adjacent);
-
-                    bool adjacentInCell = adjacentData.currentCellValue == cell.value;
-
-                    if(matrix.ItemIsSet(adjacent) || (!currentInCell && !adjacentInCell)) continue;
-
-
-                    DiscoverPointsRecursively(adjacent, adjacentData);
-                }
-        } */
-
-        WorleyNoise.PointData GetPointData(float3 position)
-        {
-            WorleyNoise.PointData data = worley.GetPointData(position.x, position.z);
-            data.pointWorldPosition = position;
-            data.isSet = 1;
-            return data;
         }
     }
 }
