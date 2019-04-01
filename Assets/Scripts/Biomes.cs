@@ -2,7 +2,7 @@
 
 public struct Biomes
 {
-    public int GetIndex(float cellNoise)
+    public int CellGrouping(float cellNoise)
     {
         if(cellNoise < 0.25f)
             return 0;
@@ -11,5 +11,10 @@ public struct Biomes
         else if(cellNoise < 0.75f)    
             return 2;
         else return 3;
+    }
+
+    public float CellHeight(int2 cellIndex, SimplexNoiseGenerator simplex)
+    {
+        return simplex.GetSimplex(cellIndex.x, cellIndex.y);
     }
 }
