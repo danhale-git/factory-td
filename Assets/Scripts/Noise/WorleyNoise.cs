@@ -26,7 +26,7 @@ public struct WorleyNoise
 
 		public float3 pointWorldPosition;
 
-		public float3 currentCellPosition;
+		public float3 currentCellPosition, adjacentCellPosition;
 		public int2 currentCellIndex, adjacentCellIndex;
 		public float currentCellValue, distance2Edge, adjacentCellValue;
 	}
@@ -167,6 +167,7 @@ public struct WorleyNoise
 		float adjacentEdgeDistance = 999999;
 		float adjacentCellValue = 0;
 		int2 adjacentCellIndex = int2.zero;
+		float3 adjacentCellPosition = float3.zero;
 
 		//	Iterate over all adjacent cells
 		for(int i = 0; i < 9; i++)
@@ -184,6 +185,7 @@ public struct WorleyNoise
 					adjacentEdgeDistance = dist2Edge;
 					adjacentCellValue = otherCellValue;
 					adjacentCellIndex = new int2(otherX[i], otherY[i]);
+					adjacentCellPosition = new float3(otherX[i], 0, otherY[i]) / frequency;
 				}
 			}
 		}
@@ -197,6 +199,7 @@ public struct WorleyNoise
 		cell.currentCellPosition = currentCellPosition;
 		cell.currentCellIndex = currentCellIndex;
 		cell.adjacentCellIndex = adjacentCellIndex;
+		cell.adjacentCellPosition = adjacentCellPosition;
 
 		//	Data for use in terrain generation
 		return cell;

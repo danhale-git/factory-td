@@ -66,17 +66,42 @@ public class TopologySystem : ComponentSystem
                 DynamicBuffer<Height> topologyBuffer = commandBuffer.AddBuffer<Height>(entity);
                 topologyBuffer.ResizeUninitialized(worley.Length);
 
+
                 for(int i = 0; i < topologyBuffer.Length; i++)
                 {
                     if(worley[i].isSet == 0) continue;
 
                     float3 position = worley[i].pointWorldPosition;
-                    float noise = simplex.GetSimplex(position.x, position.z);
 
-                    float height = worley[i].currentCellValue * (2*biomes.GetIndex(worley[i].currentCellValue)) + noise;
+                    //float height = worley[i].currentCellValue * (2*biomes.CellGrouping(worley[i].currentCellValue)) + noise;
 
                     //float height = biomes.GetIndex(worley[i].currentCellValue) * 5;
 
+                    WorleyNoise.PointData point = worley[i];
+
+                    int2 slopeDirection = biomes.SlopedSide(point);
+
+                    
+                    float height;
+
+                    SimplexNoiseGenerator biomeSimplex = new SimplexNoiseGenerator(TerrainSettings.seed, 0.2f);
+                    if((point.adjacentCellIndex - point.currentCellIndex).Equals(slopeDirection))
+                    {
+
+                        float currentHeight = biomes.CellHeight(worley[i].currentCellValue);
+                        float adjacentHeight = biomes.CellHeight(worley[i].adjacentCellValue);
+
+                        float halfway = (currentHeight + adjacentHeight) / 2;
+                        float interpolator = math.unlerp(0, 1f, point.distance2Edge);
+
+                        DebugSystem.Text("Distance to edge", point.distance2Edge.ToString());
+
+                        height = math.lerp(halfway, currentHeight, point.distance2Edge);    
+                    }
+                    else
+                    {
+                        height = biomes.CellHeight(worley[i].currentCellValue);
+                    }
 
                     topologyBuffer[i] = new Height{ height = height };
                 }

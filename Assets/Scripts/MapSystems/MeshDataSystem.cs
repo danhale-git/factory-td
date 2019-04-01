@@ -15,9 +15,13 @@ public class MeshDataSystem : ComponentSystem
 
     ComponentGroup meshDataGroup;
 
+    Biomes biomes;
+
     protected override void OnCreateManager()
     {
         entityManager = World.Active.GetOrCreateManager<EntityManager>();
+
+        biomes = new Biomes();
 
         EntityArchetypeQuery meshDataQuery = new EntityArchetypeQuery{
             All = new ComponentType[] { typeof(WorleyNoise.CellData), typeof(TopologySystem.Height) },
@@ -126,6 +130,9 @@ public class MeshDataSystem : ComponentSystem
                         float3 worldPosition = new float3(x, 0, z) + matrix.root;
                         if(worldPosition.x == cell.position.x && worldPosition.z == cell.position.z)
                             color = new float4(1, 0, 0, 1);
+
+                        var point = matrix.GetItem<WorleyNoise.PointData>(bl, worley, arrayUtil);
+                        
 
                         colors.Add(new VertColor{ color = color });
                         colors.Add(new VertColor{ color = color });
