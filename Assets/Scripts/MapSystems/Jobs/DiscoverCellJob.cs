@@ -13,9 +13,9 @@ namespace MapGeneration
 
         public Matrix<WorleyNoise.PointData> matrix;
 
-        public Entity cellEntity;
-        public WorleyNoise worley;
-        public WorleyNoise.CellData cell;
+        [ReadOnly] public Entity cellEntity;
+        [ReadOnly] public WorleyNoise worley;
+        [ReadOnly] public WorleyNoise.CellData cell;
 
         public void Execute()
         {
