@@ -97,28 +97,15 @@ public class TopologySystem : ComponentSystem
 
                     float3 position = worley[i].pointWorldPosition;
 
-                    //float height = worley[i].currentCellValue * (2*biomes.CellGrouping(worley[i].currentCellValue)) + noise;
-
-                    //float height = biomes.GetIndex(worley[i].currentCellValue) * 5;
-
                     WorleyNoise.PointData point = worley[i];
 
                     int2 slopeDirection = biomes.SlopedSide(point);
-
                     
                     float height;
 
-                    SimplexNoiseGenerator biomeSimplex = new SimplexNoiseGenerator(TerrainSettings.seed, 0.2f);
                     if((point.adjacentCellIndex - point.currentCellIndex).Equals(slopeDirection))
                     {
-
-                        float currentHeight = biomes.CellHeight(worley[i].currentCellValue);
-                        float adjacentHeight = biomes.CellHeight(worley[i].adjacentCellValue);
-
-                        float halfway = (currentHeight + adjacentHeight) / 2;
-                        float interpolator = math.unlerp(0, 0.35f, point.distance2Edge);
-
-                        height = math.lerp(halfway, currentHeight, math.clamp(interpolator, 0, 1));    
+                        height = SMoothSlope(point);  
                     }
                     else
                     {
@@ -134,5 +121,16 @@ public class TopologySystem : ComponentSystem
         commandBuffer.Dispose();
 
         chunks.Dispose();
+    }
+
+    float SMoothSlope(WorleyNoise.PointData point)
+    {
+        float currentHeight = biomes.CellHeight(point.currentCellValue);
+        float adjacentHeight = biomes.CellHeight(point.adjacentCellValue);
+
+        float halfway = (currentHeight + adjacentHeight) / 2;
+        float interpolator = math.unlerp(0, 0.35f, point.distance2Edge);
+
+        return math.lerp(halfway, currentHeight, math.clamp(interpolator, 0, 1));
     }
 }
