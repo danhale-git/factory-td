@@ -7,15 +7,19 @@ using Unity.Collections;
 
 using Unity.Transforms;
 
+[AlwaysUpdateSystem]//DEBUG
 public class TopologySystem : ComponentSystem
 {
     EntityManager entityManager;
+    PlayerEntitySystem playerSystem;//DEBUG
 
     ComponentGroup topologyGroup;
 
     SimplexNoiseGenerator simplex;
     
     Biomes biomes;
+
+    WorleyNoise debugWorley;//DEBUG
 
     public struct Height : IBufferElementData
     {
@@ -25,6 +29,7 @@ public class TopologySystem : ComponentSystem
     protected override void OnCreateManager()
     {
         entityManager = World.Active.GetOrCreateManager<EntityManager>();
+        playerSystem = World.Active.GetOrCreateManager<PlayerEntitySystem>();//DEBUG
 
         simplex = new SimplexNoiseGenerator(TerrainSettings.seed, 0.1f);
 
@@ -35,11 +40,30 @@ public class TopologySystem : ComponentSystem
             None = new ComponentType[] { typeof(CellSystem.CellComplete), typeof(Height) }
         };
         topologyGroup = GetComponentGroup(topologyQuery);
+
+        debugWorley = new WorleyNoise(//DEBUG
+            TerrainSettings.seed,
+            TerrainSettings.cellFrequency,
+            TerrainSettings.cellEdgeSmoothing,
+            TerrainSettings.cellularJitter,
+            WorleyNoise.DistanceFunction.Euclidean,
+            WorleyNoise.CellularReturnType.Distance2Sub
+        );
     }
 
     protected override void OnUpdate()
     {
         ScheduleTopologyJobs();
+        
+        DebugWorley();//DEBUG
+    }
+
+    void DebugWorley()//DEBUG
+    {
+        float3 playerPosition = math.round(playerSystem.player.transform.position);
+        WorleyNoise.PointData point = debugWorley.GetPointData(playerPosition.x, playerPosition.z);
+        DebugSystem.Text("distance: ", point.distance.ToString());
+        DebugSystem.Text("distance2Edge: ", point.distance2Edge.ToString());
     }
 
     void ScheduleTopologyJobs()
@@ -92,11 +116,9 @@ public class TopologySystem : ComponentSystem
                         float adjacentHeight = biomes.CellHeight(worley[i].adjacentCellValue);
 
                         float halfway = (currentHeight + adjacentHeight) / 2;
-                        float interpolator = math.unlerp(0, 1f, point.distance2Edge);
+                        float interpolator = math.unlerp(0, 0.35f, point.distance2Edge);
 
-                        DebugSystem.Text("Distance to edge", point.distance2Edge.ToString());
-
-                        height = math.lerp(halfway, currentHeight, point.distance2Edge);    
+                        height = math.lerp(halfway, currentHeight, math.clamp(interpolator, 0, 1));    
                     }
                     else
                     {
