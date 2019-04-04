@@ -7,24 +7,12 @@ public struct Biomes
         return (int)math.round(math.lerp(0, 5, cellNoise));
     }
 
-    public float CellHeight(float cellNoise)
+    public float CellHeight(int2 cellIndex, SimplexNoiseGenerator simplex)
     {
-        return CellGrouping(cellNoise) * 2;
+        float simplexNoise = simplex.GetSimplex(cellIndex.x, cellIndex.y);
+        int grouped = (int)math.round(math.lerp(0, TerrainSettings.cellHeightLevelCount, simplexNoise));
+        return grouped * TerrainSettings.cellheightMultiplier;
     }
-
-    /*public bool Slope(int2 a, int2 b, SimplexNoiseGenerator simplex)
-    {
-        int aValue = a.x + a.y;
-        int bValue = b.x + b.y;
-
-        float noise = simplex.GetSimplex(math.min(aValue, bValue), math.max(aValue, bValue));
-
-        DebugSystem.Text("noise", noise.ToString());
-
-        //  Every cell slopes into 2 of it's 9 neighbours
-
-        return noise > 0.5f;
-    } */
 
     public int2 SlopedSide(WorleyNoise.PointData point)
     {

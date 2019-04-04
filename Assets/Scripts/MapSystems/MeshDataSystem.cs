@@ -123,16 +123,16 @@ public class MeshDataSystem : ComponentSystem
                         float distance = matrix.GetItem<WorleyNoise.PointData>(new int2(x, z), worley, arrayUtil).distance2Edge;
 
                         if(math.round(difference) > 1) color = new float4(0.7f, 0.7f, 0.7f, 1);
-                        else color = new float4(0.4f, 0.8f, 0f, 1);
+                        else color = new float4(0.5f, 0.75f, 0.2f, 1);;
                         
-                        color -= new float4(distance/2, distance/2, distance/2, 1);
+                        color -= new float4(distance/2, distance/2, distance/2, 1); 
 
                         float3 worldPosition = new float3(x, 0, z) + matrix.root;
                         if(worldPosition.x == cell.position.x && worldPosition.z == cell.position.z)
                             color = new float4(1, 0, 0, 1);
 
-                        var point = matrix.GetItem<WorleyNoise.PointData>(bl, worley, arrayUtil);
-                        
+                        //float heightColor = bottomLeft.height / TerrainSettings.heightMultiplier;
+                        //color = new float4(heightColor, heightColor,heightColor, 1);
 
                         colors.Add(new VertColor{ color = color });
                         colors.Add(new VertColor{ color = color });

@@ -15,11 +15,13 @@ public struct WorleyNoise
 	DistanceFunction distanceFunction;
 	CellularReturnType cellularReturnType;
 	
-	Biomes biomeIndex;
+	Biomes biomes;
     CELL_2D cell_2D;
 
     int X_PRIME;
 	int Y_PRIME;
+
+	SimplexNoiseGenerator heightSimplex;
 
 	[InternalBufferCapacity(0)]
 	public struct PointData : IBufferElementData, System.IComparable<PointData>
@@ -58,11 +60,13 @@ public struct WorleyNoise
 		this.distanceFunction = distanceFunction;
 		this.cellularReturnType = cellularReturnType;
 
-		biomeIndex = new Biomes();
+		biomes = new Biomes();
 		cell_2D = new CELL_2D();
 
 		X_PRIME = 1619;
 		Y_PRIME = 31337;
+
+		this.heightSimplex = new SimplexNoiseGenerator(TerrainSettings.seed, TerrainSettings.cellHeightNoiseFrequency);
 	}
 
 	public CellData GetCellData(int2 cellIndex)
@@ -189,7 +193,7 @@ public struct WorleyNoise
 
 		//	Current cell
 		float currentCellValue = To01(ValCoord2D(seed, xc0, yc0));
-		int currentBiome = biomeIndex.CellGrouping(currentCellValue);
+		float currentBiome = biomes.CellHeight(currentCellIndex, heightSimplex);
 
 		//	Final closest adjacent cell values
 		float distance2Edge = 999999;
@@ -205,15 +209,15 @@ public struct WorleyNoise
 			float dist2Edge = ApplyDistanceType(distance0, otherDistance[i]);
 			if(dist2Edge < distance2Edge)
 			{
-				float otherCellValue = To01(ValCoord2D(seed, otherX[i], otherY[i]));
-				int otherBiome = biomeIndex.CellGrouping(otherCellValue);
+				int2 otherCellIndex = new int2(otherX[i], otherY[i]);
+				float otherBiome = biomes.CellHeight(otherCellIndex, heightSimplex);
 
 				///	Assign as final value if not current biome
 				if(otherBiome != currentBiome)
 				{
 					distance2Edge = dist2Edge;
-					adjacentCellValue = otherCellValue;
-					adjacentCellIndex = new int2(otherX[i], otherY[i]);
+					adjacentCellValue = To01(ValCoord2D(seed, otherX[i], otherY[i]));
+					adjacentCellIndex = otherCellIndex;
 					adjacentCellPosition = new float3(otherX[i], 0, otherY[i]) / frequency;
 				}
 			}
