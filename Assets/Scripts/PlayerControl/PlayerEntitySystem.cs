@@ -38,11 +38,13 @@ public class PlayerEntitySystem : ComponentSystem
 
     protected override void OnUpdate()
     {
-       MoveCamera();
+        DebugSystem.Text("player position", player.transform.position.ToString());
 
-       MovePlayer();
+        MoveCamera();
 
-       ClampToTerrainHeight();
+        MovePlayer();
+
+        ClampToTerrainHeight();
     }
 
     void MovePlayer()

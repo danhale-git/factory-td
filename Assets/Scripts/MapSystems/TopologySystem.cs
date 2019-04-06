@@ -66,6 +66,8 @@ public class TopologySystem : ComponentSystem
         DebugSystem.Text("distance2Edge", point.distance2Edge.ToString());
         DebugSystem.Text("currentCellIndex", point.currentCellIndex.ToString());
         DebugSystem.Text("adjacentCellIndex", point.adjacentCellIndex.ToString());
+        DebugSystem.Text("currentCellValue", point.currentCellValue.ToString());
+        DebugSystem.Text("adjacentCellValue", point.adjacentCellValue.ToString());
         DebugSystem.Text("slope", biomes.SlopedSide(point).ToString());
     }
 
@@ -103,10 +105,11 @@ public class TopologySystem : ComponentSystem
                     WorleyNoise.PointData point = worley[i];
 
                     int2 slopeDirection = biomes.SlopedSide(point);
+                    int2 adjacentDirection = point.adjacentCellIndex - point.currentCellIndex;
                     
                     float height;
 
-                    if((point.adjacentCellIndex - point.currentCellIndex).Equals(slopeDirection))
+                    if(adjacentDirection.Equals(slopeDirection))
                     {
                         height = SmoothSlope(point);  
                     }
