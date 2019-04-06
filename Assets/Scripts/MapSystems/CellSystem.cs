@@ -131,8 +131,8 @@ public class CellSystem : ComponentSystem
 
     void GenerateSurroundingCells()
     {
-        EntityCommandBuffer commandBuffer = new EntityCommandBuffer(Allocator.TempJob);
-        JobHandle allHandles		= new JobHandle();
+        runningCommandBuffer = new EntityCommandBuffer(Allocator.TempJob);
+        runningJobHandle = new JobHandle();
 		JobHandle previousHandle	= new JobHandle();
 
         for(int x = -2; x < 2; x++)
@@ -154,9 +154,7 @@ public class CellSystem : ComponentSystem
                         FloodFill(cellsToCheck, cellIndex);
 
                         Entity cellEntity = CreateCellEntity(cellIndex);
-                        JobHandle newHandle = ScheduleCellJob(cellEntity, commandBuffer, previousHandle);
-
-                        allHandles = JobHandle.CombineDependencies(newHandle, allHandles);
+                        JobHandle newHandle = ScheduleCellJob(cellEntity, runningCommandBuffer, previousHandle);
                         previousHandle = newHandle;
                     }
 
@@ -166,9 +164,6 @@ public class CellSystem : ComponentSystem
                     cellsToCheck.Dispose();
                 }
             } 
-
-        runningCommandBuffer = commandBuffer;
-        runningJobHandle = allHandles; 
     }
 
     Entity CreateCellEntity(int2 index)
@@ -190,7 +185,11 @@ public class CellSystem : ComponentSystem
             worley = this.worley,
             cell = cell
         };
-        return job.Schedule(previousHandle);
+        
+        JobHandle newHandle = job.Schedule(previousHandle);
+        runningJobHandle = JobHandle.CombineDependencies(newHandle, runningJobHandle);
+
+        return newHandle;
     }
 
     void FloodFill(NativeQueue<int2> toCreate, int2 center)
