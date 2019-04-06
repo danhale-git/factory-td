@@ -42,12 +42,11 @@ public struct Biomes
             default:
                 throw new System.IndexOutOfRangeException();
         }
-
     }
     public int ReverseSide(int side)
     {
         int reversed = side + 4;
-        if(reversed > 7) reversed -= 7;
+        if(reversed > 7) reversed -= 8;
 
         return reversed;
     }
