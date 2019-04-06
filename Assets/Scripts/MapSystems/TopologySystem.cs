@@ -16,6 +16,7 @@ public class TopologySystem : ComponentSystem
     ComponentGroup topologyGroup;
 
     SimplexNoiseGenerator heightSimplex;
+    SimplexNoiseGenerator groupSimplex;
     
     Biomes biomes;
 
@@ -31,7 +32,8 @@ public class TopologySystem : ComponentSystem
         entityManager = World.Active.GetOrCreateManager<EntityManager>();
         playerSystem = World.Active.GetOrCreateManager<PlayerEntitySystem>();//DEBUG
 
-        heightSimplex = new SimplexNoiseGenerator(TerrainSettings.seed, TerrainSettings.cellHeightNoiseFrequency);
+        heightSimplex = TerrainSettings.HeightSimplex();
+        groupSimplex = TerrainSettings.GroupSimplex();
 
         biomes = new Biomes();
 

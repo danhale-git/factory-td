@@ -2,9 +2,12 @@
 
 public struct Biomes
 {
-    public int CellGrouping(float cellNoise)
+    public float CellGrouping(int2 cellIndex, SimplexNoiseGenerator groupSimplex, SimplexNoiseGenerator heightSimplex)
     {
-        return (int)math.round(math.lerp(0, 5, cellNoise));
+        float groupSimplexNoise = groupSimplex.GetSimplex(cellIndex.x, cellIndex.y);
+        int grouped = (int)math.round(math.lerp(0, TerrainSettings.cellGroupCount, groupSimplexNoise));
+
+        return CellHeight(cellIndex, heightSimplex) * grouped;
     }
 
     public float CellHeight(int2 cellIndex, SimplexNoiseGenerator simplex)

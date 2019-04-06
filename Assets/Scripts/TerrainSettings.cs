@@ -19,8 +19,10 @@ public static class TerrainSettings
 	public const float cellularJitter = 0.3f;
 
     public const float cellheightMultiplier = 3f;
-	public const float cellHeightNoiseFrequency = 0.8f;	
+	public const float cellHeightNoiseFrequency = 0.7f;	
 	public const int cellHeightLevelCount = 4;
+	public const float cellGroupNoiseFrequency = 0.5f;	
+	public const int cellGroupCount = 4;
 
 	public const WorleyNoise.DistanceFunction cellDistanceFunction = WorleyNoise.DistanceFunction.Manhatten;
 	public const WorleyNoise.CellularReturnType cellReturnType = WorleyNoise.CellularReturnType.Distance2Sub;
@@ -33,5 +35,14 @@ public static class TerrainSettings
 	{
 		if(noise > 0.5f) return 1;
 		return 0;
+	}
+
+	public static SimplexNoiseGenerator HeightSimplex()
+	{
+		return new SimplexNoiseGenerator(TerrainSettings.seed, TerrainSettings.cellHeightNoiseFrequency);
+	}
+	public static SimplexNoiseGenerator GroupSimplex()
+	{
+		return new SimplexNoiseGenerator(TerrainSettings.seed / 2, TerrainSettings.cellGroupNoiseFrequency);
 	}
 }
