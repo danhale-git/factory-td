@@ -62,8 +62,11 @@ public class TopologySystem : ComponentSystem
     {
         float3 playerPosition = math.round(playerSystem.player.transform.position);
         WorleyNoise.PointData point = debugWorley.GetPointData(playerPosition.x, playerPosition.z);
-        DebugSystem.Text("distance: ", point.distance.ToString());
-        DebugSystem.Text("distance2Edge: ", point.distance2Edge.ToString());
+        DebugSystem.Text("distance", point.distance.ToString());
+        DebugSystem.Text("distance2Edge", point.distance2Edge.ToString());
+        DebugSystem.Text("currentCellIndex", point.currentCellIndex.ToString());
+        DebugSystem.Text("adjacentCellIndex", point.adjacentCellIndex.ToString());
+        DebugSystem.Text("slope", biomes.SlopedSide(point).ToString());
     }
 
     void ScheduleTopologyJobs()
