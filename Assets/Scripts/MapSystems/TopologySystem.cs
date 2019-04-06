@@ -70,7 +70,7 @@ public class TopologySystem : ComponentSystem
         DebugSystem.Text("adjacentCellIndex", point.adjacentCellIndex.ToString());
         DebugSystem.Text("currentCellValue", point.currentCellValue.ToString());
         DebugSystem.Text("adjacentCellValue", point.adjacentCellValue.ToString());
-        DebugSystem.Text("slope", biomes.SlopedSide(point).ToString());
+        DebugSystem.Text("group", biomes.CellGrouping(point.currentCellIndex, groupSimplex, heightSimplex).ToString());
     }
 
     void ScheduleTopologyJobs()

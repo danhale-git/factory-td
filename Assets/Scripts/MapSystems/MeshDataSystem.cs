@@ -17,11 +17,17 @@ public class MeshDataSystem : ComponentSystem
 
     Biomes biomes;
 
+    SimplexNoiseGenerator groupSimplex;
+    SimplexNoiseGenerator heightSimplex;
+
     protected override void OnCreateManager()
     {
         entityManager = World.Active.GetOrCreateManager<EntityManager>();
 
         biomes = new Biomes();
+
+        groupSimplex = TerrainSettings.GroupSimplex();
+        heightSimplex = TerrainSettings.HeightSimplex();
 
         EntityArchetypeQuery meshDataQuery = new EntityArchetypeQuery{
             All = new ComponentType[] { typeof(WorleyNoise.CellData), typeof(TopologySystem.Height) },
@@ -133,6 +139,8 @@ public class MeshDataSystem : ComponentSystem
 
                         //float heightColor = bottomLeft.height / TerrainSettings.heightMultiplier;
                         //color = new float4(heightColor, heightColor,heightColor, 1);
+
+                        //color = biomes.CellGrouping(cell.index, groupSimplex, heightSimplex)/5;
 
                         colors.Add(new VertColor{ color = color });
                         colors.Add(new VertColor{ color = color });
