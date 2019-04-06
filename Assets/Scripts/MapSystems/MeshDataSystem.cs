@@ -30,7 +30,7 @@ public class MeshDataSystem : ComponentSystem
         heightSimplex = TerrainSettings.HeightSimplex();
 
         EntityArchetypeQuery meshDataQuery = new EntityArchetypeQuery{
-            All = new ComponentType[] { typeof(WorleyNoise.CellData), typeof(TopologySystem.Height) },
+            All = new ComponentType[] { typeof(TopologySystem.Height) },
             None = new ComponentType[] { typeof(CellSystem.CellComplete), typeof(Vertex) }
         };
         meshDataGroup = GetComponentGroup(meshDataQuery);
@@ -49,7 +49,6 @@ public class MeshDataSystem : ComponentSystem
 
         ArchetypeChunkEntityType entityType = GetArchetypeChunkEntityType();
         ArchetypeChunkComponentType<CellSystem.CellMatrix> matrixType = GetArchetypeChunkComponentType<CellSystem.CellMatrix>(true);
-        ArchetypeChunkComponentType<WorleyNoise.CellData> cellType = GetArchetypeChunkComponentType<WorleyNoise.CellData>(true);
 
         ArchetypeChunkBufferType<WorleyNoise.PointData> worleyType = GetArchetypeChunkBufferType<WorleyNoise.PointData>(true);
         ArchetypeChunkBufferType<TopologySystem.Height> topologyType = GetArchetypeChunkBufferType<TopologySystem.Height>(true);
@@ -60,7 +59,6 @@ public class MeshDataSystem : ComponentSystem
 
             NativeArray<Entity> entities = chunk.GetNativeArray(entityType);
             NativeArray<CellSystem.CellMatrix> matrices = chunk.GetNativeArray(matrixType);
-            NativeArray<WorleyNoise.CellData> cells = chunk.GetNativeArray(cellType);
 
             BufferAccessor<WorleyNoise.PointData> worleyBuffers = chunk.GetBufferAccessor(worleyType);
             BufferAccessor<TopologySystem.Height> TopologyBuffers = chunk.GetBufferAccessor(topologyType);
@@ -71,7 +69,6 @@ public class MeshDataSystem : ComponentSystem
 
                 Entity entity = entities[e];
                 CellSystem.CellMatrix matrix = matrices[e];
-                WorleyNoise.CellData cell = cells[e];
 
                 DynamicBuffer<WorleyNoise.PointData> worley = worleyBuffers[e];
                 DynamicBuffer<TopologySystem.Height> topology = TopologyBuffers[e];
@@ -79,6 +76,8 @@ public class MeshDataSystem : ComponentSystem
                 DynamicBuffer<Vertex> vertices = commandBuffer.AddBuffer<Vertex>(entity);
                 DynamicBuffer<VertColor> colors = commandBuffer.AddBuffer<VertColor>(entity);
                 DynamicBuffer<Triangle> triangles = commandBuffer.AddBuffer<Triangle>(entity);
+
+                Debug.Log(vertices.Length);
 
                 int indexOffset = 0;
 
@@ -135,8 +134,8 @@ public class MeshDataSystem : ComponentSystem
                         color -= new float4(distance/2, distance/2, distance/2, 1); 
 
                         float3 worldPosition = new float3(x, 0, z) + matrix.root;
-                        if(worldPosition.x == cell.position.x && worldPosition.z == cell.position.z)
-                            color = new float4(1, 0, 0, 1);
+                        //if(worldPosition.x == cell.position.x && worldPosition.z == cell.position.z)
+                        //    color = new float4(1, 0, 0, 1);
 
                         //float heightColor = bottomLeft.height / TerrainSettings.heightMultiplier;
                         //color = new float4(heightColor, heightColor,heightColor, 1);

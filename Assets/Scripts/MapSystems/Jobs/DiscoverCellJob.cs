@@ -15,8 +15,12 @@ namespace MapGeneration
 
         [ReadOnly] public Entity cellEntity;
         [ReadOnly] public WorleyNoise worley;
-        [ReadOnly] public WorleyNoise.CellData cell;
+        [ReadOnly] public WorleyNoise.CellData startCell;
         [ReadOnly] public Biomes biomes;
+        [ReadOnly] public float group;
+
+        [ReadOnly] public SimplexNoiseGenerator heightSimplex;
+        [ReadOnly] public SimplexNoiseGenerator groupSimplex;
 
         public void Execute()
         {
@@ -33,7 +37,7 @@ namespace MapGeneration
         {
             NativeQueue<WorleyNoise.PointData> dataToCheck = new NativeQueue<WorleyNoise.PointData>(Allocator.Temp);
 
-            WorleyNoise.PointData initialPointData = GetPointData(cell.position);
+            WorleyNoise.PointData initialPointData = GetPointData(startCell.position);
             dataToCheck.Enqueue(initialPointData);
             matrix.AddItem(initialPointData, initialPointData.pointWorldPosition);
 
@@ -41,7 +45,7 @@ namespace MapGeneration
             {
                 WorleyNoise.PointData data = dataToCheck.Dequeue();
 
-                bool currentPositionInCell = data.currentCellValue == cell.value;
+                bool currentPositionInCell = PositionInGroup(data.currentCellIndex, int2.zero);
 
                 for(int x = -1; x <= 1; x++)
                     for(int z = -1; z <= 1; z++)
@@ -49,7 +53,7 @@ namespace MapGeneration
                         float3 adjacentPosition = new float3(x, 0, z) + data.pointWorldPosition;
                         WorleyNoise.PointData adjacentData = GetPointData(adjacentPosition);
 
-                        bool adjacentPositionInCell = adjacentData.currentCellValue == cell.value;
+                        bool adjacentPositionInCell = PositionInGroup(adjacentData.currentCellIndex, data.currentCellIndex);
                         if(matrix.ItemIsSet(adjacentPosition) || (!currentPositionInCell && !adjacentPositionInCell)) continue;
 
                         dataToCheck.Enqueue(adjacentData);
@@ -59,6 +63,15 @@ namespace MapGeneration
             }
 
             dataToCheck.Dispose();
+        }
+
+        bool PositionInGroup(int2 otherIndex, int2 offset)
+        {
+            if(!(offset.x == 0 || offset.y == 0)) return false;
+
+            float otherGroup = biomes.CellGrouping(otherIndex, groupSimplex, heightSimplex);
+
+            return otherGroup == group;
         }
 
         WorleyNoise.PointData GetPointData(float3 position)

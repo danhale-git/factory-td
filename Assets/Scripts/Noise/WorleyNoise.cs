@@ -45,6 +45,8 @@ public struct WorleyNoise
 		public int CompareTo(CellData other)
 		{ return value.CompareTo(other.value); }
 
+		public int groupIndex;
+
 		public float value;
 		public int2 index;
 		public float3 position;

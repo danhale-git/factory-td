@@ -22,7 +22,7 @@ public class CellSystem : ComponentSystem
     SimplexNoiseGenerator groupSimplex;
 
     EntityArchetype cellArchetype;
-    Matrix<Entity> cellMatrix;
+    Matrix<WorleyNoise.CellData> cellMatrix;
 
     int2 currentCellIndex;
     int2 previousCellIndex;
@@ -36,8 +36,6 @@ public class CellSystem : ComponentSystem
     ArrayUtil arrayUtil;
 
     public struct CellComplete : IComponentData { }
-
-    public struct Group : IComponentData { public float Value; }
 
     public struct CellMatrix : IComponentData
     {
@@ -62,7 +60,7 @@ public class CellSystem : ComponentSystem
         entityManager = World.Active.GetOrCreateManager<EntityManager>();
         playerSystem = World.Active.GetOrCreateManager<PlayerEntitySystem>();
 
-        cellMatrix = new Matrix<Entity>(5, Allocator.Persistent, float3.zero);
+        cellMatrix = new Matrix<WorleyNoise.CellData>(5, Allocator.Persistent, float3.zero);
         cellArchetype = entityManager.CreateArchetype(
             ComponentType.ReadWrite<LocalToWorld>(),
             ComponentType.ReadWrite<Translation>(),
@@ -148,16 +146,22 @@ public class CellSystem : ComponentSystem
                         int2 cellIndex = floodFillQueue.Dequeue();
                         if(cellMatrix.ItemIsSet(cellIndex)) continue;
     
-                        cellsInGroup.Add(worley.GetCellData(cellIndex));
+                        WorleyNoise.CellData cell = worley.GetCellData(cellIndex);
+                        cellsInGroup.Add(cell);
 
-                        Entity cellEntity = CreateCellEntity(cellIndex);
-                        JobHandle newHandle = ScheduleCellJob(cellEntity, previousHandle);
-                        previousHandle = newHandle;
+                        cellMatrix.AddItem(cell, cellIndex);
 
                         EnqueueAdjacentInGroup(cellIndex);
                     }
 
-                    SetCellGroup(cellsInGroup);
+                    NativeArray<WorleyNoise.CellData> sortedGroup = new NativeArray<WorleyNoise.CellData>(cellsInGroup, Allocator.Temp);
+                    sortedGroup.Sort();
+
+                    JobHandle newHandle = ScheduleCellJob(entityManager.CreateEntity(cellArchetype), sortedGroup[0].value, sortedGroup[0], previousHandle);
+                    previousHandle = newHandle;
+
+
+                    sortedGroup.Dispose();
 
                     cellsInGroup.Dispose();
                     floodFillQueue.Dispose();
@@ -165,24 +169,17 @@ public class CellSystem : ComponentSystem
             } 
     }
 
-    Entity CreateCellEntity(int2 index)
-    {
-        Entity cellEntity = entityManager.CreateEntity(cellArchetype);
-        entityManager.AddComponentData<WorleyNoise.CellData>(cellEntity, worley.GetCellData(index));
-        return cellEntity;
-    }
-
-    JobHandle ScheduleCellJob(Entity cellEntity, JobHandle previousHandle)
+    JobHandle ScheduleCellJob(Entity cellEntity, float group, WorleyNoise.CellData startCell, JobHandle previousHandle)
     { 
-        WorleyNoise.CellData cell = entityManager.GetComponentData<WorleyNoise.CellData>(cellEntity);
-        cellMatrix.AddItem(cellEntity, cell.index);
-
         FloodFillCellJob job = new FloodFillCellJob{
             commandBuffer = runningCommandBuffer,
             cellEntity = cellEntity,
-            matrix = new Matrix<WorleyNoise.PointData>(10, Allocator.TempJob, cell.position, job: true),
+            matrix = new Matrix<WorleyNoise.PointData>(10, Allocator.TempJob, startCell.position, job: true),
             worley = this.worley,
-            cell = cell
+            startCell = startCell,
+            group = biomes.CellGrouping(startCell.index, groupSimplex, heightSimplex),
+            heightSimplex = heightSimplex,
+            groupSimplex = groupSimplex
         };
 
         JobHandle newHandle = job.Schedule(previousHandle);
@@ -213,24 +210,10 @@ public class CellSystem : ComponentSystem
         return index.Equals(int2.zero) || !(index.x == 0 || index.y == 0);
     }
 
-    void SetCellGroup(NativeList<WorleyNoise.CellData> group)
-    {
-        NativeArray<WorleyNoise.CellData> sortedGroup = new NativeArray<WorleyNoise.CellData>(group, Allocator.Temp);
-        sortedGroup.Sort();
-
-        float masterValue = sortedGroup[0].value;
-        for(int i = 0; i < sortedGroup.Length; i++)
-        {
-            Entity entity = cellMatrix.GetItem(sortedGroup[i].index);
-            entityManager.AddComponentData(entity, new Group { Value = masterValue } );
-        }
-
-        sortedGroup.Dispose();
-    }
-
     public float GetHeightAtPosition(float3 position)
     {
-        float3 roundedPosition = math.round(position);
+        return 0;
+        /*float3 roundedPosition = math.round(position);
         int2 cellIndex = worley.GetPointData(roundedPosition.x, roundedPosition.z).currentCellIndex;
         Entity cellEntity = cellMatrix.GetItem(cellIndex);
 
@@ -240,6 +223,6 @@ public class CellSystem : ComponentSystem
         DynamicBuffer<TopologySystem.Height> heightData = entityManager.GetBuffer<TopologySystem.Height>(cellEntity);
         CellMatrix matrix = entityManager.GetComponentData<CellMatrix>(cellEntity);
 
-        return matrix.GetItem(roundedPosition, heightData, new ArrayUtil()).height;
+        return matrix.GetItem(roundedPosition, heightData, new ArrayUtil()).height; */
     }
 }
