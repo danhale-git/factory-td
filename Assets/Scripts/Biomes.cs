@@ -17,11 +17,21 @@ public struct Biomes
         return grouped * TerrainSettings.cellheightMultiplier;
     }
 
+    public bool EdgeIsSloped(int2 edge, float currentCellValue, float adjacentCellValue)
+    {
+        return SlopedSide(currentCellValue, adjacentCellValue).Equals(edge);
+    }
+
     public int2 SlopedSide(WorleyNoise.PointData point)
     {
-        int side = (int)math.round(math.lerp(0, 7, point.currentCellValue * point.adjacentCellValue));
+        return SlopedSide(point.currentCellValue, point.adjacentCellValue);
+    }
 
-        if(point.currentCellValue > point.adjacentCellValue)
+    int2 SlopedSide(float currentCellValue, float adjacentCellValue)
+    {
+        int side = (int)math.round( math.lerp(0, 7, (currentCellValue + adjacentCellValue)/2) );
+
+        if(currentCellValue > adjacentCellValue)
             side = ReverseSide(side);
 
         switch(side)
