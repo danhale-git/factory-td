@@ -17,6 +17,7 @@ public class CellSystem : ComponentSystem
     PlayerEntitySystem playerSystem;
 
     WorleyNoise worley;
+    Biomes biomes;
 
     EntityArchetype cellArchetype;
     Matrix<Entity> cellMatrix;
@@ -26,6 +27,9 @@ public class CellSystem : ComponentSystem
 
     JobHandle runningJobHandle;
 	EntityCommandBuffer runningCommandBuffer;
+
+    SimplexNoiseGenerator heightSimplex;
+    SimplexNoiseGenerator groupSimplex;
 
     public struct CellComplete : IComponentData { }
 
@@ -54,6 +58,9 @@ public class CellSystem : ComponentSystem
 
         cellMatrix = new Matrix<Entity>(5, Allocator.Persistent, float3.zero);
 
+        heightSimplex = TerrainSettings.HeightSimplex();
+        groupSimplex = TerrainSettings.GroupSimplex();
+
         worley = new WorleyNoise(
             TerrainSettings.seed,
             TerrainSettings.cellFrequency,
@@ -62,6 +69,8 @@ public class CellSystem : ComponentSystem
             TerrainSettings.cellDistanceFunction,
             TerrainSettings.cellReturnType
         );
+
+        biomes = new Biomes();
 
         cellArchetype = entityManager.CreateArchetype(
             ComponentType.ReadWrite<LocalToWorld>(),
@@ -120,21 +129,37 @@ public class CellSystem : ComponentSystem
         JobHandle allHandles		= new JobHandle();
 		JobHandle previousHandle	= new JobHandle();
 
+        NativeQueue<int2> toCreate = new NativeQueue<int2>(Allocator.Temp);
+
         for(int x = -2; x < 2; x++)
             for(int z = -2; z < 2; z++)
             {
                 int2 index = currentCellIndex + new int2(x, z);
                 if(!cellMatrix.ItemIsSet(index))
                 {
-                    JobHandle newHandle = ScheduleCellJob(index, commandBuffer, previousHandle);
-                    allHandles = JobHandle.CombineDependencies(newHandle, allHandles);
-                    previousHandle = newHandle;
-                } 
+                    toCreate.Enqueue(index);
+
+                    while(toCreate.Count > 0)
+                    {
+                        int2 check = toCreate.Dequeue();
+                        if(cellMatrix.ItemIsSet(check)) continue;
+
+                        JobHandle newHandle = ScheduleCellJob(check, commandBuffer, previousHandle);
+                        allHandles = JobHandle.CombineDependencies(newHandle, allHandles);
+                        previousHandle = newHandle;
+
+                        CheckAdjacent(toCreate, check);
+                    } 
+                }
             } 
+
+
+        
 
         runningCommandBuffer = commandBuffer;
         runningJobHandle = allHandles; 
     }
+    
 
     JobHandle ScheduleCellJob(int2 index, EntityCommandBuffer commandBuffer, JobHandle previousHandle)
     { 
@@ -154,6 +179,25 @@ public class CellSystem : ComponentSystem
             cell = cell
         };
         return job.Schedule(previousHandle);
+    }
+
+    void CheckAdjacent(NativeQueue<int2> toCreate, int2 center)
+    {
+        float centerGrouping = biomes.CellGrouping(center, groupSimplex, heightSimplex);
+        
+        for(int x = -1; x <= 1; x++)
+            for(int z = -1; z <= 1; z++)
+            {
+                int2 baseIndex = new int2(x, z);
+                if(baseIndex.Equals(int2.zero)) continue;
+                if(!(x == 0 || z == 0)) continue;
+
+                int2 adjacent = center + baseIndex;
+
+                float adjacentGrouping = biomes.CellGrouping(adjacent, groupSimplex, heightSimplex);
+
+                if(adjacentGrouping == centerGrouping) toCreate.Enqueue(adjacent);
+            }
     }
 
     public float GetHeightAtPosition(float3 position)
