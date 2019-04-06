@@ -53,19 +53,4 @@ public struct Biomes
 
         return reversed;
     }
-
-    
-    /*public float InterpolateBetweenCells(WorleyNoise.PointData point)
-    {
-        float maxDistance = DistanceBetweenPositions(point.currentCellPosition, point.adjacentCellPosition);
-        float pointDistance = DistanceBetweenPositions(point.currentCellPosition, point.pointWorldPosition);
-
-        return math.unlerp(0, maxDistance, pointDistance);
-    }
-
-    float DistanceBetweenPositions(float3 a, float3 b)
-    {
-        float3 d = math.abs(a - b);
-        return math.sqrt(d.x*d.x + d.y*d.y + d.z*d.z);
-    } */
 }
