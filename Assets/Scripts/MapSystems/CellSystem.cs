@@ -31,7 +31,11 @@ public class CellSystem : ComponentSystem
     SimplexNoiseGenerator heightSimplex;
     SimplexNoiseGenerator groupSimplex;
 
+    ArrayUtil arrayUtil;
+
     public struct CellComplete : IComponentData { }
+
+    public struct Group : IComponentData { public float Value; }
 
     public struct CellMatrix : IComponentData
     {
@@ -60,6 +64,8 @@ public class CellSystem : ComponentSystem
 
         heightSimplex = TerrainSettings.HeightSimplex();
         groupSimplex = TerrainSettings.GroupSimplex();
+
+        arrayUtil = new ArrayUtil();
 
         worley = new WorleyNoise(
             TerrainSettings.seed,
@@ -129,37 +135,49 @@ public class CellSystem : ComponentSystem
         JobHandle allHandles		= new JobHandle();
 		JobHandle previousHandle	= new JobHandle();
 
-        NativeQueue<int2> toCreate = new NativeQueue<int2>(Allocator.Temp);
-
         for(int x = -2; x < 2; x++)
             for(int z = -2; z < 2; z++)
             {
                 int2 index = currentCellIndex + new int2(x, z);
                 if(!cellMatrix.ItemIsSet(index))
                 {
-                    toCreate.Enqueue(index);
+                    NativeQueue<int2> toCreate = new NativeQueue<int2>(Allocator.Temp);
+                    NativeList<WorleyNoise.CellData> group = new NativeList<WorleyNoise.CellData>(Allocator.Temp);
 
+                    toCreate.Enqueue(index);
                     while(toCreate.Count > 0)
                     {
-                        int2 check = toCreate.Dequeue();
-                        if(cellMatrix.ItemIsSet(check)) continue;
+                        int2 cellIndex = toCreate.Dequeue();
+                        if(cellMatrix.ItemIsSet(cellIndex)) continue;
+    
+                        group.Add(worley.GetCellData(cellIndex));
 
-                        JobHandle newHandle = ScheduleCellJob(check, commandBuffer, previousHandle);
+                        JobHandle newHandle = ScheduleCellJob(cellIndex, commandBuffer, previousHandle);
                         allHandles = JobHandle.CombineDependencies(newHandle, allHandles);
                         previousHandle = newHandle;
 
-                        CheckAdjacent(toCreate, check);
-                    } 
+                        CheckAdjacent(toCreate, cellIndex);
+                    }
+
+                    NativeArray<WorleyNoise.CellData> sortedGroup = new NativeArray<WorleyNoise.CellData>(group, Allocator.Temp);
+                    sortedGroup.Sort();
+
+                    float masterValue = sortedGroup[0].value;
+                    for(int i = 0; i < sortedGroup.Length; i++)
+                    {
+                        Entity entity = cellMatrix.GetItem(sortedGroup[i].index);
+                        entityManager.AddComponentData(entity, new Group { Value = masterValue } );
+                    }
+
+                    group.Dispose();
+                    sortedGroup.Dispose();
+                    toCreate.Dispose();
                 }
             } 
-
-
-        
 
         runningCommandBuffer = commandBuffer;
         runningJobHandle = allHandles; 
     }
-    
 
     JobHandle ScheduleCellJob(int2 index, EntityCommandBuffer commandBuffer, JobHandle previousHandle)
     { 
