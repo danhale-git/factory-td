@@ -59,8 +59,8 @@ public class CellSystem : ComponentSystem
             TerrainSettings.cellFrequency,
             TerrainSettings.cellEdgeSmoothing,
             TerrainSettings.cellularJitter,
-            WorleyNoise.DistanceFunction.Euclidean,
-            WorleyNoise.CellularReturnType.Distance2Sub
+            TerrainSettings.cellDistanceFunction,
+            TerrainSettings.cellReturnType
         );
 
         cellArchetype = entityManager.CreateArchetype(

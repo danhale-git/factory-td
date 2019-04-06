@@ -15,12 +15,15 @@ public static class TerrainSettings
 	public const int seed = 5678;
 
 	public const float cellFrequency = 0.04f;
-	//public const float cellEdgeSmoothing = 10.0f;
-	public const float cellEdgeSmoothing = 3;
+	public const float cellEdgeSmoothing = 0;
 	public const float cellularJitter = 0.3f;
+
     public const float cellheightMultiplier = 3f;
-	public const float cellHeightNoiseFrequency = 0.075f;	
-	public const int cellHeightLevelCount = 15;
+	public const float cellHeightNoiseFrequency = 0.8f;	
+	public const int cellHeightLevelCount = 4;
+
+	public const WorleyNoise.DistanceFunction cellDistanceFunction = WorleyNoise.DistanceFunction.Manhatten;
+	public const WorleyNoise.CellularReturnType cellReturnType = WorleyNoise.CellularReturnType.Distance2Sub;
 
 	public const int levelHeight = 5;
     public const float cliffDepth = 0.05f;

@@ -46,8 +46,8 @@ public class TopologySystem : ComponentSystem
             TerrainSettings.cellFrequency,
             TerrainSettings.cellEdgeSmoothing,
             TerrainSettings.cellularJitter,
-            WorleyNoise.DistanceFunction.Euclidean,
-            WorleyNoise.CellularReturnType.Distance2Sub
+            TerrainSettings.cellDistanceFunction,
+            TerrainSettings.cellReturnType
         );
     }
 
@@ -107,15 +107,14 @@ public class TopologySystem : ComponentSystem
                     int2 slopeDirection = biomes.SlopedSide(point);
                     int2 adjacentDirection = point.adjacentCellIndex - point.currentCellIndex;
                     
-                    float height;
+                    float height = biomes.CellHeight(worley[i].currentCellIndex, heightSimplex);;
 
                     if(adjacentDirection.Equals(slopeDirection))
                     {
-                        height = SmoothSlope(point);  
-                    }
-                    else
-                    {
-                        height = biomes.CellHeight(worley[i].currentCellIndex, heightSimplex);
+                        float currentHeight = biomes.CellHeight(point.currentCellIndex, heightSimplex);
+                        float adjacentHeight = biomes.CellHeight(point.adjacentCellIndex, heightSimplex);
+                        if(currentHeight != adjacentHeight)
+                            height = SmoothSlope(point);  
                     }
 
                     topologyBuffer[i] = new Height{ height = height };
