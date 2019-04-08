@@ -48,7 +48,7 @@ public class MeshDataSystem : ComponentSystem
         NativeArray<ArchetypeChunk> chunks = meshDataGroup.CreateArchetypeChunkArray(Allocator.TempJob);
 
         ArchetypeChunkEntityType entityType = GetArchetypeChunkEntityType();
-        ArchetypeChunkComponentType<CellSystem.CellMatrix> matrixType = GetArchetypeChunkComponentType<CellSystem.CellMatrix>(true);
+        ArchetypeChunkComponentType<CellSystem.MatrixComponent> matrixType = GetArchetypeChunkComponentType<CellSystem.MatrixComponent>(true);
         ArchetypeChunkComponentType<WorleyNoise.CellData> cellType = GetArchetypeChunkComponentType<WorleyNoise.CellData>(true);
 
         ArchetypeChunkBufferType<WorleyNoise.PointData> worleyType = GetArchetypeChunkBufferType<WorleyNoise.PointData>(true);
@@ -59,7 +59,7 @@ public class MeshDataSystem : ComponentSystem
             ArchetypeChunk chunk = chunks[c];
 
             NativeArray<Entity> entities = chunk.GetNativeArray(entityType);
-            NativeArray<CellSystem.CellMatrix> matrices = chunk.GetNativeArray(matrixType);
+            NativeArray<CellSystem.MatrixComponent> matrices = chunk.GetNativeArray(matrixType);
             NativeArray<WorleyNoise.CellData> cells = chunk.GetNativeArray(cellType);
 
             BufferAccessor<WorleyNoise.PointData> worleyBuffers = chunk.GetBufferAccessor(worleyType);
@@ -70,7 +70,7 @@ public class MeshDataSystem : ComponentSystem
                 ArrayUtil arrayUtil = new ArrayUtil();
 
                 Entity entity = entities[e];
-                CellSystem.CellMatrix matrix = matrices[e];
+                CellSystem.MatrixComponent matrix = matrices[e];
                 WorleyNoise.CellData cell = cells[e];
 
                 DynamicBuffer<WorleyNoise.PointData> worley = worleyBuffers[e];

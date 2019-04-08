@@ -38,7 +38,7 @@ public class CellSystem : ComponentSystem
 
     public struct CellComplete : IComponentData { }
 
-    public struct CellMatrix : IComponentData
+    public struct MatrixComponent : IComponentData
     {
         public float3 root;
         public int width;
@@ -282,7 +282,7 @@ public class CellSystem : ComponentSystem
             return 0;
 
         DynamicBuffer<TopologySystem.Height> heightData = entityManager.GetBuffer<TopologySystem.Height>(cellEntity);
-        CellMatrix matrix = entityManager.GetComponentData<CellMatrix>(cellEntity);
+        MatrixComponent matrix = entityManager.GetComponentData<MatrixComponent>(cellEntity);
 
         return matrix.GetItem(roundedPosition, heightData, new ArrayUtil()).height;
     }
