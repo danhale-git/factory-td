@@ -37,8 +37,6 @@ public class CellSystem : ComponentSystem
 
     public struct CellComplete : IComponentData { }
 
-    public struct Group : IComponentData { public float Value; }
-
     public struct CellMatrix : IComponentData
     {
         public float3 root;
@@ -157,8 +155,6 @@ public class CellSystem : ComponentSystem
                         EnqueueAdjacentInGroup(cellIndex);
                     }
 
-                    SetCellGroup(cellsInGroup);
-
                     cellsInGroup.Dispose();
                     floodFillQueue.Dispose();
                 }
@@ -211,21 +207,6 @@ public class CellSystem : ComponentSystem
     bool CornerOrCenter(int2 index)
     {
         return index.Equals(int2.zero) || !(index.x == 0 || index.y == 0);
-    }
-
-    void SetCellGroup(NativeList<WorleyNoise.CellData> group)
-    {
-        NativeArray<WorleyNoise.CellData> sortedGroup = new NativeArray<WorleyNoise.CellData>(group, Allocator.Temp);
-        sortedGroup.Sort();
-
-        float masterValue = sortedGroup[0].value;
-        for(int i = 0; i < sortedGroup.Length; i++)
-        {
-            Entity entity = cellMatrix.GetItem(sortedGroup[i].index);
-            entityManager.AddComponentData(entity, new Group { Value = masterValue } );
-        }
-
-        sortedGroup.Dispose();
     }
 
     public float GetHeightAtPosition(float3 position)
