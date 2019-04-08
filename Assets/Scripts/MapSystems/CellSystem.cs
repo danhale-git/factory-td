@@ -69,7 +69,7 @@ public class CellSystem : ComponentSystem
         cellArchetype = entityManager.CreateArchetype(
             ComponentType.ReadWrite<LocalToWorld>(),
             ComponentType.ReadWrite<Translation>(),
-            ComponentType.ReadWrite<RenderMeshProxy>()
+            ComponentType.ReadWrite<RenderMeshProxy>()//,
 
             //ComponentType.ReadWrite<Type>()
         );
@@ -147,58 +147,9 @@ public class CellSystem : ComponentSystem
 
                 NativeList<WorleyNoise.CellData> group = FloodFillCellGroup(cellIndex);
 
-                /*if(!GroupIsConnected(group))
-                    for(int i = 0; i < group.Length; i++)
-                        entityManager.SetComponentData(cellMatrix.GetItem(group[i].index), new Type { Value = CellType.UNPATHABLE }); */
-
                 group.Dispose();
             }
     }
-
-    /*bool GroupIsConnected(NativeList<WorleyNoise.CellData> group)
-    {
-        for(int i = 0; i < group.Length; i++)
-        {
-            int debug = group[i].index.Equals(new int2(-3,4)) ? 1 : 0;
-
-            WorleyNoise.CellData data = group[i];
-            Entity cellEntity = cellMatrix.GetItem(data.index);
-
-            float grouping = biomes.CellGrouping(data.index, groupSimplex, heightSimplex);
-            float height = biomes.CellHeight(data.index, heightSimplex);
-
-            for(int x = -1; x <= 1; x++)
-                for(int z = -1; z <= 1; z++)
-                {
-                    int2 direction = new int2(x, z);
-                    if(direction.Equals(int2.zero)) continue;
-
-                    int2 adjacentIndex = data.index + direction;
-
-                    if(debug > 0)Debug.Log(direction);
-
-                    WorleyNoise.CellData adjacentData = worley.GetCellData(adjacentIndex);
-
-                    float adjacentGrouping = biomes.CellGrouping(adjacentIndex, groupSimplex, heightSimplex);
-                    if(adjacentGrouping == grouping && !CornerOrCenter(direction))
-                    {
-                        if(debug > 0)Debug.Log("same group");
-                        continue;
-                    }
-
-                    float adjacentHeight = biomes.CellHeight(adjacentIndex, heightSimplex);
-                    bool sameHeight = height == adjacentHeight;
-
-                    bool edgeSloped = biomes.EdgeIsSloped(direction, data.value, adjacentData.value, debug);
-
-                    if(debug > 0)Debug.Log(sameHeight+" || "+edgeSloped);
-
-                    if(sameHeight || edgeSloped) return true;
-                }
-        }
-
-        return false;
-    } */
 
     NativeList<WorleyNoise.CellData> FloodFillCellGroup(int2 startIndex)
     {
