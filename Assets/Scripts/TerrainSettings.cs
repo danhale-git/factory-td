@@ -21,7 +21,7 @@ public static class TerrainSettings
     public const float cellheightMultiplier = 3f;
 	public const float cellHeightNoiseFrequency = 0.6f;	
 	public const int cellHeightLevelCount = 4;
-	public const float cellGroupNoiseFrequency = 0.4f;	
+	public const float cellGroupNoiseFrequency = 0.1f;	
 	public const int cellGroupCount = 4;
 
 	public const WorleyNoise.DistanceFunction cellDistanceFunction = WorleyNoise.DistanceFunction.Manhatten;
