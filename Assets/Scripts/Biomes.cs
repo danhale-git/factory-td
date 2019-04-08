@@ -19,7 +19,7 @@ public struct Biomes
 
     public bool EdgeIsSloped(int2 edge, float currentCellValue, float adjacentCellValue)
     {
-        return SlopedSide(currentCellValue, adjacentCellValue).Equals(edge);
+        return SlopedSide(currentCellValue, adjacentCellValue).Equals(-edge);
     }
 
     public int2 SlopedSide(WorleyNoise.PointData point)
