@@ -129,8 +129,8 @@ public class MeshDataSystem : ComponentSystem
                         float distance = matrix.GetItem<WorleyNoise.PointData>(new int2(x, z), worley, arrayUtil).distance2Edge;
 
                         if(math.round(difference) > 1) color = new float4(0.7f, 0.7f, 0.7f, 1);
-                        //else color = entityManager.GetComponentData<CellSystem.Group>(entity).Value;
-                        else color = new float4(0.2f, 0.8f, 0.1f, 1);
+                        else color = entityManager.GetComponentData<SectorSystem.SectorValue>(entity).Value;
+                        //else color = new float4(0.2f, 0.8f, 0.1f, 1);
                         
                         color -= new float4(distance/2, distance/2, distance/2, 1); 
 
