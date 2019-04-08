@@ -23,6 +23,7 @@ public class CellSystem : ComponentSystem
 
     EntityArchetype cellArchetype;
     Matrix<Entity> cellMatrix;
+    EntityArchetype sectorArchetype;
 
     int2 currentCellIndex;
     int2 previousCellIndex;
@@ -32,7 +33,7 @@ public class CellSystem : ComponentSystem
     JobHandle previousHandle;
 
     NativeQueue<int2> floodFillQueue;
-    NativeList<WorleyNoise.CellData> cellsInGroup;
+    NativeList<SectorSystem.Cell> cellsInGroup;
 
     ArrayUtil arrayUtil;
 
@@ -56,10 +57,6 @@ public class CellSystem : ComponentSystem
         }
     }
 
-    /*public enum CellType { NONE, UNPATHABLE }
-
-    public struct Type : IComponentData { public CellType Value; } */
-
     protected override void OnCreateManager()
     {
         entityManager = World.Active.GetOrCreateManager<EntityManager>();
@@ -71,7 +68,10 @@ public class CellSystem : ComponentSystem
             ComponentType.ReadWrite<Translation>(),
             ComponentType.ReadWrite<RenderMeshProxy>()//,
 
-            //ComponentType.ReadWrite<Type>()
+        );
+
+        sectorArchetype = entityManager.CreateArchetype(
+            ComponentType.ReadWrite<SectorSystem.Cell>()
         );
 
         biomes = new Biomes();
@@ -145,16 +145,16 @@ public class CellSystem : ComponentSystem
                 
                 if(cellMatrix.ItemIsSet(cellIndex)) continue;
 
-                NativeList<WorleyNoise.CellData> group = FloodFillCellGroup(cellIndex);
+                NativeList<SectorSystem.Cell> group = FloodFillCellGroup(cellIndex);
 
-                group.Dispose();
+                CreateSectorEntity(group);
             }
     }
 
-    NativeList<WorleyNoise.CellData> FloodFillCellGroup(int2 startIndex)
+    NativeList<SectorSystem.Cell> FloodFillCellGroup(int2 startIndex)
     {
         floodFillQueue = new NativeQueue<int2>(Allocator.Temp);
-        cellsInGroup = new NativeList<WorleyNoise.CellData>(Allocator.Temp);
+        cellsInGroup = new NativeList<SectorSystem.Cell>(Allocator.Temp);
 
         floodFillQueue.Enqueue(startIndex);
         while(floodFillQueue.Count > 0)
@@ -173,12 +173,24 @@ public class CellSystem : ComponentSystem
         return cellsInGroup;
     }
 
+    void CreateSectorEntity(NativeList<SectorSystem.Cell> group)
+    {
+        Entity sectorEntity = entityManager.CreateEntity(sectorArchetype);
+        entityManager.GetBuffer<SectorSystem.Cell>(sectorEntity).AddRange(group);
+                        
+        group.Dispose();
+    }
+
     Entity CreateCell(int2 cellIndex)
     {
-        cellsInGroup.Add(worley.GetCellData(cellIndex));
-
         Entity cellEntity = entityManager.CreateEntity(cellArchetype);
         entityManager.AddComponentData<WorleyNoise.CellData>(cellEntity, worley.GetCellData(cellIndex));
+
+        cellsInGroup.Add(new SectorSystem.Cell{
+                data = worley.GetCellData(cellIndex),
+                entity = cellEntity
+            }
+        );
 
         return cellEntity;
     }

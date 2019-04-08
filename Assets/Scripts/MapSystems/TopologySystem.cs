@@ -38,7 +38,7 @@ public class TopologySystem : ComponentSystem
         biomes = new Biomes();
 
         EntityArchetypeQuery topologyQuery = new EntityArchetypeQuery{
-            All = new ComponentType[] { typeof(WorleyNoise.CellData), typeof(WorleyNoise.PointData) },
+            All = new ComponentType[] { typeof(WorleyNoise.CellData), typeof(WorleyNoise.PointData), typeof(SectorSystem.SectorValue) },
             None = new ComponentType[] { typeof(CellSystem.CellComplete), typeof(Height) }
         };
         topologyGroup = GetComponentGroup(topologyQuery);
