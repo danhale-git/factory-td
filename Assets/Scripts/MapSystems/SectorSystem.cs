@@ -9,11 +9,11 @@ public class SectorSystem : ComponentSystem
 {
     EntityManager entityManager;
 
-    TopologyUtil topology;
+    TopologyUtil topologyUtil;
 
     ComponentGroup sectorGroup;
 
-    public enum SectorTypes { NONE, UNPATHABLE }
+    public enum SectorTypes { NONE, UNPATHABLE, LAKE }
 
     public struct SectorType : IComponentData
     {
@@ -36,7 +36,7 @@ public class SectorSystem : ComponentSystem
     {
         entityManager = World.Active.GetOrCreateManager<EntityManager>();
 
-        topology = new TopologyUtil();
+        topologyUtil = new TopologyUtil();
 
         EntityArchetypeQuery sectorQuery = new EntityArchetypeQuery{
             All = new ComponentType[] { typeof(Cell) },
@@ -73,6 +73,9 @@ public class SectorSystem : ComponentSystem
 
                 if(!SectorIsPathable(cells))
                     type.Value = SectorTypes.UNPATHABLE;
+                else if(SectorIsLowest(cells[0].data.index) && value > 0.5f)
+                    type.Value = SectorTypes.LAKE;
+
 
                 AddSectorComponentsToCells(value, type, cells, commandBuffer);                
 
@@ -84,6 +87,11 @@ public class SectorSystem : ComponentSystem
         commandBuffer.Dispose();
 
         chunks.Dispose();
+    }
+
+    bool SectorIsLowest(int2 cellIndex)
+    {
+        return topologyUtil.CellHeight(cellIndex) <= TerrainSettings.cellheightMultiplier; 
     }
 
     bool AllEntitiesHaveWorley(DynamicBuffer<Cell> cellBuffer)
@@ -135,21 +143,21 @@ public class SectorSystem : ComponentSystem
 
     bool AdjacentInSameGroup(WorleyNoise.PointData point)
     {
-        float currentCellGroup = topology.CellGrouping(point.currentCellIndex);
-        float adjacentCellGroup = topology.CellGrouping(point.adjacentCellIndex);
+        float currentCellGroup = topologyUtil.CellGrouping(point.currentCellIndex);
+        float adjacentCellGroup = topologyUtil.CellGrouping(point.adjacentCellIndex);
         return currentCellGroup == adjacentCellGroup;
     }
 
     bool AdjacentIsSameHeight(WorleyNoise.PointData point)
     {
-        float currentCellHeight = topology.CellHeight(point.currentCellIndex);
-        float adjacentCellHeight = topology.CellHeight(point.adjacentCellIndex);
+        float currentCellHeight = topologyUtil.CellHeight(point.currentCellIndex);
+        float adjacentCellHeight = topologyUtil.CellHeight(point.adjacentCellIndex);
         return currentCellHeight == adjacentCellHeight;
     }
 
     bool AdjacentEdgeIsSlope(WorleyNoise.PointData point)
     {
         int2 adjacentDirection = point.adjacentCellIndex - point.currentCellIndex;
-        return topology.EdgeIsSloped(adjacentDirection, point);
+        return topologyUtil.EdgeIsSloped(adjacentDirection, point);
     }
 }

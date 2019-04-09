@@ -45,6 +45,7 @@ public class TopologySystem : ComponentSystem
         NativeArray<ArchetypeChunk> chunks = topologyGroup.CreateArchetypeChunkArray(Allocator.TempJob);
 
         ArchetypeChunkEntityType entityType = GetArchetypeChunkEntityType();
+        ArchetypeChunkComponentType<SectorSystem.SectorType> sectorTypeType = GetArchetypeChunkComponentType<SectorSystem.SectorType>(true);
         ArchetypeChunkBufferType<WorleyNoise.PointData> worleyType = GetArchetypeChunkBufferType<WorleyNoise.PointData>(true);
 
         for(int c = 0; c < chunks.Length; c++)
@@ -52,11 +53,13 @@ public class TopologySystem : ComponentSystem
             ArchetypeChunk chunk = chunks[c];
 
             NativeArray<Entity> entities = chunk.GetNativeArray(entityType);
+            NativeArray<SectorSystem.SectorType> sectorTypes = chunk.GetNativeArray(sectorTypeType);
             BufferAccessor<WorleyNoise.PointData> worleyArrays = chunk.GetBufferAccessor(worleyType);
 
             for(int e = 0; e < entities.Length; e++)
             {
                 Entity entity = entities[e];
+                SectorSystem.SectorTypes type = sectorTypes[e].Value;
                 DynamicBuffer<WorleyNoise.PointData> worley = worleyArrays[e];
 
                 DynamicBuffer<Height> topology = commandBuffer.AddBuffer<Height>(entity);
@@ -77,8 +80,12 @@ public class TopologySystem : ComponentSystem
                     else
                         pointHeight.height = topologyUtil.CellHeight(worley[i].currentCellIndex);
 
+                    if(type == SectorSystem.SectorTypes.LAKE && point.distance2Edge > 0.3f)
+                        pointHeight.height -= (point.distance2Edge - 0.3f) * (TerrainSettings.cellheightMultiplier * 3);
+
                     topology[i] = pointHeight;
                 }
+
             }
         }
 
