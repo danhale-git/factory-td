@@ -9,10 +9,21 @@ public class SectorSystem : ComponentSystem
 {
     EntityManager entityManager;
 
-    TopologyUtil biomes;
+    TopologyUtil topology;
+
+    ComponentGroup sectorGroup;
 
     public enum SectorTypes { NONE, UNPATHABLE }
-    public struct SectorType : IComponentData { public SectorTypes Value; }
+
+    public struct SectorType : IComponentData
+    {
+        public SectorTypes Value;
+    }
+
+    public struct SectorNoiseValue : IComponentData
+    {
+        public float Value;
+    }
     
     [InternalBufferCapacity(0)]
     public struct Cell : IBufferElementData
@@ -21,18 +32,11 @@ public class SectorSystem : ComponentSystem
         public Entity entity;
     }
 
-    public struct SectorValue : IComponentData
-    {
-        public float Value;
-    }
-
-    ComponentGroup sectorGroup;
-
     protected override void OnCreateManager()
     {
         entityManager = World.Active.GetOrCreateManager<EntityManager>();
 
-        biomes = new TopologyUtil();
+        topology = new TopologyUtil();
 
         EntityArchetypeQuery sectorQuery = new EntityArchetypeQuery{
             All = new ComponentType[] { typeof(Cell) },
@@ -43,42 +47,36 @@ public class SectorSystem : ComponentSystem
 
     protected override void OnUpdate()
     {
-        CheckWorleyGeneration();
-    }
-
-    void CheckWorleyGeneration()
-    {
         EntityCommandBuffer commandBuffer = new EntityCommandBuffer(Allocator.TempJob);
         NativeArray<ArchetypeChunk> chunks = sectorGroup.CreateArchetypeChunkArray(Allocator.TempJob);
 
         ArchetypeChunkEntityType entityType = GetArchetypeChunkEntityType();
-        ArchetypeChunkBufferType<Cell> cellBufferType = GetArchetypeChunkBufferType<Cell>();
+        ArchetypeChunkBufferType<Cell> cellArrayType = GetArchetypeChunkBufferType<Cell>();
 
         for(int c = 0; c < chunks.Length; c++)
         {
             ArchetypeChunk chunk = chunks[c];
             NativeArray<Entity> entities = chunk.GetNativeArray(entityType);
-            BufferAccessor<Cell> cellBuffers = chunk.GetBufferAccessor(cellBufferType);
+            BufferAccessor<Cell> cellArrays = chunk.GetBufferAccessor(cellArrayType);
 
             for(int e = 0; e < entities.Length; e++)
             {
-                DynamicBuffer<Cell> cellBuffer = cellBuffers[e];
+                Entity sectorEntity = entities[e];
+                DynamicBuffer<Cell> cells = cellArrays[e];
 
-                if(!AllEntitiesHaveWorley(cellBuffer))
-                {
+                if(!AllEntitiesHaveWorley(cells))
                     continue;
-                }
 
-                float value = GetSectorValue(cellBuffer);
+                float value = GetSectorValue(cells);
 
-                SectorType type = new SectorType{ Value = SectorTypes.NONE };
+                SectorType type = new SectorType();
 
-                if(!SectorIsPathable(cellBuffer))
+                if(!SectorIsPathable(cells))
                     type.Value = SectorTypes.UNPATHABLE;
 
-                AddSectorComponents(value, type, cellBuffer, commandBuffer);                
+                AddSectorComponentsToCells(value, type, cells, commandBuffer);                
 
-                commandBuffer.AddComponent(entities[e], type);
+                commandBuffer.AddComponent(sectorEntity, type);
             }
         }
 
@@ -91,10 +89,9 @@ public class SectorSystem : ComponentSystem
     bool AllEntitiesHaveWorley(DynamicBuffer<Cell> cellBuffer)
     {
         for(int i = 0; i < cellBuffer.Length; i++)
-        {
             if( !entityManager.HasComponent(cellBuffer[i].entity, typeof(WorleyNoise.PointData)) )
                 return false;
-        }
+
         return true;
     }
 
@@ -107,11 +104,11 @@ public class SectorSystem : ComponentSystem
         return value / cellBuffer.Length;
     }
 
-    void AddSectorComponents(float value, SectorType type, DynamicBuffer<Cell> cellBuffer, EntityCommandBuffer commandBuffer)
+    void AddSectorComponentsToCells(float value, SectorType type, DynamicBuffer<Cell> cellBuffer, EntityCommandBuffer commandBuffer)
     {
         for(int i = 0; i < cellBuffer.Length; i++)
         {
-            commandBuffer.AddComponent<SectorValue>(cellBuffer[i].entity, new SectorValue{ Value = value });
+            commandBuffer.AddComponent<SectorNoiseValue>(cellBuffer[i].entity, new SectorNoiseValue{ Value = value });
             commandBuffer.AddComponent<SectorType>(cellBuffer[i].entity, type);
         }
     }
@@ -125,22 +122,34 @@ public class SectorSystem : ComponentSystem
             {
                 WorleyNoise.PointData point = points[p];
 
-                float currentCellGroup = biomes.CellGrouping(point.currentCellIndex);
-                float adjacentCellGroup = biomes.CellGrouping(point.adjacentCellIndex);
+                if(point.isSet == 0) continue;
+                if(AdjacentInSameGroup(point)) continue;
 
-                if(currentCellGroup == adjacentCellGroup) continue;
-
-                float currentCellHeight = biomes.CellHeight(point.currentCellIndex);
-                float adjacentCellHeight = biomes.CellHeight(point.adjacentCellIndex);
-
-                if(currentCellHeight == adjacentCellHeight) return true;
-
-                int2 adjacentDirection = point.adjacentCellIndex - point.currentCellIndex;
-
-                if(biomes.EdgeIsSloped(adjacentDirection, point.currentCellValue, point.adjacentCellValue))
-                    return true;
+                if(AdjacentIsSameHeight(point)) return true;
+                if(AdjacentEdgeIsSlope(point)) return true;
+                
             }
         }
         return false;
+    }
+
+    bool AdjacentInSameGroup(WorleyNoise.PointData point)
+    {
+        float currentCellGroup = topology.CellGrouping(point.currentCellIndex);
+        float adjacentCellGroup = topology.CellGrouping(point.adjacentCellIndex);
+        return currentCellGroup == adjacentCellGroup;
+    }
+
+    bool AdjacentIsSameHeight(WorleyNoise.PointData point)
+    {
+        float currentCellHeight = topology.CellHeight(point.currentCellIndex);
+        float adjacentCellHeight = topology.CellHeight(point.adjacentCellIndex);
+        return currentCellHeight == adjacentCellHeight;
+    }
+
+    bool AdjacentEdgeIsSlope(WorleyNoise.PointData point)
+    {
+        int2 adjacentDirection = point.adjacentCellIndex - point.currentCellIndex;
+        return topology.EdgeIsSloped(adjacentDirection, point.currentCellValue, point.adjacentCellValue);
     }
 }
