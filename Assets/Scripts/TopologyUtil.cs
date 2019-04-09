@@ -1,6 +1,6 @@
 ﻿using Unity.Mathematics;
 
-public struct Biomes
+public struct TopologyUtil
 {
     static SimplexNoiseGenerator groupSimplex = TerrainSettings.GroupSimplex();
     static SimplexNoiseGenerator heightSimplex = TerrainSettings.HeightSimplex();

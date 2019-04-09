@@ -15,7 +15,7 @@ public struct WorleyNoise
 	DistanceFunction distanceFunction;
 	CellularReturnType cellularReturnType;
 	
-	Biomes biomes;
+	TopologyUtil biomes;
     CELL_2D cell_2D;
 
     int X_PRIME;
@@ -58,7 +58,7 @@ public struct WorleyNoise
 		this.distanceFunction = distanceFunction;
 		this.cellularReturnType = cellularReturnType;
 
-		biomes = new Biomes();
+		biomes = new TopologyUtil();
 		cell_2D = new CELL_2D();
 
 		X_PRIME = 1619;

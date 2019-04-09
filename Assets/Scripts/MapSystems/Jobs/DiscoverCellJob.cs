@@ -16,7 +16,7 @@ namespace MapGeneration
         [ReadOnly] public Entity cellEntity;
         [ReadOnly] public WorleyNoise worley;
         [ReadOnly] public WorleyNoise.CellData cell;
-        [ReadOnly] public Biomes biomes;
+        [ReadOnly] public TopologyUtil biomes;
 
         public void Execute()
         {

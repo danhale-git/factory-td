@@ -9,7 +9,7 @@ public class SectorSystem : ComponentSystem
 {
     EntityManager entityManager;
 
-    Biomes biomes;
+    TopologyUtil biomes;
 
     public enum SectorTypes { NONE, UNPATHABLE }
     public struct SectorType : IComponentData { public SectorTypes Value; }
@@ -32,7 +32,7 @@ public class SectorSystem : ComponentSystem
     {
         entityManager = World.Active.GetOrCreateManager<EntityManager>();
 
-        biomes = new Biomes();
+        biomes = new TopologyUtil();
 
         EntityArchetypeQuery sectorQuery = new EntityArchetypeQuery{
             All = new ComponentType[] { typeof(Cell) },

@@ -17,7 +17,7 @@ public class CellSystem : ComponentSystem
     PlayerEntitySystem playerSystem;
 
     WorleyNoise worley;
-    Biomes biomes;
+    TopologyUtil biomes;
 
     EntityArchetype cellArchetype;
     Matrix<Entity> cellMatrix;
@@ -72,7 +72,7 @@ public class CellSystem : ComponentSystem
             ComponentType.ReadWrite<SectorSystem.Cell>()
         );
 
-        biomes = new Biomes();
+        biomes = new TopologyUtil();
         worley = new WorleyNoise(
             TerrainSettings.seed,
             TerrainSettings.cellFrequency,

@@ -15,7 +15,7 @@ public class TopologySystem : ComponentSystem
 
     ComponentGroup topologyGroup;
 
-    Biomes biomes;
+    TopologyUtil biomes;
 
     WorleyNoise debugWorley;//DEBUG
 
@@ -29,7 +29,7 @@ public class TopologySystem : ComponentSystem
         entityManager = World.Active.GetOrCreateManager<EntityManager>();
         playerSystem = World.Active.GetOrCreateManager<PlayerEntitySystem>();//DEBUG
 
-        biomes = new Biomes();
+        biomes = new TopologyUtil();
 
         EntityArchetypeQuery topologyQuery = new EntityArchetypeQuery{
             All = new ComponentType[] { typeof(WorleyNoise.CellData), typeof(WorleyNoise.PointData), typeof(SectorSystem.SectorValue) },
