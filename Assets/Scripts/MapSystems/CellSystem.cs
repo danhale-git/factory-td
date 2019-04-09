@@ -18,8 +18,6 @@ public class CellSystem : ComponentSystem
 
     WorleyNoise worley;
     Biomes biomes;
-    SimplexNoiseGenerator heightSimplex;
-    SimplexNoiseGenerator groupSimplex;
 
     EntityArchetype cellArchetype;
     Matrix<Entity> cellMatrix;
@@ -83,8 +81,6 @@ public class CellSystem : ComponentSystem
             TerrainSettings.cellDistanceFunction,
             TerrainSettings.cellReturnType
         );
-        heightSimplex = TerrainSettings.HeightSimplex();
-        groupSimplex = TerrainSettings.GroupSimplex();
         
         arrayUtil = new ArrayUtil();
 
@@ -215,7 +211,7 @@ public class CellSystem : ComponentSystem
 
     void EnqueueAdjacentInGroup(int2 center)
     {
-        float centerGrouping = biomes.CellGrouping(center, groupSimplex, heightSimplex);
+        float centerGrouping = biomes.CellGrouping(center);
         
         for(int x = -1; x <= 1; x++)
             for(int z = -1; z <= 1; z++)
@@ -224,7 +220,7 @@ public class CellSystem : ComponentSystem
                 if(CornerOrCenter(baseIndex)) continue;
 
                 int2 adjacent = center + baseIndex;
-                float adjacentGrouping = biomes.CellGrouping(adjacent, groupSimplex, heightSimplex);
+                float adjacentGrouping = biomes.CellGrouping(adjacent);
 
                 if(adjacentGrouping == centerGrouping) floodFillQueue.Enqueue(adjacent);
             }

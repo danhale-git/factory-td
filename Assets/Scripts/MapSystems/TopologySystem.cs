@@ -15,9 +15,6 @@ public class TopologySystem : ComponentSystem
 
     ComponentGroup topologyGroup;
 
-    SimplexNoiseGenerator heightSimplex;
-    SimplexNoiseGenerator groupSimplex;
-    
     Biomes biomes;
 
     WorleyNoise debugWorley;//DEBUG
@@ -31,9 +28,6 @@ public class TopologySystem : ComponentSystem
     {
         entityManager = World.Active.GetOrCreateManager<EntityManager>();
         playerSystem = World.Active.GetOrCreateManager<PlayerEntitySystem>();//DEBUG
-
-        heightSimplex = TerrainSettings.HeightSimplex();
-        groupSimplex = TerrainSettings.GroupSimplex();
 
         biomes = new Biomes();
 
@@ -70,7 +64,7 @@ public class TopologySystem : ComponentSystem
         DebugSystem.Text("adjacentCellIndex", point.adjacentCellIndex.ToString());
         DebugSystem.Text("currentCellValue", point.currentCellValue.ToString());
         DebugSystem.Text("adjacentCellValue", point.adjacentCellValue.ToString());
-        DebugSystem.Text("group", biomes.CellGrouping(point.currentCellIndex, groupSimplex, heightSimplex).ToString());
+        DebugSystem.Text("group", biomes.CellGrouping(point.currentCellIndex).ToString());
     }
 
     void ScheduleTopologyJobs()
@@ -109,12 +103,12 @@ public class TopologySystem : ComponentSystem
                     int2 slopeDirection = biomes.SlopedSide(point);
                     int2 adjacentDirection = point.adjacentCellIndex - point.currentCellIndex;
                     
-                    float height = biomes.CellHeight(worley[i].currentCellIndex, heightSimplex);;
+                    float height = biomes.CellHeight(worley[i].currentCellIndex);
 
                     if(adjacentDirection.Equals(slopeDirection))
                     {
-                        float currentHeight = biomes.CellHeight(point.currentCellIndex, heightSimplex);
-                        float adjacentHeight = biomes.CellHeight(point.adjacentCellIndex, heightSimplex);
+                        float currentHeight = biomes.CellHeight(point.currentCellIndex);
+                        float adjacentHeight = biomes.CellHeight(point.adjacentCellIndex);
                         if(currentHeight != adjacentHeight)
                             height = SmoothSlope(point);  
                     }
@@ -132,8 +126,8 @@ public class TopologySystem : ComponentSystem
 
     float SmoothSlope(WorleyNoise.PointData point)
     {
-        float currentHeight = biomes.CellHeight(point.currentCellIndex, heightSimplex);
-        float adjacentHeight = biomes.CellHeight(point.adjacentCellIndex, heightSimplex);
+        float currentHeight = biomes.CellHeight(point.currentCellIndex);
+        float adjacentHeight = biomes.CellHeight(point.adjacentCellIndex);
 
         float halfway = (currentHeight + adjacentHeight) / 2;
         float interpolator = math.unlerp(0, 0.35f, point.distance2Edge);

@@ -10,8 +10,6 @@ public class SectorSystem : ComponentSystem
     EntityManager entityManager;
 
     Biomes biomes;
-    SimplexNoiseGenerator heightSimplex;
-    SimplexNoiseGenerator groupSimplex;
 
     public enum SectorTypes { NONE, UNPATHABLE }
     public struct SectorType : IComponentData { public SectorTypes Value; }
@@ -35,8 +33,6 @@ public class SectorSystem : ComponentSystem
         entityManager = World.Active.GetOrCreateManager<EntityManager>();
 
         biomes = new Biomes();
-        heightSimplex = TerrainSettings.HeightSimplex();
-        groupSimplex = TerrainSettings.GroupSimplex();
 
         EntityArchetypeQuery sectorQuery = new EntityArchetypeQuery{
             All = new ComponentType[] { typeof(Cell) },
@@ -129,13 +125,13 @@ public class SectorSystem : ComponentSystem
             {
                 WorleyNoise.PointData point = points[p];
 
-                float currentCellGroup = biomes.CellGrouping(point.currentCellIndex, groupSimplex, heightSimplex);
-                float adjacentCellGroup = biomes.CellGrouping(point.adjacentCellIndex, groupSimplex, heightSimplex);
+                float currentCellGroup = biomes.CellGrouping(point.currentCellIndex);
+                float adjacentCellGroup = biomes.CellGrouping(point.adjacentCellIndex);
 
                 if(currentCellGroup == adjacentCellGroup) continue;
 
-                float currentCellHeight = biomes.CellHeight(point.currentCellIndex, heightSimplex);
-                float adjacentCellHeight = biomes.CellHeight(point.adjacentCellIndex, heightSimplex);
+                float currentCellHeight = biomes.CellHeight(point.currentCellIndex);
+                float adjacentCellHeight = biomes.CellHeight(point.adjacentCellIndex);
 
                 if(currentCellHeight == adjacentCellHeight) return true;
 

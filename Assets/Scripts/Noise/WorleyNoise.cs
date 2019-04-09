@@ -21,9 +21,6 @@ public struct WorleyNoise
     int X_PRIME;
 	int Y_PRIME;
 
-	SimplexNoiseGenerator heightSimplex;
-    SimplexNoiseGenerator groupSimplex;
-
 	[InternalBufferCapacity(0)]
 	public struct PointData : IBufferElementData, System.IComparable<PointData>
 	{
@@ -66,9 +63,6 @@ public struct WorleyNoise
 
 		X_PRIME = 1619;
 		Y_PRIME = 31337;
-
-		this.heightSimplex = TerrainSettings.HeightSimplex();
-        this.groupSimplex = TerrainSettings.GroupSimplex();
 	}
 
 	public CellData GetCellData(int2 cellIndex)
@@ -195,7 +189,7 @@ public struct WorleyNoise
 
 		//	Current cell
 		float currentCellValue = To01(ValCoord2D(seed, xc0, yc0));
-		float currentBiome = biomes.CellGrouping(currentCellIndex, groupSimplex, heightSimplex);
+		float currentBiome = biomes.CellGrouping(currentCellIndex);
 
 		//	Final closest adjacent cell values
 		float distance2Edge = 999999;
@@ -212,7 +206,7 @@ public struct WorleyNoise
 			if(dist2Edge < distance2Edge)
 			{
 				int2 otherCellIndex = new int2(otherX[i], otherY[i]);
-				float otherBiome = biomes.CellGrouping(otherCellIndex, groupSimplex, heightSimplex);
+				float otherBiome = biomes.CellGrouping(otherCellIndex);
 
 				///	Assign as final value if not current biome
 				if(otherBiome != currentBiome)
