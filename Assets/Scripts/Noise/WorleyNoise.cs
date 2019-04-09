@@ -178,7 +178,7 @@ public struct WorleyNoise
 							xc0 = xi;
 							yc0 = yi;
 
-							currentCellPosition = new float3(cellX, 0, cellY) / frequency;
+							currentCellPosition = math.round(new float3(cellX, 0, cellY) / frequency);
 							currentCellIndex = new int2(xi, yi);
 						}
 
@@ -219,7 +219,7 @@ public struct WorleyNoise
 					distance2Edge = dist2Edge;
 					adjacentCellValue = To01(ValCoord2D(seed, otherX[i], otherY[i]));
 					adjacentCellIndex = otherCellIndex;
-					adjacentCellPosition = new float3(otherCellX[i], 0, otherCellY[i]) / frequency;
+					adjacentCellPosition = math.round(new float3(otherCellX[i], 0, otherCellY[i]) / frequency);
 				}
 			}
 		}
