@@ -123,14 +123,16 @@ public class MeshDataSystem : ComponentSystem
 
                         //  COLOR
 
+                        WorleyNoise.PointData worleyPoint = matrix.GetItem<WorleyNoise.PointData>(bl, worley, arrayUtil);
+
                         float4 color;
                         float difference = LargestHeightDifference(bottomLeft.height, topLeft.height, topRight.height, bottomRight.height);
                         
                         float distance = matrix.GetItem<WorleyNoise.PointData>(new int2(x, z), worley, arrayUtil).distance2Edge;
 
                         if(math.round(difference) > 1) color = new float4(0.7f, 0.7f, 0.7f, 1);
-                        else color = entityManager.GetComponentData<SectorSystem.SectorValue>(entity).Value;
-                        //else color = new float4(0.2f, 0.8f, 0.1f, 1);
+                        //else color = (entityManager.GetComponentData<SectorSystem.SectorValue>(entity).Value/2) + 0.5f ;
+                        else color = new float4(0.2f, 0.8f, 0.1f, 1);
                         
                         color -= new float4(distance/2, distance/2, distance/2, 1); 
 
@@ -141,7 +143,12 @@ public class MeshDataSystem : ComponentSystem
                         //float heightColor = bottomLeft.height / TerrainSettings.heightMultiplier;
                         //color = new float4(heightColor, heightColor,heightColor, 1);
 
-                        
+                        /*if(entityManager.GetComponentData<SectorSystem.SectorType>(entity).Value == SectorSystem.SectorTypes.UNPATHABLE)
+                            color = new float4(1,0,0,1);
+
+                        int2 adjacentDirection = worleyPoint.adjacentCellIndex - worleyPoint.currentCellIndex;
+                        if(biomes.EdgeIsSloped(adjacentDirection, worleyPoint.currentCellValue, worleyPoint.adjacentCellValue))
+                            color += new float4(0, 0.5f, 0.5f, 1); */
 
                         colors.Add(new VertColor{ color = color });
                         colors.Add(new VertColor{ color = color });
