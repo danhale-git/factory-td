@@ -69,12 +69,9 @@ public class DebugSystem : ComponentSystem
         if(playerSystem.player == null) return;
         float3 playerPosition = math.round(playerSystem.player.transform.position);
         WorleyNoise.PointData point = debugWorley.GetPointData(playerPosition.x, playerPosition.z);
-        Text("distance", point.distance.ToString());
         Text("distance2Edge", point.distance2Edge.ToString());
-        Text("currentCellIndex", point.currentCellIndex.ToString());
-        Text("adjacentCellIndex", point.adjacentCellIndex.ToString());
-        Text("currentCellValue", point.currentCellValue.ToString());
-        Text("adjacentCellValue", point.adjacentCellValue.ToString());
+        Text("CURRENT", point.currentCellIndex.ToString());
+        Text("ADJACENT", point.adjacentCellIndex.ToString());
         Text("group", topologyUtil.CellGrouping(point.currentCellIndex).ToString());
     }
 

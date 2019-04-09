@@ -188,6 +188,8 @@ public class CellSystem : ComponentSystem
             }
         );
 
+        DebugSystem.Count("Cell height "+biomes.CellHeight(cellIndex));
+
         return cellEntity;
     }
 
