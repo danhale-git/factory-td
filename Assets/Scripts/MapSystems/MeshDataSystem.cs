@@ -17,7 +17,6 @@ public class MeshDataSystem : ComponentSystem
 
     TopologyUtil biomes;
 
-
     protected override void OnCreateManager()
     {
         entityManager = World.Active.GetOrCreateManager<EntityManager>();
@@ -85,24 +84,28 @@ public class MeshDataSystem : ComponentSystem
                         int2 tr = new int2(x+1, z+1);
                         int2 br = new int2(x+1, z  );
 
-                        if( matrix.GetItem<WorleyNoise.PointData>(bl, worley, arrayUtil).isSet == 0 ||
-                            matrix.GetItem<WorleyNoise.PointData>(tl, worley, arrayUtil).isSet == 0 ||
-                            matrix.GetItem<WorleyNoise.PointData>(tr, worley, arrayUtil).isSet == 0 ||
-                            matrix.GetItem<WorleyNoise.PointData>(br, worley, arrayUtil).isSet == 0
-                        )
+                        WorleyNoise.PointData bottomLeftWorley  = matrix.GetItem<WorleyNoise.PointData>(bl, worley, arrayUtil);
+                        WorleyNoise.PointData topLeftWorley     = matrix.GetItem<WorleyNoise.PointData>(tl, worley, arrayUtil);
+                        WorleyNoise.PointData topRightWorley    = matrix.GetItem<WorleyNoise.PointData>(tr, worley, arrayUtil);
+                        WorleyNoise.PointData bottomRightWorley = matrix.GetItem<WorleyNoise.PointData>(br, worley, arrayUtil);
+                        
+                        if( bottomLeftWorley.isSet  == 0 ||
+                            topLeftWorley.isSet     == 0 ||
+                            topRightWorley.isSet    == 0 ||
+                            bottomRightWorley.isSet == 0 )
                         {
                             continue;
                         }
 
-                        TopologySystem.Height bottomLeft    = matrix.GetItem<TopologySystem.Height>(bl, topology, arrayUtil);
-                        TopologySystem.Height topLeft       = matrix.GetItem<TopologySystem.Height>(tl, topology, arrayUtil);
-                        TopologySystem.Height topRight      = matrix.GetItem<TopologySystem.Height>(tr, topology, arrayUtil);
-                        TopologySystem.Height bottomRight   = matrix.GetItem<TopologySystem.Height>(br, topology, arrayUtil);
+                        TopologySystem.Height bottomLeft            = matrix.GetItem<TopologySystem.Height>(bl, topology, arrayUtil);
+                        TopologySystem.Height topLeftTopology       = matrix.GetItem<TopologySystem.Height>(tl, topology, arrayUtil);
+                        TopologySystem.Height topRightTopology      = matrix.GetItem<TopologySystem.Height>(tr, topology, arrayUtil);
+                        TopologySystem.Height bottomRightTopology   = matrix.GetItem<TopologySystem.Height>(br, topology, arrayUtil);
 
-                        float3 bottomLeftOffset =   new float3(bl.x, bottomLeft.height,     bl.y);
-                        float3 topLeftOffset =      new float3(tl.x, topLeft.height,        tl.y);
-                        float3 topRightOffset =     new float3(tr.x, topRight.height,       tr.y);
-                        float3 bottomRightOffset =  new float3(br.x, bottomRight.height,    br.y);
+                        float3 bottomLeftOffset     = new float3(bl.x, bottomLeft.height, bl.y);
+                        float3 topLeftOffset        = new float3(tl.x, topLeftTopology.height, tl.y);
+                        float3 topRightOffset       = new float3(tr.x, topRightTopology.height, tr.y);
+                        float3 bottomRightOffset    = new float3(br.x, bottomRightTopology.height, br.y);
 
                         vertices.Add(new Vertex{ vertex = bottomLeftOffset });
                         vertices.Add(new Vertex{ vertex = topLeftOffset });
@@ -120,30 +123,9 @@ public class MeshDataSystem : ComponentSystem
 
                         WorleyNoise.PointData worleyPoint = matrix.GetItem<WorleyNoise.PointData>(bl, worley, arrayUtil);
 
-                        float4 color;
-                        float difference = LargestHeightDifference(bottomLeft.height, topLeft.height, topRight.height, bottomRight.height);
-                        
-                        float distance = matrix.GetItem<WorleyNoise.PointData>(new int2(x, z), worley, arrayUtil).distance2Edge;
+                        float difference = LargestHeightDifference(bottomLeft.height, topLeftTopology.height, topRightTopology.height, bottomRightTopology.height);
 
-                        if(math.round(difference) > 1) color = new float4(0.7f, 0.7f, 0.7f, 1);
-                        //else color = (entityManager.GetComponentData<SectorSystem.SectorValue>(entity).Value/2) + 0.5f ;
-                        else color = new float4(0.2f, 0.8f, 0.1f, 1);
-                        
-                        color -= new float4(distance/2, distance/2, distance/2, 1); 
-
-                        float3 worldPosition = new float3(x, 0, z) + matrix.root;
-                        if(worldPosition.x == cell.position.x && worldPosition.z == cell.position.z)
-                            color = new float4(1, 0, 0, 1);
-
-                        //float heightColor = bottomLeft.height / TerrainSettings.heightMultiplier;
-                        //color = new float4(heightColor, heightColor,heightColor, 1);
-
-                        if(entityManager.GetComponentData<SectorSystem.SectorType>(entity).Value == SectorSystem.SectorTypes.UNPATHABLE)
-                            color += new float4(0.5f,0,0,1);
-
-                        /*int2 adjacentDirection = worleyPoint.adjacentCellIndex - worleyPoint.currentCellIndex;
-                        if(biomes.EdgeIsSloped(adjacentDirection, worleyPoint.currentCellValue, worleyPoint.adjacentCellValue))
-                            color += new float4(0, 0.5f, 0.5f, 1);  */
+                        float4 color = DebugTerrainColor(worleyPoint, cell, difference, new float3(x, 0, z) + matrix.root, entity);
 
                         colors.Add(new VertColor{ color = color });
                         colors.Add(new VertColor{ color = color });
@@ -168,5 +150,33 @@ public class MeshDataSystem : ComponentSystem
         float largest = math.max(a, math.max(b, math.max(c, d)));
         float smallest = math.min(a, math.min(b, math.min(c, d)));
         return largest - smallest;
+    }
+
+    float4 DebugTerrainColor(WorleyNoise.PointData point, WorleyNoise.CellData cell, float difference, float3 worldPosition, Entity entity)
+    {
+        float4 color;
+        
+        float distance = point.distance2Edge;
+
+        if(math.round(difference) > 1) color = new float4(0.7f, 0.7f, 0.7f, 1);
+        //else color = (entityManager.GetComponentData<SectorSystem.SectorValue>(entity).Value/2) + 0.5f ;
+        else color = new float4(0.2f, 0.8f, 0.1f, 1);
+        
+        color -= new float4(distance/2, distance/2, distance/2, 1); 
+
+        if(worldPosition.x == cell.position.x && worldPosition.z == cell.position.z)
+            color = new float4(1, 0, 0, 1);
+
+        //float heightColor = bottomLeft.height / TerrainSettings.heightMultiplier;
+        //color = new float4(heightColor, heightColor,heightColor, 1);
+
+        if(entityManager.GetComponentData<SectorSystem.SectorType>(entity).Value == SectorSystem.SectorTypes.UNPATHABLE)
+            color += new float4(0.5f,0,0,1);
+
+        /*int2 adjacentDirection = worleyPoint.adjacentCellIndex - worleyPoint.currentCellIndex;
+        if(biomes.EdgeIsSloped(adjacentDirection, worleyPoint.currentCellValue, worleyPoint.adjacentCellValue))
+            color += new float4(0, 0.5f, 0.5f, 1);  */
+
+        return color;
     }
 }
