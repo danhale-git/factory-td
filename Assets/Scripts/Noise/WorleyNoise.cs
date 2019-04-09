@@ -105,6 +105,9 @@ public struct WorleyNoise
 		NineInts otherX = new NineInts();
 		NineInts otherY = new NineInts();
 
+		NineFloats otherCellX = new NineFloats();
+		NineFloats otherCellY = new NineFloats();
+
 		NineFloats otherDistance = new NineFloats();
 		for(int i = 0; i < 9; i++)
 		{
@@ -180,6 +183,8 @@ public struct WorleyNoise
 						}
 
 						//	Store all adjacent cells
+						otherCellX[indexCount] = cellX;
+						otherCellY[indexCount] = cellY;
 						otherX[indexCount] = xi;
 						otherY[indexCount] = yi;
 						otherDistance[indexCount] = newDistance;
@@ -214,7 +219,7 @@ public struct WorleyNoise
 					distance2Edge = dist2Edge;
 					adjacentCellValue = To01(ValCoord2D(seed, otherX[i], otherY[i]));
 					adjacentCellIndex = otherCellIndex;
-					adjacentCellPosition = new float3(otherX[i], 0, otherY[i]) / frequency;
+					adjacentCellPosition = new float3(otherCellX[i], 0, otherCellY[i]) / frequency;
 				}
 			}
 		}
