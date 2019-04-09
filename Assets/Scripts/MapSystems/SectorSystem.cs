@@ -150,6 +150,6 @@ public class SectorSystem : ComponentSystem
     bool AdjacentEdgeIsSlope(WorleyNoise.PointData point)
     {
         int2 adjacentDirection = point.adjacentCellIndex - point.currentCellIndex;
-        return topology.EdgeIsSloped(adjacentDirection, point.currentCellValue, point.adjacentCellValue);
+        return topology.EdgeIsSloped(adjacentDirection, point);
     }
 }

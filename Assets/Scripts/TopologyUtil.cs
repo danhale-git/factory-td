@@ -20,9 +20,9 @@ public struct TopologyUtil
         return grouped * TerrainSettings.cellheightMultiplier;
     }
 
-    public bool EdgeIsSloped(int2 edge, float currentCellValue, float adjacentCellValue)
+    public bool EdgeIsSloped(int2 edge, WorleyNoise.PointData point)
     {
-        int2 slopeSide = SlopedSide(currentCellValue, adjacentCellValue);
+        int2 slopeSide = SlopedSide(point);
         return slopeSide.Equals(edge);
     }
 

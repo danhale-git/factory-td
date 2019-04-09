@@ -45,4 +45,16 @@ public static class TerrainSettings
 	{
 		return new SimplexNoiseGenerator(TerrainSettings.seed / 2, TerrainSettings.cellGroupNoiseFrequency);
 	}
+
+	public static WorleyNoise CellWorley()
+	{
+		return new WorleyNoise(
+            seed,
+            cellFrequency,
+            cellEdgeSmoothing,
+            cellularJitter,
+            cellDistanceFunction,
+            cellReturnType
+        );
+	}
 }

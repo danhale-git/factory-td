@@ -7,17 +7,13 @@ using Unity.Collections;
 
 using Unity.Transforms;
 
-[AlwaysUpdateSystem]//DEBUG
 public class TopologySystem : ComponentSystem
 {
     EntityManager entityManager;
-    PlayerEntitySystem playerSystem;//DEBUG
 
     ComponentGroup topologyGroup;
 
-    TopologyUtil biomes;
-
-    WorleyNoise debugWorley;//DEBUG
+    TopologyUtil topologyUtil;
 
     public struct Height : IBufferElementData
     {
@@ -27,44 +23,19 @@ public class TopologySystem : ComponentSystem
     protected override void OnCreateManager()
     {
         entityManager = World.Active.GetOrCreateManager<EntityManager>();
-        playerSystem = World.Active.GetOrCreateManager<PlayerEntitySystem>();//DEBUG
 
-        biomes = new TopologyUtil();
+        topologyUtil = new TopologyUtil();
 
         EntityArchetypeQuery topologyQuery = new EntityArchetypeQuery{
-            All = new ComponentType[] { typeof(WorleyNoise.CellData), typeof(WorleyNoise.PointData), typeof(SectorSystem.SectorValue) },
+            All = new ComponentType[] { typeof(WorleyNoise.CellData), typeof(WorleyNoise.PointData), typeof(SectorSystem.SectorNoiseValue) },
             None = new ComponentType[] { typeof(CellSystem.CellComplete), typeof(Height) }
         };
         topologyGroup = GetComponentGroup(topologyQuery);
-
-        debugWorley = new WorleyNoise(//DEBUG
-            TerrainSettings.seed,
-            TerrainSettings.cellFrequency,
-            TerrainSettings.cellEdgeSmoothing,
-            TerrainSettings.cellularJitter,
-            TerrainSettings.cellDistanceFunction,
-            TerrainSettings.cellReturnType
-        );
     }
 
     protected override void OnUpdate()
     {
-        ScheduleTopologyJobs();
-        
-        DebugWorley();//DEBUG
-    }
-
-    void DebugWorley()//DEBUG
-    {
-        float3 playerPosition = math.round(playerSystem.player.transform.position);
-        WorleyNoise.PointData point = debugWorley.GetPointData(playerPosition.x, playerPosition.z);
-        DebugSystem.Text("distance", point.distance.ToString());
-        DebugSystem.Text("distance2Edge", point.distance2Edge.ToString());
-        DebugSystem.Text("currentCellIndex", point.currentCellIndex.ToString());
-        DebugSystem.Text("adjacentCellIndex", point.adjacentCellIndex.ToString());
-        DebugSystem.Text("currentCellValue", point.currentCellValue.ToString());
-        DebugSystem.Text("adjacentCellValue", point.adjacentCellValue.ToString());
-        DebugSystem.Text("group", biomes.CellGrouping(point.currentCellIndex).ToString());
+        ScheduleTopologyJobs();        
     }
 
     void ScheduleTopologyJobs()
@@ -81,39 +52,32 @@ public class TopologySystem : ComponentSystem
             ArchetypeChunk chunk = chunks[c];
 
             NativeArray<Entity> entities = chunk.GetNativeArray(entityType);
-            BufferAccessor<WorleyNoise.PointData> worleyBuffers = chunk.GetBufferAccessor(worleyType);
+            BufferAccessor<WorleyNoise.PointData> worleyArrays = chunk.GetBufferAccessor(worleyType);
 
             for(int e = 0; e < entities.Length; e++)
             {
                 Entity entity = entities[e];
-                DynamicBuffer<WorleyNoise.PointData> worley = worleyBuffers[e];
+                DynamicBuffer<WorleyNoise.PointData> worley = worleyArrays[e];
 
-                DynamicBuffer<Height> topologyBuffer = commandBuffer.AddBuffer<Height>(entity);
-                topologyBuffer.ResizeUninitialized(worley.Length);
+                DynamicBuffer<Height> topology = commandBuffer.AddBuffer<Height>(entity);
+                topology.ResizeUninitialized(worley.Length);
 
-
-                for(int i = 0; i < topologyBuffer.Length; i++)
+                for(int i = 0; i < topology.Length; i++)
                 {
                     if(worley[i].isSet == 0) continue;
 
                     float3 position = worley[i].pointWorldPosition;
-
                     WorleyNoise.PointData point = worley[i];
+                    Height pointHeight = new Height();
 
-                    int2 slopeDirection = biomes.SlopedSide(point);
                     int2 adjacentDirection = point.adjacentCellIndex - point.currentCellIndex;
-                    
-                    float height = biomes.CellHeight(worley[i].currentCellIndex);
 
-                    if(adjacentDirection.Equals(slopeDirection))
-                    {
-                        float currentHeight = biomes.CellHeight(point.currentCellIndex);
-                        float adjacentHeight = biomes.CellHeight(point.adjacentCellIndex);
-                        if(currentHeight != adjacentHeight)
-                            height = SmoothSlope(point);  
-                    }
+                    if(topologyUtil.EdgeIsSloped(adjacentDirection, point))
+                        pointHeight.height = SmoothSlope(point);  
+                    else
+                        pointHeight.height = topologyUtil.CellHeight(worley[i].currentCellIndex);
 
-                    topologyBuffer[i] = new Height{ height = height };
+                    topology[i] = pointHeight;
                 }
             }
         }
@@ -126,8 +90,10 @@ public class TopologySystem : ComponentSystem
 
     float SmoothSlope(WorleyNoise.PointData point)
     {
-        float currentHeight = biomes.CellHeight(point.currentCellIndex);
-        float adjacentHeight = biomes.CellHeight(point.adjacentCellIndex);
+        float currentHeight = topologyUtil.CellHeight(point.currentCellIndex);
+        float adjacentHeight = topologyUtil.CellHeight(point.adjacentCellIndex);
+
+        if(currentHeight == adjacentHeight) return currentHeight;
 
         float halfway = (currentHeight + adjacentHeight) / 2;
         float interpolator = math.unlerp(0, 0.35f, point.distance2Edge);

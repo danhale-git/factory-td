@@ -138,12 +138,12 @@ public class MeshDataSystem : ComponentSystem
                         //float heightColor = bottomLeft.height / TerrainSettings.heightMultiplier;
                         //color = new float4(heightColor, heightColor,heightColor, 1);
 
-                        /*if(entityManager.GetComponentData<SectorSystem.SectorType>(entity).Value == SectorSystem.SectorTypes.UNPATHABLE)
-                            color = new float4(1,0,0,1);
+                        if(entityManager.GetComponentData<SectorSystem.SectorType>(entity).Value == SectorSystem.SectorTypes.UNPATHABLE)
+                            color += new float4(0.5f,0,0,1);
 
-                        int2 adjacentDirection = worleyPoint.adjacentCellIndex - worleyPoint.currentCellIndex;
+                        /*int2 adjacentDirection = worleyPoint.adjacentCellIndex - worleyPoint.currentCellIndex;
                         if(biomes.EdgeIsSloped(adjacentDirection, worleyPoint.currentCellValue, worleyPoint.adjacentCellValue))
-                            color += new float4(0, 0.5f, 0.5f, 1); */
+                            color += new float4(0, 0.5f, 0.5f, 1);  */
 
                         colors.Add(new VertColor{ color = color });
                         colors.Add(new VertColor{ color = color });
