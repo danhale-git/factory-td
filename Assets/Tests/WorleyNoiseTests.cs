@@ -70,7 +70,7 @@ namespace Tests
             bool notEqual = (   point.distance2Edge != 999999   &&
                                 point.distance      != 999999   );
 
-            Assert.IsTrue(notEqual, "distance2Edge"+point.distance2Edge+"\ndistance"+point.distance);
+            Assert.IsTrue(notEqual, "distance2Edge: "+point.distance2Edge+"\ndistance: "+point.distance);
         }
 
         [Test]
