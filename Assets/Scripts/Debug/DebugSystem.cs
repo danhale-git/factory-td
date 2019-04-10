@@ -8,6 +8,7 @@ using UnityEngine;
 [AlwaysUpdateSystem]
 public class DebugSystem : ComponentSystem
 {
+    EntityManager entityManager;
     PlayerEntitySystem playerSystem;
     CellSystem cellSystem;
 
@@ -24,9 +25,10 @@ public class DebugSystem : ComponentSystem
 
     protected override void OnCreateManager()
     {
-        monoBehaviour = GameObject.FindObjectOfType<DebugMonoBehaviour>();
+        entityManager = World.Active.GetOrCreateManager<EntityManager>();
         playerSystem = World.Active.GetOrCreateManager<PlayerEntitySystem>();
         cellSystem = World.Active.GetOrCreateManager<CellSystem>();
+        monoBehaviour = GameObject.FindObjectOfType<DebugMonoBehaviour>();
         debugWorley = TerrainSettings.CellWorley();
         topologyUtil = new TopologyUtil();
 
@@ -79,7 +81,10 @@ public class DebugSystem : ComponentSystem
         float3 playerPosition = math.round(playerSystem.player.transform.position);
         WorleyNoise.PointData point = debugWorley.GetPointData(playerPosition.x, playerPosition.z);
         Text("distance2Edge", point.distance2Edge.ToString());
-        Text("group", topologyUtil.CellGrouping(point.currentCellIndex).ToString());
+
+        Entity cellEntity;
+        if(cellSystem.TryGetCell(point.currentCellIndex, out cellEntity) && entityManager.HasComponent<SectorSystem.SectorNoiseValue>(cellEntity))
+            Text("group", topologyUtil.CellGrouping(point.currentCellIndex).ToString()+" "+entityManager.GetComponentData<SectorSystem.SectorNoiseValue>(cellEntity).Value);
 
         worleyCurrentMarker.transform.position = math.round(point.currentCellPosition) + new float3(0.5f, cellSystem.GetHeightAtPosition(point.currentCellPosition)+1, 0.5f);
 

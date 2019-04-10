@@ -247,4 +247,10 @@ public class CellSystem : ComponentSystem
 
         return matrix.GetItem(roundedPosition, heightData, new ArrayUtil()).height;
     }
+
+    public bool TryGetCell(int2 index, out Entity entity)
+    {
+        entity = new Entity();
+        return cellMatrix.TryGetItem(index, out entity);
+    }
 }
