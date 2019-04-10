@@ -11,14 +11,15 @@ namespace Tests
     public class WorleyNoiseTests
     {
         WorleyNoise cellWorley = TerrainSettings.CellWorley();
+        TestUtility testUtil = new TestUtility();
 
         [Test]
         public void Cell_value_greater_than_zero_and_less_than_one()
         {
             for(int i = 0; i < 500; i++)
             {
-                WorleyNoise.CellData cell = RandomCellData();
-                WorleyNoise.PointData point = RandomPointData();
+                WorleyNoise.CellData cell = testUtil.RandomCellData(cellWorley);
+                WorleyNoise.PointData point = testUtil.RandomPointData(cellWorley);
 
                 Assert.Less(cell.value, 1, "Cell less than 1");
                 Assert.Greater(cell.value, 0, "Cell greater than 0");
@@ -30,8 +31,8 @@ namespace Tests
         [Test]
         public void Returns_values_greater_than_zero()
         {
-            WorleyNoise.CellData cell = RandomCellData();
-            WorleyNoise.PointData point = RandomPointData();
+            WorleyNoise.CellData cell = testUtil.RandomCellData(cellWorley);
+            WorleyNoise.PointData point = testUtil.RandomPointData(cellWorley);
 
             float sumOfAllValuesPoint = 0;
             float sumOfAllValuesCell = 0;
@@ -65,7 +66,7 @@ namespace Tests
         [Test]
         public void Distances_do_not_equal_999999()
         {
-            WorleyNoise.PointData point = RandomPointData();
+            WorleyNoise.PointData point = testUtil.RandomPointData(cellWorley);
 
             bool notEqual = (   point.distance2Edge != 999999   &&
                                 point.distance      != 999999   );
@@ -76,7 +77,7 @@ namespace Tests
         [Test]
         public void PointData_matches_CellData()
         {
-            WorleyNoise.PointData randomPoint = RandomPointData();
+            WorleyNoise.PointData randomPoint = testUtil.RandomPointData(cellWorley);
             WorleyNoise.CellData cell = cellWorley.GetCellData(randomPoint.currentCellIndex);
 
             Assert.IsTrue(
@@ -92,23 +93,6 @@ namespace Tests
                 "Value\n"+"PointData: "+randomPoint.currentCellValue+'\n'+"CellData: "+cell.value
             );
         }
-
-        WorleyNoise.PointData RandomPointData()
-        {
-            int x = UnityEngine.Random.Range(-5000, 5000);
-            int z = UnityEngine.Random.Range(-5000, 5000);
-
-            return cellWorley.GetPointData(x, z);
-        }
-
-        WorleyNoise.CellData RandomCellData()
-        {
-            int x = UnityEngine.Random.Range(-500, 500);
-            int z = UnityEngine.Random.Range(-500, 500);
-
-            return cellWorley.GetCellData(new int2(x, z));
-        }
-        
     }
 }
 
