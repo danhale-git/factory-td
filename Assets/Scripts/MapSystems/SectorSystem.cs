@@ -67,17 +67,17 @@ public class SectorSystem : ComponentSystem
                 if(!AllEntitiesHaveWorley(cells))
                     continue;
 
-                float value = GetSectorValue(cells);
+                float noiseValue = GetSectorValue(cells);
 
                 SectorType type = new SectorType();
 
                 if(!SectorIsPathable(cells))
                     type.Value = SectorTypes.UNPATHABLE;
-                else if(SectorIsLowest(cells[0].data.index) && value > 0.5f)
+                else if(SectorIsLowest(cells[0].data.index) && noiseValue > 0.5f)
                     type.Value = SectorTypes.LAKE;
 
 
-                AddSectorComponentsToCells(value, type, cells, commandBuffer);                
+                AddSectorComponentsToCells(noiseValue, type, cells, commandBuffer);                
 
                 commandBuffer.AddComponent(sectorEntity, type);
             }
@@ -129,6 +129,7 @@ public class SectorSystem : ComponentSystem
             for(int p = 0; p < points.Length; p++)
             {
                 WorleyNoise.PointData point = points[p];
+                if(PointIsOutsideCell(point, cellBuffer[i].data)) continue;
 
                 if(point.isSet == 0) continue;
                 if(AdjacentInSameGroup(point)) continue;
@@ -139,6 +140,11 @@ public class SectorSystem : ComponentSystem
             }
         }
         return false;
+    }
+
+    bool PointIsOutsideCell(WorleyNoise.PointData point, WorleyNoise.CellData cell)
+    {
+        return (point.isSet == 0) || !point.currentCellIndex.Equals(cell.index);
     }
 
     bool AdjacentInSameGroup(WorleyNoise.PointData point)
