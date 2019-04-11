@@ -35,8 +35,6 @@ public class CellSystem : ComponentSystem
 
     ArrayUtil arrayUtil;
 
-    public struct CellComplete : IComponentData { }
-
     public struct MatrixComponent : IComponentData
     {
         public float3 root;

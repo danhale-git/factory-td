@@ -25,7 +25,7 @@ public class MeshDataSystem : ComponentSystem
 
         EntityQueryDesc meshDataQuery = new EntityQueryDesc{
             All = new ComponentType[] { typeof(WorleyNoise.CellData), typeof(TopologySystem.Height) },
-            None = new ComponentType[] { typeof(CellSystem.CellComplete), typeof(Vertex) }
+            None = new ComponentType[] { typeof(Unity.Rendering.RenderMesh), typeof(Vertex) }
         };
         meshDataGroup = GetEntityQuery(meshDataQuery);
     }

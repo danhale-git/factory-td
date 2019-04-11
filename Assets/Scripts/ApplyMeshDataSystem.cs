@@ -24,7 +24,7 @@ public class ApplyMeshDataSystem : ComponentSystem
 
         EntityQueryDesc applyMeshQuery = new EntityQueryDesc{
 			All = new ComponentType[] { typeof(Vertex) },
-			None = new ComponentType[] { typeof(CellSystem.CellComplete) }
+			None = new ComponentType[] { typeof(RenderMesh) }
 		};
         applyMeshGroup = GetEntityQuery(applyMeshQuery);
     }
@@ -62,8 +62,6 @@ public class ApplyMeshDataSystem : ComponentSystem
 				commandBuffer.RemoveComponent(entity, typeof(VertColor));
 
 				commandBuffer.RemoveComponent(entity, typeof(WorleyNoise.PointData));
-
-				commandBuffer.AddComponent(entity, new CellSystem.CellComplete());
             }
         }
 
