@@ -15,7 +15,7 @@ public class SectorSystem : ComponentSystem
 
     public enum SectorTypes { NONE, UNPATHABLE, LAKE }
 
-    public struct SectorType : IComponentData
+    public struct TypeComponent : IComponentData
     {
         public SectorTypes Value;
     }
@@ -40,7 +40,7 @@ public class SectorSystem : ComponentSystem
 
         EntityArchetypeQuery sectorQuery = new EntityArchetypeQuery{
             All = new ComponentType[] { typeof(Cell) },
-            None = new ComponentType[] { typeof(SectorType) }
+            None = new ComponentType[] { typeof(TypeComponent) }
         };
         sectorGroup = GetComponentGroup(sectorQuery);
     }
@@ -69,7 +69,7 @@ public class SectorSystem : ComponentSystem
 
                 float noiseValue = GetSectorValue(cells);
 
-                SectorType type = new SectorType();
+                TypeComponent type = new TypeComponent();
 
                 if(!SectorIsPathable(cells))
                     type.Value = SectorTypes.UNPATHABLE;
@@ -112,12 +112,12 @@ public class SectorSystem : ComponentSystem
         return value / cellBuffer.Length;
     }
 
-    void AddSectorComponentsToCells(float value, SectorType type, DynamicBuffer<Cell> cellBuffer, EntityCommandBuffer commandBuffer)
+    void AddSectorComponentsToCells(float value, TypeComponent type, DynamicBuffer<Cell> cellBuffer, EntityCommandBuffer commandBuffer)
     {
         for(int i = 0; i < cellBuffer.Length; i++)
         {
             commandBuffer.AddComponent<SectorNoiseValue>(cellBuffer[i].entity, new SectorNoiseValue{ Value = value });
-            commandBuffer.AddComponent<SectorType>(cellBuffer[i].entity, type);
+            commandBuffer.AddComponent<TypeComponent>(cellBuffer[i].entity, type);
         }
     }
 

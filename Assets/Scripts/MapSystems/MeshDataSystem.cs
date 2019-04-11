@@ -184,7 +184,7 @@ public class MeshDataSystem : ComponentSystem
         //float heightColor = bottomLeft.height / TerrainSettings.heightMultiplier;
         //color = new float4(heightColor, heightColor,heightColor, 1);
 
-        if(entityManager.GetComponentData<SectorSystem.SectorType>(entity).Value == SectorSystem.SectorTypes.UNPATHABLE)
+        if(entityManager.GetComponentData<SectorSystem.TypeComponent>(entity).Value == SectorSystem.SectorTypes.UNPATHABLE)
             color += new float4(0.5f,0,0,1);
 
         /*int2 adjacentDirection = worleyPoint.adjacentCellIndex - worleyPoint.currentCellIndex;
