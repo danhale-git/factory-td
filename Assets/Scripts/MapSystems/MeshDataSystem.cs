@@ -17,9 +17,9 @@ public class MeshDataSystem : ComponentSystem
 
     TopologyUtil biomes;
 
-    protected override void OnCreateManager()
+    protected override void OnCreate()
     {
-        entityManager = World.Active.GetOrCreateSystem<EntityManager>();
+        entityManager = World.Active.EntityManager;
 
         biomes = new TopologyUtil();
 
@@ -27,7 +27,7 @@ public class MeshDataSystem : ComponentSystem
             All = new ComponentType[] { typeof(WorleyNoise.CellData), typeof(TopologySystem.Height) },
             None = new ComponentType[] { typeof(CellSystem.CellComplete), typeof(Vertex) }
         };
-        meshDataGroup = GetComponentGroup(meshDataQuery);
+        meshDataGroup = GetEntityQuery(meshDataQuery);
     }
 
     protected override void OnUpdate()

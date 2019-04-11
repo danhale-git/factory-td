@@ -32,9 +32,9 @@ public class SectorSystem : ComponentSystem
         public Entity entity;
     }
 
-    protected override void OnCreateManager()
+    protected override void OnCreate()
     {
-        entityManager = World.Active.GetOrCreateSystem<EntityManager>();
+        entityManager = World.Active.EntityManager;
 
         topologyUtil = new TopologyUtil();
 
@@ -42,7 +42,7 @@ public class SectorSystem : ComponentSystem
             All = new ComponentType[] { typeof(Cell) },
             None = new ComponentType[] { typeof(TypeComponent) }
         };
-        sectorGroup = GetComponentGroup(sectorQuery);
+        sectorGroup = GetEntityQuery(sectorQuery);
     }
 
     protected override void OnUpdate()

@@ -23,9 +23,9 @@ public class DebugSystem : ComponentSystem
     GameObject worleyCurrentMarker;
     GameObject worleyAdjacentMarker;
 
-    protected override void OnCreateManager()
+    protected override void OnCreate()
     {
-        entityManager = World.Active.GetOrCreateManager<EntityManager>();
+        entityManager = World.Active.EntityManager;
         playerSystem = World.Active.GetOrCreateSystem<PlayerEntitySystem>();
         cellSystem = World.Active.GetOrCreateSystem<CellSystem>();
         monoBehaviour = GameObject.FindObjectOfType<DebugMonoBehaviour>();

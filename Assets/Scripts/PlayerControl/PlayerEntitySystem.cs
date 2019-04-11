@@ -23,9 +23,9 @@ public class PlayerEntitySystem : ComponentSystem
 
     const float playerSpeed = 20f;
 
-    protected override void OnCreateManager()
+    protected override void OnCreate()
     {
-        entityManager = World.Active.GetOrCreateSystem<EntityManager>();
+        entityManager = World.Active.EntityManager;
         cellSystem = World.Active.GetOrCreateSystem<CellSystem>();
         squareWidth = TerrainSettings.mapSquareWidth;
     }
