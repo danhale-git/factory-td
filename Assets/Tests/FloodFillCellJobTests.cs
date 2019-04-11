@@ -22,11 +22,16 @@ namespace Tests
         public void FloodFillCell_generates_some_data()
         {
             FloodFillCellJob floodFillJob = RandomCellJob();
+            
             floodFillJob.FloodFillCell();
 
+            WorleyNoise.PointData[] pointArray = floodFillJob.matrix.matrix.ToArray();
+            floodFillJob.matrix.Dispose();
+            floodFillJob.commandBuffer.Dispose();
+
             bool wasGenerated = false;
-            for(int i = 0; i < floodFillJob.matrix.Length; i++)
-                if(floodFillJob.matrix.GetItem(i).isSet > 0)
+            for(int i = 0; i < pointArray.Length; i++)
+                if(pointArray[i].isSet > 0)
                 {
                     wasGenerated = true;
                     break;
@@ -68,8 +73,11 @@ namespace Tests
                 }
             }
 
+            floodFillJob.matrix.Dispose();
+            floodFillJob.commandBuffer.Dispose();
+
             Assert.IsTrue(onlyAdjacent);
-        }
+        } 
 
         FloodFillCellJob RandomCellJob()
         {
