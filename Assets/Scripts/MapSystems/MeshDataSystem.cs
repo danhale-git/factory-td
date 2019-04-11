@@ -15,19 +15,13 @@ public class MeshDataSystem : ComponentSystem
 
     ComponentGroup meshDataGroup;
 
-    Biomes biomes;
-
-    SimplexNoiseGenerator groupSimplex;
-    SimplexNoiseGenerator heightSimplex;
+    TopologyUtil biomes;
 
     protected override void OnCreateManager()
     {
         entityManager = World.Active.GetOrCreateManager<EntityManager>();
 
-        biomes = new Biomes();
-
-        groupSimplex = TerrainSettings.GroupSimplex();
-        heightSimplex = TerrainSettings.HeightSimplex();
+        biomes = new TopologyUtil();
 
         EntityArchetypeQuery meshDataQuery = new EntityArchetypeQuery{
             All = new ComponentType[] { typeof(WorleyNoise.CellData), typeof(TopologySystem.Height) },
@@ -48,7 +42,7 @@ public class MeshDataSystem : ComponentSystem
         NativeArray<ArchetypeChunk> chunks = meshDataGroup.CreateArchetypeChunkArray(Allocator.TempJob);
 
         ArchetypeChunkEntityType entityType = GetArchetypeChunkEntityType();
-        ArchetypeChunkComponentType<CellSystem.CellMatrix> matrixType = GetArchetypeChunkComponentType<CellSystem.CellMatrix>(true);
+        ArchetypeChunkComponentType<CellSystem.MatrixComponent> matrixType = GetArchetypeChunkComponentType<CellSystem.MatrixComponent>(true);
         ArchetypeChunkComponentType<WorleyNoise.CellData> cellType = GetArchetypeChunkComponentType<WorleyNoise.CellData>(true);
 
         ArchetypeChunkBufferType<WorleyNoise.PointData> worleyType = GetArchetypeChunkBufferType<WorleyNoise.PointData>(true);
@@ -59,7 +53,7 @@ public class MeshDataSystem : ComponentSystem
             ArchetypeChunk chunk = chunks[c];
 
             NativeArray<Entity> entities = chunk.GetNativeArray(entityType);
-            NativeArray<CellSystem.CellMatrix> matrices = chunk.GetNativeArray(matrixType);
+            NativeArray<CellSystem.MatrixComponent> matrices = chunk.GetNativeArray(matrixType);
             NativeArray<WorleyNoise.CellData> cells = chunk.GetNativeArray(cellType);
 
             BufferAccessor<WorleyNoise.PointData> worleyBuffers = chunk.GetBufferAccessor(worleyType);
@@ -70,7 +64,7 @@ public class MeshDataSystem : ComponentSystem
                 ArrayUtil arrayUtil = new ArrayUtil();
 
                 Entity entity = entities[e];
-                CellSystem.CellMatrix matrix = matrices[e];
+                CellSystem.MatrixComponent matrix = matrices[e];
                 WorleyNoise.CellData cell = cells[e];
 
                 DynamicBuffer<WorleyNoise.PointData> worley = worleyBuffers[e];
@@ -90,29 +84,28 @@ public class MeshDataSystem : ComponentSystem
                         int2 tr = new int2(x+1, z+1);
                         int2 br = new int2(x+1, z  );
 
-                        if( matrix.GetItem<WorleyNoise.PointData>(bl, worley, arrayUtil).isSet == 0 ||
-                            matrix.GetItem<WorleyNoise.PointData>(tl, worley, arrayUtil).isSet == 0 ||
-                            matrix.GetItem<WorleyNoise.PointData>(tr, worley, arrayUtil).isSet == 0 ||
-                            matrix.GetItem<WorleyNoise.PointData>(br, worley, arrayUtil).isSet == 0
-                        )
+                        WorleyNoise.PointData bottomLeftWorley  = matrix.GetItem<WorleyNoise.PointData>(bl, worley, arrayUtil);
+                        WorleyNoise.PointData topLeftWorley     = matrix.GetItem<WorleyNoise.PointData>(tl, worley, arrayUtil);
+                        WorleyNoise.PointData topRightWorley    = matrix.GetItem<WorleyNoise.PointData>(tr, worley, arrayUtil);
+                        WorleyNoise.PointData bottomRightWorley = matrix.GetItem<WorleyNoise.PointData>(br, worley, arrayUtil);
+                        
+                        if( bottomLeftWorley.isSet  == 0 ||
+                            topLeftWorley.isSet     == 0 ||
+                            topRightWorley.isSet    == 0 ||
+                            bottomRightWorley.isSet == 0 )
                         {
                             continue;
                         }
 
-                        TopologySystem.Height bottomLeft    = matrix.GetItem<TopologySystem.Height>(bl, topology, arrayUtil);
-                        TopologySystem.Height topLeft       = matrix.GetItem<TopologySystem.Height>(tl, topology, arrayUtil);
-                        TopologySystem.Height topRight      = matrix.GetItem<TopologySystem.Height>(tr, topology, arrayUtil);
-                        TopologySystem.Height bottomRight   = matrix.GetItem<TopologySystem.Height>(br, topology, arrayUtil);
+                        TopologySystem.Height bottomLeft            = matrix.GetItem<TopologySystem.Height>(bl, topology, arrayUtil);
+                        TopologySystem.Height topLeftTopology       = matrix.GetItem<TopologySystem.Height>(tl, topology, arrayUtil);
+                        TopologySystem.Height topRightTopology      = matrix.GetItem<TopologySystem.Height>(tr, topology, arrayUtil);
+                        TopologySystem.Height bottomRightTopology   = matrix.GetItem<TopologySystem.Height>(br, topology, arrayUtil);
 
-                        float3 bottomLeftOffset =   new float3(bl.x, bottomLeft.height,     bl.y);
-                        float3 topLeftOffset =      new float3(tl.x, topLeft.height,        tl.y);
-                        float3 topRightOffset =     new float3(tr.x, topRight.height,       tr.y);
-                        float3 bottomRightOffset =  new float3(br.x, bottomRight.height,    br.y);
-
-                        vertices.Add(new Vertex{ vertex = bottomLeftOffset });
-                        vertices.Add(new Vertex{ vertex = topLeftOffset });
-                        vertices.Add(new Vertex{ vertex = topRightOffset });
-                        vertices.Add(new Vertex{ vertex = bottomRightOffset });
+                        vertices.Add(new Vertex{ vertex = new float3(bl.x, bottomLeft.height, bl.y) });
+                        vertices.Add(new Vertex{ vertex = new float3(tl.x, topLeftTopology.height, tl.y) });
+                        vertices.Add(new Vertex{ vertex = new float3(tr.x, topRightTopology.height, tr.y) });
+                        vertices.Add(new Vertex{ vertex = new float3(br.x, bottomRightTopology.height, br.y) });
 
                         triangles.Add(new Triangle{ triangle = 0 + indexOffset });
                         triangles.Add(new Triangle{ triangle = 1 + indexOffset });
@@ -121,36 +114,41 @@ public class MeshDataSystem : ComponentSystem
                         triangles.Add(new Triangle{ triangle = 2 + indexOffset });
                         triangles.Add(new Triangle{ triangle = 3 + indexOffset });
 
-                        //  COLOR
-
-                        float4 color;
-                        float difference = LargestHeightDifference(bottomLeft.height, topLeft.height, topRight.height, bottomRight.height);
-                        
-                        float distance = matrix.GetItem<WorleyNoise.PointData>(new int2(x, z), worley, arrayUtil).distance2Edge;
-
-                        if(math.round(difference) > 1) color = new float4(0.7f, 0.7f, 0.7f, 1);
-                        //else color = entityManager.GetComponentData<CellSystem.Group>(entity).Value;
-                        else color = new float4(0.2f, 0.8f, 0.1f, 1);
-                        
-                        color -= new float4(distance/2, distance/2, distance/2, 1); 
-
-                        float3 worldPosition = new float3(x, 0, z) + matrix.root;
-                        if(worldPosition.x == cell.position.x && worldPosition.z == cell.position.z)
-                            color = new float4(1, 0, 0, 1);
-
-                        //float heightColor = bottomLeft.height / TerrainSettings.heightMultiplier;
-                        //color = new float4(heightColor, heightColor,heightColor, 1);
-
-                        
+                        WorleyNoise.PointData worleyPoint = matrix.GetItem<WorleyNoise.PointData>(bl, worley, arrayUtil);
+                        float difference = LargestHeightDifference(bottomLeft.height, topLeftTopology.height, topRightTopology.height, bottomRightTopology.height);
+                        float4 color = DebugTerrainColor(worleyPoint, cell, difference, new float3(x, 0, z) + matrix.root, entity);
 
                         colors.Add(new VertColor{ color = color });
                         colors.Add(new VertColor{ color = color });
                         colors.Add(new VertColor{ color = color });
                         colors.Add(new VertColor{ color = color });
-
-                        //  COLOR
 
                         indexOffset += 4;
+
+                        /*if(entityManager.GetComponentData<SectorSystem.SectorType>(entity).Value == SectorSystem.SectorTypes.LAKE)
+                        {
+                            float waterHeight = biomes.CellHeight(cell.index) - 0.1f;
+                            vertices.Add(new Vertex{ vertex = new float3(bl.x, waterHeight, bl.y) });
+                            vertices.Add(new Vertex{ vertex = new float3(tl.x, waterHeight, tl.y) });
+                            vertices.Add(new Vertex{ vertex = new float3(tr.x, waterHeight, tr.y) });
+                            vertices.Add(new Vertex{ vertex = new float3(br.x, waterHeight, br.y) });
+
+                            triangles.Add(new Triangle{ triangle = 0 + indexOffset });
+                            triangles.Add(new Triangle{ triangle = 1 + indexOffset });
+                            triangles.Add(new Triangle{ triangle = 2 + indexOffset });
+                            triangles.Add(new Triangle{ triangle = 0 + indexOffset });
+                            triangles.Add(new Triangle{ triangle = 2 + indexOffset });
+                            triangles.Add(new Triangle{ triangle = 3 + indexOffset });
+
+                            color = new float4(0.2f, 0.7f, 0.9f, 0.3f);
+
+                            colors.Add(new VertColor{ color = color });
+                            colors.Add(new VertColor{ color = color });
+                            colors.Add(new VertColor{ color = color });
+                            colors.Add(new VertColor{ color = color });
+    
+                            indexOffset += 4;
+                        } */
                     }
             }
         }
@@ -166,5 +164,33 @@ public class MeshDataSystem : ComponentSystem
         float largest = math.max(a, math.max(b, math.max(c, d)));
         float smallest = math.min(a, math.min(b, math.min(c, d)));
         return largest - smallest;
+    }
+
+    float4 DebugTerrainColor(WorleyNoise.PointData point, WorleyNoise.CellData cell, float difference, float3 worldPosition, Entity entity)
+    {
+        float4 color;
+        
+        float distance = point.distance2Edge;
+
+        if(math.round(difference) > 1) color = new float4(0.7f, 0.7f, 0.7f, 1);
+        //else color = (entityManager.GetComponentData<SectorSystem.SectorValue>(entity).Value/2) + 0.5f ;
+        else color = new float4(0.2f, 0.8f, 0.1f, 1);
+        
+        color -= new float4(distance/2, distance/2, distance/2, 1); 
+
+        if(worldPosition.x == cell.position.x && worldPosition.z == cell.position.z)
+            color = new float4(1, 0, 0, 1);
+
+        //float heightColor = bottomLeft.height / TerrainSettings.heightMultiplier;
+        //color = new float4(heightColor, heightColor,heightColor, 1);
+
+        if(entityManager.GetComponentData<SectorSystem.TypeComponent>(entity).Value == SectorSystem.SectorTypes.UNPATHABLE)
+            color += new float4(0.5f,0,0,1);
+
+        /*int2 adjacentDirection = worleyPoint.adjacentCellIndex - worleyPoint.currentCellIndex;
+        if(biomes.EdgeIsSloped(adjacentDirection, worleyPoint.currentCellValue, worleyPoint.adjacentCellValue))
+            color += new float4(0, 0.5f, 0.5f, 1);  */
+
+        return color;
     }
 }

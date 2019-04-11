@@ -1,25 +1,28 @@
 ﻿using Unity.Mathematics;
 
-public struct Biomes
+public struct TopologyUtil
 {
-    public float CellGrouping(int2 cellIndex, SimplexNoiseGenerator groupSimplex, SimplexNoiseGenerator heightSimplex)
+    static SimplexNoiseGenerator groupSimplex = TerrainSettings.GroupSimplex();
+    static SimplexNoiseGenerator heightSimplex = TerrainSettings.HeightSimplex();
+
+    public float CellGrouping(int2 cellIndex)
     {
         float groupSimplexNoise = groupSimplex.GetSimplex(cellIndex.x, cellIndex.y);
         float grouped = (int)math.round(math.lerp(0, TerrainSettings.cellGroupCount, groupSimplexNoise));
 
-        return grouped + (CellHeight(cellIndex, heightSimplex) / 10);
+        return grouped + (CellHeight(cellIndex) / 10);
     }
 
-    public float CellHeight(int2 cellIndex, SimplexNoiseGenerator simplex)
+    public float CellHeight(int2 cellIndex)
     {
-        float simplexNoise = simplex.GetSimplex(cellIndex.x, cellIndex.y);
+        float simplexNoise = heightSimplex.GetSimplex(cellIndex.x, cellIndex.y);
         int grouped = (int)math.round(math.lerp(0, TerrainSettings.cellHeightLevelCount, simplexNoise));
         return grouped * TerrainSettings.cellheightMultiplier;
     }
 
-    public bool EdgeIsSloped(int2 edge, float currentCellValue, float adjacentCellValue)
+    public bool EdgeIsSloped(int2 edge, WorleyNoise.PointData point)
     {
-        int2 slopeSide = SlopedSide(currentCellValue, adjacentCellValue);
+        int2 slopeSide = SlopedSide(point);
         return slopeSide.Equals(edge);
     }
 

@@ -17,12 +17,11 @@ public class CellSystem : ComponentSystem
     PlayerEntitySystem playerSystem;
 
     WorleyNoise worley;
-    Biomes biomes;
-    SimplexNoiseGenerator heightSimplex;
-    SimplexNoiseGenerator groupSimplex;
+    TopologyUtil biomes;
 
     EntityArchetype cellArchetype;
     Matrix<Entity> cellMatrix;
+    EntityArchetype sectorArchetype;
 
     int2 currentCellIndex;
     int2 previousCellIndex;
@@ -32,13 +31,13 @@ public class CellSystem : ComponentSystem
     JobHandle previousHandle;
 
     NativeQueue<int2> floodFillQueue;
-    NativeList<WorleyNoise.CellData> cellsInGroup;
+    NativeList<SectorSystem.Cell> cellsInGroup;
 
     ArrayUtil arrayUtil;
 
     public struct CellComplete : IComponentData { }
 
-    public struct CellMatrix : IComponentData
+    public struct MatrixComponent : IComponentData
     {
         public float3 root;
         public int width;
@@ -56,10 +55,6 @@ public class CellSystem : ComponentSystem
         }
     }
 
-    /*public enum CellType { NONE, UNPATHABLE }
-
-    public struct Type : IComponentData { public CellType Value; } */
-
     protected override void OnCreateManager()
     {
         entityManager = World.Active.GetOrCreateManager<EntityManager>();
@@ -69,12 +64,15 @@ public class CellSystem : ComponentSystem
         cellArchetype = entityManager.CreateArchetype(
             ComponentType.ReadWrite<LocalToWorld>(),
             ComponentType.ReadWrite<Translation>(),
-            ComponentType.ReadWrite<RenderMeshProxy>()
+            ComponentType.ReadWrite<RenderMeshProxy>()//,
 
-            //ComponentType.ReadWrite<Type>()
         );
 
-        biomes = new Biomes();
+        sectorArchetype = entityManager.CreateArchetype(
+            ComponentType.ReadWrite<SectorSystem.Cell>()
+        );
+
+        biomes = new TopologyUtil();
         worley = new WorleyNoise(
             TerrainSettings.seed,
             TerrainSettings.cellFrequency,
@@ -83,8 +81,6 @@ public class CellSystem : ComponentSystem
             TerrainSettings.cellDistanceFunction,
             TerrainSettings.cellReturnType
         );
-        heightSimplex = TerrainSettings.HeightSimplex();
-        groupSimplex = TerrainSettings.GroupSimplex();
         
         arrayUtil = new ArrayUtil();
 
@@ -145,65 +141,16 @@ public class CellSystem : ComponentSystem
                 
                 if(cellMatrix.ItemIsSet(cellIndex)) continue;
 
-                NativeList<WorleyNoise.CellData> group = FloodFillCellGroup(cellIndex);
+                NativeList<SectorSystem.Cell> group = FloodFillCellGroup(cellIndex);
 
-                /*if(!GroupIsConnected(group))
-                    for(int i = 0; i < group.Length; i++)
-                        entityManager.SetComponentData(cellMatrix.GetItem(group[i].index), new Type { Value = CellType.UNPATHABLE }); */
-
-                group.Dispose();
+                CreateSectorEntity(group);
             }
     }
 
-    /*bool GroupIsConnected(NativeList<WorleyNoise.CellData> group)
-    {
-        for(int i = 0; i < group.Length; i++)
-        {
-            int debug = group[i].index.Equals(new int2(-3,4)) ? 1 : 0;
-
-            WorleyNoise.CellData data = group[i];
-            Entity cellEntity = cellMatrix.GetItem(data.index);
-
-            float grouping = biomes.CellGrouping(data.index, groupSimplex, heightSimplex);
-            float height = biomes.CellHeight(data.index, heightSimplex);
-
-            for(int x = -1; x <= 1; x++)
-                for(int z = -1; z <= 1; z++)
-                {
-                    int2 direction = new int2(x, z);
-                    if(direction.Equals(int2.zero)) continue;
-
-                    int2 adjacentIndex = data.index + direction;
-
-                    if(debug > 0)Debug.Log(direction);
-
-                    WorleyNoise.CellData adjacentData = worley.GetCellData(adjacentIndex);
-
-                    float adjacentGrouping = biomes.CellGrouping(adjacentIndex, groupSimplex, heightSimplex);
-                    if(adjacentGrouping == grouping && !CornerOrCenter(direction))
-                    {
-                        if(debug > 0)Debug.Log("same group");
-                        continue;
-                    }
-
-                    float adjacentHeight = biomes.CellHeight(adjacentIndex, heightSimplex);
-                    bool sameHeight = height == adjacentHeight;
-
-                    bool edgeSloped = biomes.EdgeIsSloped(direction, data.value, adjacentData.value, debug);
-
-                    if(debug > 0)Debug.Log(sameHeight+" || "+edgeSloped);
-
-                    if(sameHeight || edgeSloped) return true;
-                }
-        }
-
-        return false;
-    } */
-
-    NativeList<WorleyNoise.CellData> FloodFillCellGroup(int2 startIndex)
+    NativeList<SectorSystem.Cell> FloodFillCellGroup(int2 startIndex)
     {
         floodFillQueue = new NativeQueue<int2>(Allocator.Temp);
-        cellsInGroup = new NativeList<WorleyNoise.CellData>(Allocator.Temp);
+        cellsInGroup = new NativeList<SectorSystem.Cell>(Allocator.Temp);
 
         floodFillQueue.Enqueue(startIndex);
         while(floodFillQueue.Count > 0)
@@ -222,12 +169,26 @@ public class CellSystem : ComponentSystem
         return cellsInGroup;
     }
 
+    void CreateSectorEntity(NativeList<SectorSystem.Cell> group)
+    {
+        Entity sectorEntity = entityManager.CreateEntity(sectorArchetype);
+        entityManager.GetBuffer<SectorSystem.Cell>(sectorEntity).AddRange(group);
+                        
+        group.Dispose();
+    }
+
     Entity CreateCell(int2 cellIndex)
     {
-        cellsInGroup.Add(worley.GetCellData(cellIndex));
-
         Entity cellEntity = entityManager.CreateEntity(cellArchetype);
         entityManager.AddComponentData<WorleyNoise.CellData>(cellEntity, worley.GetCellData(cellIndex));
+
+        cellsInGroup.Add(new SectorSystem.Cell{
+                data = worley.GetCellData(cellIndex),
+                entity = cellEntity
+            }
+        );
+
+        DebugSystem.Count("Cell height "+biomes.CellHeight(cellIndex));
 
         return cellEntity;
     }
@@ -252,7 +213,7 @@ public class CellSystem : ComponentSystem
 
     void EnqueueAdjacentInGroup(int2 center)
     {
-        float centerGrouping = biomes.CellGrouping(center, groupSimplex, heightSimplex);
+        float centerGrouping = biomes.CellGrouping(center);
         
         for(int x = -1; x <= 1; x++)
             for(int z = -1; z <= 1; z++)
@@ -261,7 +222,7 @@ public class CellSystem : ComponentSystem
                 if(CornerOrCenter(baseIndex)) continue;
 
                 int2 adjacent = center + baseIndex;
-                float adjacentGrouping = biomes.CellGrouping(adjacent, groupSimplex, heightSimplex);
+                float adjacentGrouping = biomes.CellGrouping(adjacent);
 
                 if(adjacentGrouping == centerGrouping) floodFillQueue.Enqueue(adjacent);
             }
@@ -282,8 +243,14 @@ public class CellSystem : ComponentSystem
             return 0;
 
         DynamicBuffer<TopologySystem.Height> heightData = entityManager.GetBuffer<TopologySystem.Height>(cellEntity);
-        CellMatrix matrix = entityManager.GetComponentData<CellMatrix>(cellEntity);
+        MatrixComponent matrix = entityManager.GetComponentData<MatrixComponent>(cellEntity);
 
         return matrix.GetItem(roundedPosition, heightData, new ArrayUtil()).height;
+    }
+
+    public bool TryGetCell(int2 index, out Entity entity)
+    {
+        entity = new Entity();
+        return cellMatrix.TryGetItem(index, out entity);
     }
 }

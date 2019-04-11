@@ -62,6 +62,11 @@ public struct Matrix<T> where T : struct
         matrix[index] = item;
         isSet[index] = 1;
     }
+
+    public bool TryGetItem(int2 index, out T item)
+    {
+        return TryGetItem(new float3(index.x, 0, index.y), out item);
+    }
     
     public bool TryGetItem(float3 worldPosition, out T item)
 	{
