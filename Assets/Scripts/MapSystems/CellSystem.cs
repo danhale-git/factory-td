@@ -10,6 +10,11 @@ using Unity.Rendering;
 
 using MapGeneration;
 
+namespace Tags
+{
+    public struct TerrainCell : IComponentData { }
+}
+
 [AlwaysUpdateSystem]
 public class CellSystem : ComponentSystem
 {
@@ -62,8 +67,8 @@ public class CellSystem : ComponentSystem
         cellArchetype = entityManager.CreateArchetype(
             ComponentType.ReadWrite<LocalToWorld>(),
             ComponentType.ReadWrite<Translation>(),
-            ComponentType.ReadWrite<RenderMeshProxy>()//,
-
+            ComponentType.ReadWrite<RenderMeshProxy>(),
+            ComponentType.ReadWrite<Tags.TerrainCell>()
         );
 
         sectorArchetype = entityManager.CreateArchetype(
