@@ -1,5 +1,6 @@
-﻿/*using Unity.Entities;
+﻿using Unity.Entities;
 using NUnit.Framework;
+using System.Linq;
 
 public class ECSTestFixture
     {
@@ -53,4 +54,4 @@ public class ECSTestFixture
                 m_Manager = null;
             }
         }
-    } */
+    } 
