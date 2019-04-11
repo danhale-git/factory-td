@@ -1,4 +1,5 @@
 ﻿using Unity.Mathematics;
+using Unity.Collections;
 
 public struct ArrayUtil
 { 
@@ -47,5 +48,31 @@ public struct ArrayUtil
         int z = index / size;
 
         return new float3(x, 0, z);
+    }
+
+    public NativeArray<T> Set<T>(NativeArray<T> raw, Allocator label) where T : struct, System.IComparable<T>
+    {
+        NativeList<T> set = new NativeList<T>(Allocator.Temp);
+
+        if(raw.Length == 0) return set;
+
+        raw.Sort();
+
+        int index = 0;
+        set.Add(raw[0]);
+
+        for(int i = 1; i < raw.Length; i++)
+        {
+            if(raw[i].CompareTo(set[index]) != 0)
+            {
+                index++;
+                set.Add(raw[i]);
+            }
+        }
+
+        NativeArray<T> array = new NativeArray<T>(set.Length, label);
+        array.CopyFrom(set);
+        set.Dispose();
+        return array;
     }
 }

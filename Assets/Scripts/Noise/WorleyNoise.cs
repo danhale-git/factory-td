@@ -5,12 +5,17 @@ using Unity.Entities;
 
 public struct WorleyNoise
 {
+	public enum DistanceFunction {Natural, Manhatten, Euclidean}
+	public enum CellularReturnType {Distance2, Distance2Add, Distance2Sub, Distance2Mul, Distance2Div}
+
 	int seed;
 	float frequency;
 	float perterbAmp;
 	float cellularJitter;
+	DistanceFunction distanceFunction;
+	CellularReturnType cellularReturnType;
 	
-	Biomes biomeIndex;
+	TopologyUtil biomes;
     CELL_2D cell_2D;
 
     int X_PRIME;
@@ -26,9 +31,11 @@ public struct WorleyNoise
 
 		public float3 pointWorldPosition;
 
-		public float3 currentCellPosition;
+		public float distance2Edge, distance;
+
+		public float3 currentCellPosition, adjacentCellPosition;
 		public int2 currentCellIndex, adjacentCellIndex;
-		public float currentCellValue, distance2Edge, adjacentCellValue;
+		public float currentCellValue, adjacentCellValue;
 	}
 	public struct CellData : IComponentData, System.IComparable<CellData>
 	{
@@ -42,14 +49,16 @@ public struct WorleyNoise
 		public sbyte discovered;
 	}
 
-	public WorleyNoise(int seed, float frequency, float perterbAmp, float cellularJitter)
+	public WorleyNoise(int seed, float frequency, float perterbAmp, float cellularJitter, DistanceFunction distanceFunction, CellularReturnType cellularReturnType)
 	{
 		this.seed = seed;
 		this.frequency = frequency;
 		this.perterbAmp = perterbAmp;
 		this.cellularJitter = cellularJitter;
+		this.distanceFunction = distanceFunction;
+		this.cellularReturnType = cellularReturnType;
 
-		biomeIndex = new Biomes();
+		biomes = new TopologyUtil();
 		cell_2D = new CELL_2D();
 
 		X_PRIME = 1619;
@@ -96,16 +105,21 @@ public struct WorleyNoise
 		NineInts otherX = new NineInts();
 		NineInts otherY = new NineInts();
 
-		NineFloats otherDist = new NineFloats();
+		NineFloats otherCellX = new NineFloats();
+		NineFloats otherCellY = new NineFloats();
+
+		NineFloats otherDistance = new NineFloats();
 		for(int i = 0; i < 9; i++)
 		{
-			otherDist[i] = 999999;
+			otherDistance[i] = 999999;
 		}
 
 		int indexCount = 0;
 
 		float3 currentCellPosition = float3.zero;
 		int2 currentCellIndex = int2.zero;
+
+		float distance = 999999;
 
 		for (int xi = xr - 1; xi <= xr + 1; xi++)
 				{
@@ -119,11 +133,28 @@ public struct WorleyNoise
 						float cellX = xi + vec.x * cellularJitter;
 						float cellY = yi + vec.y * cellularJitter;
 
-						//	Natural distance function
-						//float newDistance = (math.abs(vecX) + math.abs(vecY)) + (vecX * vecX + vecY * vecY);
+						float newDistance;
+
+						switch(distanceFunction)
+						{
+							case DistanceFunction.Natural:
+								newDistance = (math.abs(vecX) + math.abs(vecY)) + (vecX * vecX + vecY * vecY);
+								break;
+							case DistanceFunction.Manhatten:
+								newDistance = math.abs(vecX) + math.abs(vecY);
+								break;
+							case DistanceFunction.Euclidean:
+								newDistance = newDistance = vecX * vecX + vecY * vecY;
+								break;
+							default:
+								newDistance = 0;
+								throw new System.Exception("Unrecognised cellular distance function");
+						}
 						
-						//	Euclidean distance function
-						float newDistance = newDistance = vecX * vecX + vecY * vecY;
+						if(newDistance < distance)
+						{
+							distance = newDistance;
+						}
 
 						if(newDistance <= distance1)
 						{
@@ -147,59 +178,88 @@ public struct WorleyNoise
 							xc0 = xi;
 							yc0 = yi;
 
-							currentCellPosition = new float3(cellX, 0, cellY) / frequency;
+							currentCellPosition = math.round(new float3(cellX, 0, cellY) / frequency);
 							currentCellIndex = new int2(xi, yi);
 						}
 
 						//	Store all adjacent cells
+						otherCellX[indexCount] = cellX;
+						otherCellY[indexCount] = cellY;
 						otherX[indexCount] = xi;
 						otherY[indexCount] = yi;
-						otherDist[indexCount] = newDistance;
+						otherDistance[indexCount] = newDistance;
 						indexCount++;			
 					}
 				}
 
 		//	Current cell
 		float currentCellValue = To01(ValCoord2D(seed, xc0, yc0));
-		int currentBiome = biomeIndex.GetIndex(currentCellValue);
+		float currentBiome = biomes.CellGrouping(currentCellIndex);
 
 		//	Final closest adjacent cell values
-		float adjacentEdgeDistance = 999999;
+		float distance2Edge = 999999;
 		float adjacentCellValue = 0;
 		int2 adjacentCellIndex = int2.zero;
+		float3 adjacentCellPosition = float3.zero;
 
 		//	Iterate over all adjacent cells
 		for(int i = 0; i < 9; i++)
 		{	
 			//	Find closest cell within smoothing radius
-			float dist2Edge = otherDist[i] - distance0;
-			if(dist2Edge < adjacentEdgeDistance)
+
+			float dist2Edge = ApplyDistanceType(distance0, otherDistance[i]);
+			if(dist2Edge < distance2Edge)
 			{
-				float otherCellValue = To01(ValCoord2D(seed, otherX[i], otherY[i]));
-				int otherBiome = biomeIndex.GetIndex(otherCellValue);
+				int2 otherCellIndex = new int2(otherX[i], otherY[i]);
+				float otherBiome = biomes.CellGrouping(otherCellIndex);
 
 				///	Assign as final value if not current biome
 				if(otherBiome != currentBiome)
 				{
-					adjacentEdgeDistance = dist2Edge;
-					adjacentCellValue = otherCellValue;
-					adjacentCellIndex = new int2(otherX[i], otherY[i]);
+					distance2Edge = dist2Edge;
+					adjacentCellValue = To01(ValCoord2D(seed, otherX[i], otherY[i]));
+					adjacentCellIndex = otherCellIndex;
+					adjacentCellPosition = math.round(new float3(otherCellX[i], 0, otherCellY[i]) / frequency);
 				}
 			}
 		}
-		if(adjacentEdgeDistance == 999999) adjacentEdgeDistance = 0;
+		if(distance2Edge == 999999) distance2Edge = 0;
 		
 		PointData cell = new PointData();
 		
+		cell.distance2Edge = distance2Edge;
+		cell.distance = distance;
+
 		cell.currentCellValue = currentCellValue;
-		cell.distance2Edge = adjacentEdgeDistance;
 		cell.adjacentCellValue = adjacentCellValue;
+
 		cell.currentCellPosition = currentCellPosition;
+		cell.adjacentCellPosition = adjacentCellPosition;
+
 		cell.currentCellIndex = currentCellIndex;
 		cell.adjacentCellIndex = adjacentCellIndex;
 
 		//	Data for use in terrain generation
 		return cell;
+	}
+
+	float ApplyDistanceType(float distance, float otherDistance)
+	{
+		switch (cellularReturnType)
+		{
+			case CellularReturnType.Distance2:
+				return otherDistance;
+			case CellularReturnType.Distance2Add:
+				return otherDistance + distance;
+			case CellularReturnType.Distance2Sub:
+				return otherDistance - distance;
+			case CellularReturnType.Distance2Mul:
+				return otherDistance * distance;
+			case CellularReturnType.Distance2Div:
+				return distance / otherDistance;
+			default:
+				throw new System.Exception("Unrecognised cellular return type function");
+		}
 	}
 
 	struct NineInts

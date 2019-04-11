@@ -16,6 +16,7 @@ namespace MapGeneration
         [ReadOnly] public Entity cellEntity;
         [ReadOnly] public WorleyNoise worley;
         [ReadOnly] public WorleyNoise.CellData cell;
+        [ReadOnly] public TopologyUtil topologyUtil;
 
         public void Execute()
         {
@@ -23,12 +24,12 @@ namespace MapGeneration
             
             AddBufferFromMatrix();
 
-            CellSystem.CellMatrix cellMatrix = AddCellMatrixComponent();
+            CellSystem.MatrixComponent matrixComponent = AddCellMatrixComponent();
 
-            SetPosition(cellMatrix.root);
+            SetPosition(matrixComponent.root);
         }
 
-        void FloodFillCell()
+        public void FloodFillCell()
         {
             NativeQueue<WorleyNoise.PointData> dataToCheck = new NativeQueue<WorleyNoise.PointData>(Allocator.Temp);
 
@@ -40,7 +41,7 @@ namespace MapGeneration
             {
                 WorleyNoise.PointData data = dataToCheck.Dequeue();
 
-                bool currentPositionInCell = data.currentCellValue == cell.value;
+                bool currentPointInCell = data.currentCellValue == cell.value;
 
                 for(int x = -1; x <= 1; x++)
                     for(int z = -1; z <= 1; z++)
@@ -48,8 +49,8 @@ namespace MapGeneration
                         float3 adjacentPosition = new float3(x, 0, z) + data.pointWorldPosition;
                         WorleyNoise.PointData adjacentData = GetPointData(adjacentPosition);
 
-                        bool adjacentPositionInCell = adjacentData.currentCellValue == cell.value;
-                        if(matrix.ItemIsSet(adjacentPosition) || (!currentPositionInCell && !adjacentPositionInCell)) continue;
+                        bool adjacentPointInCell = adjacentData.currentCellValue == cell.value;
+                        if(matrix.ItemIsSet(adjacentPosition) || (!currentPointInCell && !adjacentPointInCell)) continue;
 
                         dataToCheck.Enqueue(adjacentData);
                         matrix.AddItem(adjacentData, adjacentData.pointWorldPosition);
@@ -74,13 +75,13 @@ namespace MapGeneration
             worleyBuffer.CopyFrom(matrix.matrix);
         }
 
-        CellSystem.CellMatrix AddCellMatrixComponent()
+        CellSystem.MatrixComponent AddCellMatrixComponent()
         {
-            CellSystem.CellMatrix cellMatrix = new CellSystem.CellMatrix{
+            CellSystem.MatrixComponent cellMatrix = new CellSystem.MatrixComponent{
                 root = matrix.rootPosition,
                 width = matrix.width
             };
-            commandBuffer.AddComponent<CellSystem.CellMatrix>(cellEntity, cellMatrix);
+            commandBuffer.AddComponent<CellSystem.MatrixComponent>(cellEntity, cellMatrix);
             return cellMatrix;
         }
 

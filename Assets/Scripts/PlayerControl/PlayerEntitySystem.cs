@@ -17,7 +17,7 @@ public class PlayerEntitySystem : ComponentSystem
 
     Camera camera;
     float cameraSwivelSpeed = 1;
-    float3 currentOffset = new float3(0, 10, 10);
+    float3 currentOffset = new float3(0, 10, -10);
 
     public GameObject player;
 
@@ -38,11 +38,13 @@ public class PlayerEntitySystem : ComponentSystem
 
     protected override void OnUpdate()
     {
-       MoveCamera();
+        DebugSystem.Text("player position", player.transform.position.ToString());
 
-       MovePlayer();
+        MoveCamera();
 
-       ClampToTerrainHeight();
+        MovePlayer();
+
+        ClampToTerrainHeight();
     }
 
     void MovePlayer()
@@ -53,8 +55,8 @@ public class PlayerEntitySystem : ComponentSystem
         float3 forward  = math.normalize(playerPosition - new float3(camera.transform.position.x, playerPosition.y, camera.transform.position.z));
 
          //  Move relative to camera angle
-        float3 x = UnityEngine.Input.GetAxis("Horizontal")  * (float3)camera.transform.right;
-        float3 z = UnityEngine.Input.GetAxis("Vertical")    * (float3)forward;
+        float3 x = UnityEngine.Input.GetAxis("Horizontal")  * -(float3)camera.transform.right;
+        float3 z = UnityEngine.Input.GetAxis("Vertical")    * -(float3)forward;
 
         //  Update movement component
         float3 move = (x + z) * playerSpeed;
