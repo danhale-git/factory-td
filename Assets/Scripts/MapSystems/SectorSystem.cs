@@ -11,7 +11,7 @@ public class SectorSystem : ComponentSystem
 
     TopologyUtil topologyUtil;
 
-    ComponentGroup sectorGroup;
+    EntityQuery sectorGroup;
 
     public enum SectorTypes { NONE, UNPATHABLE, LAKE }
 
@@ -34,11 +34,11 @@ public class SectorSystem : ComponentSystem
 
     protected override void OnCreateManager()
     {
-        entityManager = World.Active.GetOrCreateManager<EntityManager>();
+        entityManager = World.Active.GetOrCreateSystem<EntityManager>();
 
         topologyUtil = new TopologyUtil();
 
-        EntityArchetypeQuery sectorQuery = new EntityArchetypeQuery{
+        EntityQueryDesc sectorQuery = new EntityQueryDesc{
             All = new ComponentType[] { typeof(Cell) },
             None = new ComponentType[] { typeof(TypeComponent) }
         };

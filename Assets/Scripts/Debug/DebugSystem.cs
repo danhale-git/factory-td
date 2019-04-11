@@ -26,8 +26,8 @@ public class DebugSystem : ComponentSystem
     protected override void OnCreateManager()
     {
         entityManager = World.Active.GetOrCreateManager<EntityManager>();
-        playerSystem = World.Active.GetOrCreateManager<PlayerEntitySystem>();
-        cellSystem = World.Active.GetOrCreateManager<CellSystem>();
+        playerSystem = World.Active.GetOrCreateSystem<PlayerEntitySystem>();
+        cellSystem = World.Active.GetOrCreateSystem<CellSystem>();
         monoBehaviour = GameObject.FindObjectOfType<DebugMonoBehaviour>();
         debugWorley = TerrainSettings.CellWorley();
         topologyUtil = new TopologyUtil();

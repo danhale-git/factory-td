@@ -57,8 +57,8 @@ public class CellSystem : ComponentSystem
 
     protected override void OnCreateManager()
     {
-        entityManager = World.Active.GetOrCreateManager<EntityManager>();
-        playerSystem = World.Active.GetOrCreateManager<PlayerEntitySystem>();
+        entityManager = World.Active.GetOrCreateSystem<EntityManager>();
+        playerSystem = World.Active.GetOrCreateSystem<PlayerEntitySystem>();
 
         cellMatrix = new Matrix<Entity>(5, Allocator.Persistent, float3.zero);
         cellArchetype = entityManager.CreateArchetype(

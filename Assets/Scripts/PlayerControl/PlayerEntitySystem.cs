@@ -25,8 +25,8 @@ public class PlayerEntitySystem : ComponentSystem
 
     protected override void OnCreateManager()
     {
-        entityManager = World.Active.GetOrCreateManager<EntityManager>();
-        cellSystem = World.Active.GetOrCreateManager<CellSystem>();
+        entityManager = World.Active.GetOrCreateSystem<EntityManager>();
+        cellSystem = World.Active.GetOrCreateSystem<CellSystem>();
         squareWidth = TerrainSettings.mapSquareWidth;
     }
 

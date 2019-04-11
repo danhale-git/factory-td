@@ -13,17 +13,17 @@ public class MeshDataSystem : ComponentSystem
 {
     EntityManager entityManager;
 
-    ComponentGroup meshDataGroup;
+    EntityQuery meshDataGroup;
 
     TopologyUtil biomes;
 
     protected override void OnCreateManager()
     {
-        entityManager = World.Active.GetOrCreateManager<EntityManager>();
+        entityManager = World.Active.GetOrCreateSystem<EntityManager>();
 
         biomes = new TopologyUtil();
 
-        EntityArchetypeQuery meshDataQuery = new EntityArchetypeQuery{
+        EntityQueryDesc meshDataQuery = new EntityQueryDesc{
             All = new ComponentType[] { typeof(WorleyNoise.CellData), typeof(TopologySystem.Height) },
             None = new ComponentType[] { typeof(CellSystem.CellComplete), typeof(Vertex) }
         };

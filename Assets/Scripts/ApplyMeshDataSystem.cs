@@ -14,7 +14,7 @@ public class ApplyMeshDataSystem : ComponentSystem
 {
     EntityManager entityManager;
 
-    ComponentGroup applyMeshGroup;
+    EntityQuery applyMeshGroup;
 
 	public static Material material = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/DefaultMaterial.mat");
 
@@ -22,7 +22,7 @@ public class ApplyMeshDataSystem : ComponentSystem
     {
         entityManager = World.Active.GetOrCreateManager<EntityManager>();
 
-        EntityArchetypeQuery applyMeshQuery = new EntityArchetypeQuery{
+        EntityQueryDesc applyMeshQuery = new EntityQueryDesc{
 			All = new ComponentType[] { typeof(Vertex) },
 			None = new ComponentType[] { typeof(CellSystem.CellComplete) }
 		};
