@@ -23,11 +23,11 @@ public class DebugSystem : ComponentSystem
     GameObject worleyCurrentMarker;
     GameObject worleyAdjacentMarker;
 
-    protected override void OnCreateManager()
+    protected override void OnCreate()
     {
-        entityManager = World.Active.GetOrCreateManager<EntityManager>();
-        playerSystem = World.Active.GetOrCreateManager<PlayerEntitySystem>();
-        cellSystem = World.Active.GetOrCreateManager<CellSystem>();
+        entityManager = World.Active.EntityManager;
+        playerSystem = World.Active.GetOrCreateSystem<PlayerEntitySystem>();
+        cellSystem = World.Active.GetOrCreateSystem<CellSystem>();
         monoBehaviour = GameObject.FindObjectOfType<DebugMonoBehaviour>();
         debugWorley = TerrainSettings.CellWorley();
         topologyUtil = new TopologyUtil();

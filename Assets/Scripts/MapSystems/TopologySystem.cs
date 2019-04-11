@@ -11,7 +11,7 @@ public class TopologySystem : ComponentSystem
 {
     EntityManager entityManager;
 
-    ComponentGroup topologyGroup;
+    EntityQuery topologyGroup;
 
     TopologyUtil topologyUtil;
 
@@ -20,17 +20,17 @@ public class TopologySystem : ComponentSystem
         public float height;
     }
 
-    protected override void OnCreateManager()
+    protected override void OnCreate()
     {
-        entityManager = World.Active.GetOrCreateManager<EntityManager>();
+        entityManager = World.Active.EntityManager;
 
         topologyUtil = new TopologyUtil();
 
-        EntityArchetypeQuery topologyQuery = new EntityArchetypeQuery{
+        EntityQueryDesc topologyQuery = new EntityQueryDesc{
             All = new ComponentType[] { typeof(WorleyNoise.CellData), typeof(WorleyNoise.PointData), typeof(SectorSystem.SectorNoiseValue) },
             None = new ComponentType[] { typeof(CellSystem.CellComplete), typeof(Height) }
         };
-        topologyGroup = GetComponentGroup(topologyQuery);
+        topologyGroup = GetEntityQuery(topologyQuery);
     }
 
     protected override void OnUpdate()

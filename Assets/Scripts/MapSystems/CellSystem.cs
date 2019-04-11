@@ -55,10 +55,10 @@ public class CellSystem : ComponentSystem
         }
     }
 
-    protected override void OnCreateManager()
+    protected override void OnCreate()
     {
-        entityManager = World.Active.GetOrCreateManager<EntityManager>();
-        playerSystem = World.Active.GetOrCreateManager<PlayerEntitySystem>();
+        entityManager = World.Active.EntityManager;
+        playerSystem = World.Active.GetOrCreateSystem<PlayerEntitySystem>();
 
         cellMatrix = new Matrix<Entity>(5, Allocator.Persistent, float3.zero);
         cellArchetype = entityManager.CreateArchetype(
@@ -87,7 +87,7 @@ public class CellSystem : ComponentSystem
         previousCellIndex = new int2(100); 
     }
 
-    protected override void OnDestroyManager()
+    protected override void OnDestroy()
     {
         cellMatrix.Dispose();
         if(runningCommandBuffer.IsCreated) runningCommandBuffer.Dispose();

@@ -14,19 +14,19 @@ public class ApplyMeshDataSystem : ComponentSystem
 {
     EntityManager entityManager;
 
-    ComponentGroup applyMeshGroup;
+    EntityQuery applyMeshGroup;
 
 	public static Material material = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/DefaultMaterial.mat");
 
-    protected override void OnCreateManager()
+    protected override void OnCreate()
     {
-        entityManager = World.Active.GetOrCreateManager<EntityManager>();
+        entityManager = World.Active.EntityManager;
 
-        EntityArchetypeQuery applyMeshQuery = new EntityArchetypeQuery{
+        EntityQueryDesc applyMeshQuery = new EntityQueryDesc{
 			All = new ComponentType[] { typeof(Vertex) },
 			None = new ComponentType[] { typeof(CellSystem.CellComplete) }
 		};
-        applyMeshGroup = GetComponentGroup(applyMeshQuery);
+        applyMeshGroup = GetEntityQuery(applyMeshQuery);
     }
 
     protected override void OnUpdate()
