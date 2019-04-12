@@ -173,8 +173,8 @@ public class MeshDataSystem : ComponentSystem
         float distance = point.distance2Edge;
 
         if(math.round(difference) > 1) color = new float4(0.7f, 0.7f, 0.7f, 1);
-        else color = (entityManager.GetComponentData<SectorSystem.SectorNoiseValue>(entity).Value);
-        //else color = new float4(0.2f, 0.8f, 0.1f, 1);
+        //else color = (entityManager.GetComponentData<SectorSystem.SectorNoiseValue>(entity).Value);
+        else color = new float4(0.2f, 0.8f, 0.1f, 1);
         
         color -= new float4(distance/2, distance/2, distance/2, 1); 
 

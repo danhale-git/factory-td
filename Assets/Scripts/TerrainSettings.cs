@@ -24,6 +24,8 @@ public static class TerrainSettings
 	public const float cellGroupNoiseFrequency = 0.3f;	
 	public const int cellGroupCount = 4;
 
+	public const float slopeLength = 0.55f;
+
 	public const WorleyNoise.DistanceFunction cellDistanceFunction = WorleyNoise.DistanceFunction.Natural;
 	public const WorleyNoise.CellularReturnType cellReturnType = WorleyNoise.CellularReturnType.Distance2Sub;
 
