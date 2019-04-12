@@ -50,8 +50,10 @@ public struct ArrayUtil
         return new float3(x, 0, z);
     }
 
-    public NativeArray<T> Set<T>(NativeArray<T> raw, Allocator label) where T : struct, System.IComparable<T>
+    public NativeArray<T> Set<T>(NativeArray<T> rawOriginal, Allocator label) where T : struct, System.IComparable<T>
     {
+        NativeArray<T> raw = new NativeArray<T>(rawOriginal, Allocator.Temp);
+
         NativeList<T> set = new NativeList<T>(Allocator.Temp);
 
         if(raw.Length == 0) return set;
@@ -72,7 +74,10 @@ public struct ArrayUtil
 
         NativeArray<T> array = new NativeArray<T>(set.Length, label);
         array.CopyFrom(set);
+
         set.Dispose();
+        raw.Dispose();
+        
         return array;
     }
 }
