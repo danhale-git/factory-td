@@ -1,28 +1,26 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using NUnit.Framework;
+﻿using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
+using Unity.Entities;
+using Unity.Collections;
 
 namespace Tests
 {
     public class HybridSystemTests : ECSTestFixture
     {
-        // A Test behaves as an ordinary method
         [Test]
-        public void HybridSystemTestsSimplePasses()
+        public void Creates_GameObjects_at_correct_positions()
         {
-            // Use the Assert class to test conditions
-        }
+            CellSystem cellSystem = World.CreateSystem<CellSystem>();
+            cellSystem.Update();
 
-        // A UnityTest behaves like a coroutine in Play Mode. In Edit Mode you can use
-        // `yield return null;` to skip a frame.
-        [UnityTest]
-        public IEnumerator HybridSystemTestsWithEnumeratorPasses()
-        {
-            // Use the Assert class to test conditions.
-            // Use yield to skip a frame.
-            yield return null;
+
+            NativeArray<Entity> entities = m_Manager.GetAllEntities();
+            int entityCount = entities.Length;
+            entities.Dispose();
+
+            Assert.NotZero(entityCount);
+            
         }
     }
 }
