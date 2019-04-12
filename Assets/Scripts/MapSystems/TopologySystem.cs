@@ -103,7 +103,7 @@ public class TopologySystem : ComponentSystem
         if(currentHeight == adjacentHeight) return currentHeight;
 
         float halfway = (currentHeight + adjacentHeight) / 2;
-        float interpolator = math.unlerp(0, 0.35f, point.distance2Edge);
+        float interpolator = math.unlerp(0, TerrainSettings.slopeLength, point.distance2Edge);
 
         return math.lerp(halfway, currentHeight, math.clamp(interpolator, 0, 1));
     }
