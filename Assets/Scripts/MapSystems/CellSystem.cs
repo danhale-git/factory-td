@@ -89,11 +89,11 @@ public class CellSystem : ComponentSystem
         if(runningCommandBuffer.IsCreated) runningCommandBuffer.Dispose();
     }
     
-    protected override void OnStartRunning()
+    /*protected override void OnStartRunning()
     {
         UpdateCurrentCellIndex();
         GenerateOneSector(currentCellIndex);
-    }
+    } */
 
     protected override void OnUpdate()
     {
@@ -104,13 +104,11 @@ public class CellSystem : ComponentSystem
             if(!runningJobHandle.IsCompleted) return;
             else JobCompleteAndBufferPlayback();
         }
-        else
-        {
+        
+        if(cellMatrix.ItemIsSet(currentCellIndex))
             GenerateAdjacentSectors();
-        }
-
-        //if(!UpdateCurrentCellIndex()) return;
-        //else GenerateAdjacentSectors();
+        else
+            GenerateOneSector(currentCellIndex);
     }
 
     void JobCompleteAndBufferPlayback()
@@ -136,27 +134,13 @@ public class CellSystem : ComponentSystem
         }
     }
 
-    NativeList<int2> AdjacentCells()
-    {
-        NativeList<int2> adjacent = new NativeList<int2>(Allocator.Temp);
-       
-        return adjacent;
-    }
-
-    void GenerateOneSector(int2 index)
+    void GenerateOneSector(int2 cellIndex)
     {
         runningCommandBuffer = new EntityCommandBuffer(Allocator.TempJob);
         runningJobHandle = new JobHandle();
 		previousHandle = new JobHandle();
 
-        if(cellMatrix.ItemIsSet(index))
-        {
-            return;
-        }
-        else
-        {
-            SpawnSector(index);
-        }   
+        CreateSector(cellIndex);
     }
 
     void GenerateAdjacentSectors()
@@ -171,20 +155,24 @@ public class CellSystem : ComponentSystem
             if(!entityManager.HasComponent<SectorSystem.AdjacentCell>(sectorEntity))
                 return;
 
-            DynamicBuffer<SectorSystem.AdjacentCell> adjacentCells = entityManager.GetBuffer<SectorSystem.AdjacentCell>(sectorEntity);
-            NativeArray<SectorSystem.AdjacentCell> adjacentArray = new NativeArray<SectorSystem.AdjacentCell>(adjacentCells.AsNativeArray(), Allocator.Temp);
-            for(int i = 0; i < adjacentArray.Length; i++)
-            {
-                WorleyNoise.CellData cell = adjacentArray[i].data;
-                if(!cellMatrix.ItemIsSet(cell.index))
-                    SpawnSector(cell.index);
-            }
-            adjacentArray.Dispose();
+            NativeArray<SectorSystem.AdjacentCell> adjacentCells = AdjacentCells(sectorEntity);
+            
+            for(int i = 0; i < adjacentCells.Length; i++)
+                CreateSector(adjacentCells[i].data.index);
+
+            adjacentCells.Dispose();
         }
     }
 
-    void SpawnSector(int2 startIndex)
+    NativeArray<SectorSystem.AdjacentCell> AdjacentCells(Entity sectorEntity)
     {
+        DynamicBuffer<SectorSystem.AdjacentCell> adjacentCells = entityManager.GetBuffer<SectorSystem.AdjacentCell>(sectorEntity);
+        return new NativeArray<SectorSystem.AdjacentCell>(adjacentCells.AsNativeArray(), Allocator.Temp);
+    }
+
+    void CreateSector(int2 startIndex)
+    {
+        if(cellMatrix.ItemIsSet(startIndex)) return;
         Entity sectorEntity = CreateSectorEntity(startIndex);
         ScheduleCellGroupJob(sectorEntity);
     }
