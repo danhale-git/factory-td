@@ -24,10 +24,10 @@ public class HybridSystem : ComponentSystem
 
     GameObject sectorPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Sector.prefab");
 
-    /*public struct MeshData : IComponentData
+    public struct GameObjectComponent : ISharedComponentData
     {
-        public Mesh mesh;
-    } */
+        public GameObject gameObject;
+    }
 
     protected override void OnCreate()
     {
@@ -48,8 +48,7 @@ public class HybridSystem : ComponentSystem
         var translationType = GetArchetypeChunkComponentType<Translation>(true);
         var matrixType = GetArchetypeChunkComponentType<CellSystem.MatrixComponent>(true);
         var localToWorldType = GetArchetypeChunkComponentType<LocalToWorld>(true);
-        //var meshType = GetArchetypeChunkSharedComponentType<RenderMesh>();
-        //var meshType = GetArchetypeChunkComponentType<MeshData>();
+        var meshType = GetArchetypeChunkSharedComponentType<RenderMesh>();
 
         for(int c = 0; c < chunks.Length; c++)
         {
@@ -59,45 +58,25 @@ public class HybridSystem : ComponentSystem
             NativeArray<Translation> translations = chunk.GetNativeArray(translationType);
             NativeArray<CellSystem.MatrixComponent> matrixComponents = chunk.GetNativeArray(matrixType);
             NativeArray<LocalToWorld> localToWorldComponents = chunk.GetNativeArray(localToWorldType);
-            //RenderMesh meshes = chunk.GetSharedComponentData<RenderMesh>(meshType, entityManager);
-
-            //NativeArray<MeshData> meshes = chunk.GetNativeArray<MeshData>(meshType);
-
 
             for(int e = 0; e < entities.Length; e++)
             {
                 Entity entity = entities[e];
                 float3 position = translations[e].Value;
                 CellSystem.MatrixComponent matrix = matrixComponents[e];
-                Mesh mesh = entityManager.GetSharedComponentData<RenderMesh>(entity).mesh;
+                Mesh mesh = chunk.GetSharedComponentData<RenderMesh>(meshType, entityManager).mesh;
+                float4x4 localToWorld = localToWorldComponents[e].Value;
 
                 GameObject sectorGameObject = GameObject.Instantiate(sectorPrefab, position, Quaternion.identity);
 
-                MeshCollider collider = sectorGameObject.GetComponent<MeshCollider>();
-                collider.sharedMesh = mesh;
-
+                CreateCollider(sectorGameObject, mesh);
 
                 NavMeshSurface navMeshComponent = sectorGameObject.GetComponent<NavMeshSurface>();
 
-                NavMeshBuildSource source = new NavMeshBuildSource();
-                source.shape = NavMeshBuildSourceShape.Mesh;
-                source.size = new Vector3(matrix.width, 0, matrix.width);
-                source.component = navMeshComponent;
-                source.sourceObject = mesh;
-                source.transform = localToWorldComponents[e].Value;
-
                 NavMeshBuildSettings settings = NavMesh.GetSettingsByID(0);
-                List<NavMeshBuildSource> sources = new List<NavMeshBuildSource>();
-                sources.Add(source);
-
-                NavMeshData navMeshData = new NavMeshData();
-
-                navMeshComponent.navMeshData = navMeshData;
-
-                navMeshComponent.BuildNavMesh();
-
+                List<NavMeshBuildSource> sources = GetSourceList(matrix.width, navMeshComponent, mesh, localToWorld);
                 Bounds bounds = CalculateWorldBounds(sources, position);
-
+                
                 var data = NavMeshBuilder.BuildNavMeshData(settings, sources, bounds, position, Quaternion.identity);
 
                 if(data != null)
@@ -110,6 +89,7 @@ public class HybridSystem : ComponentSystem
                 }
 
                 commandBuffer.AddComponent<Tags.HybridGameObjectCreated>(entity, new Tags.HybridGameObjectCreated());
+                commandBuffer.AddSharedComponent<GameObjectComponent>(entity, new GameObjectComponent { gameObject = sectorGameObject });
             }
         }
 
@@ -117,6 +97,28 @@ public class HybridSystem : ComponentSystem
         commandBuffer.Dispose();
 
         chunks.Dispose();
+    }
+
+    void CreateCollider(GameObject sectorGameObject, Mesh mesh)
+    {
+        MeshCollider collider = sectorGameObject.GetComponent<MeshCollider>();
+        collider.sharedMesh = mesh;
+    }
+
+    List<NavMeshBuildSource> GetSourceList(int matrixWidth, NavMeshSurface component, Mesh mesh, float4x4 localToWorld)
+    {
+        NavMeshBuildSource source = new NavMeshBuildSource();
+        source.shape = NavMeshBuildSourceShape.Mesh;
+        source.size = new Vector3(matrixWidth, 0, matrixWidth);
+        source.component = component;
+        source.sourceObject = mesh;
+        source.transform = localToWorld;
+
+        NavMeshBuildSettings settings = NavMesh.GetSettingsByID(0);
+        List<NavMeshBuildSource> sources = new List<NavMeshBuildSource>();
+        sources.Add(source);
+
+        return sources;
     }
 
     Bounds CalculateWorldBounds(List<NavMeshBuildSource> sources, float3 position)
