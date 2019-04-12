@@ -198,14 +198,22 @@ public class CellSystem : ComponentSystem
     void ScheduleCellJob(Entity cellEntity)
     { 
         WorleyNoise.CellData cell = entityManager.GetComponentData<WorleyNoise.CellData>(cellEntity);
-        cellMatrix.AddItem(cellEntity, cell.index);
+        //cellMatrix.AddItem(cellEntity, cell.index);
 
-        FloodFillCellJob job = new FloodFillCellJob{
+        /*FloodFillCellJob job = new FloodFillCellJob{
             commandBuffer = runningCommandBuffer,
             cellEntity = cellEntity,
             matrix = new Matrix<WorleyNoise.PointData>(10, Allocator.TempJob, cell.position, job: true),
             worley = this.worley,
             cell = cell
+        }; */
+
+        FloodFillCellGroupJob job = new FloodFillCellGroupJob{
+            commandBuffer = runningCommandBuffer,
+            startCell = cell,
+            sectorEntity = cellEntity,
+            matrix = new Matrix<WorleyNoise.PointData>(10, Allocator.TempJob, cell.position, job: true),
+            worley = this.worley
         };
 
         JobHandle newHandle = job.Schedule(previousHandle);
