@@ -199,7 +199,7 @@ public class CellSystem : ComponentSystem
 
     public float GetHeightAtPosition(float3 position)
     {
-        /*float3 roundedPosition = math.round(position);
+        float3 roundedPosition = math.round(position);
         int2 cellIndex = worley.GetPointData(roundedPosition.x, roundedPosition.z).currentCellIndex;
         Entity cellEntity = cellMatrix.GetItem(cellIndex);
 
@@ -209,8 +209,7 @@ public class CellSystem : ComponentSystem
         DynamicBuffer<TopologySystem.Height> heightData = entityManager.GetBuffer<TopologySystem.Height>(cellEntity);
         MatrixComponent matrix = entityManager.GetComponentData<MatrixComponent>(cellEntity);
 
-        return matrix.GetItem(roundedPosition, heightData, new ArrayUtil()).height; */
-        return 20;
+        return matrix.GetItem(roundedPosition, heightData, new ArrayUtil()).height;
     }
 
     public bool TryGetCell(int2 index, out Entity entity)
