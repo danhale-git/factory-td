@@ -82,9 +82,7 @@ public class DebugSystem : ComponentSystem
         WorleyNoise.PointData point = debugWorley.GetPointData(playerPosition.x, playerPosition.z);
         Text("distance2Edge", point.distance2Edge.ToString());
 
-        Entity cellEntity;
-        if(cellSystem.TryGetCell(point.currentCellIndex, out cellEntity) && entityManager.HasComponent<SectorSystem.SectorNoiseValue>(cellEntity))
-            Text("group", topologyUtil.CellGrouping(point.currentCellIndex).ToString()+" "+entityManager.GetComponentData<SectorSystem.SectorNoiseValue>(cellEntity).Value);
+        Text("group", topologyUtil.CellGrouping(point.currentCellIndex).ToString());
 
         worleyCurrentMarker.transform.position = math.round(point.currentCellPosition) + new float3(0.5f, cellSystem.GetHeightAtPosition(point.currentCellPosition)+1, 0.5f);
 
