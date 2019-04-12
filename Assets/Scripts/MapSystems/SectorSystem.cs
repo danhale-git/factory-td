@@ -39,7 +39,7 @@ public class SectorSystem : ComponentSystem
         topologyUtil = new TopologyUtil();
 
         EntityQueryDesc sectorQuery = new EntityQueryDesc{
-            All = new ComponentType[] { typeof(Cell) },
+            All = new ComponentType[] { typeof(Tags.TerrainCell), typeof(WorleyNoise.CellData) },
             None = new ComponentType[] { typeof(TypeComponent) }
         };
         sectorGroup = GetEntityQuery(sectorQuery);
@@ -51,33 +51,38 @@ public class SectorSystem : ComponentSystem
         NativeArray<ArchetypeChunk> chunks = sectorGroup.CreateArchetypeChunkArray(Allocator.TempJob);
 
         ArchetypeChunkEntityType entityType = GetArchetypeChunkEntityType();
-        ArchetypeChunkBufferType<Cell> cellArrayType = GetArchetypeChunkBufferType<Cell>();
+        //ArchetypeChunkBufferType<Cell> cellArrayType = GetArchetypeChunkBufferType<Cell>();
 
         for(int c = 0; c < chunks.Length; c++)
         {
             ArchetypeChunk chunk = chunks[c];
             NativeArray<Entity> entities = chunk.GetNativeArray(entityType);
-            BufferAccessor<Cell> cellArrays = chunk.GetBufferAccessor(cellArrayType);
+            //BufferAccessor<Cell> cellArrays = chunk.GetBufferAccessor(cellArrayType);
 
             for(int e = 0; e < entities.Length; e++)
             {
                 Entity sectorEntity = entities[e];
-                DynamicBuffer<Cell> cells = cellArrays[e];
+                //DynamicBuffer<Cell> cells = cellArrays[e];
 
-                if(!AllEntitiesHaveWorley(cells))
+                /*if(!AllEntitiesHaveWorley(cells))
                     continue;
 
-                float noiseValue = GetSectorValue(cells);
+                float noiseValue = GetSectorValue(cells); */
 
                 TypeComponent type = new TypeComponent();
 
-                if(!SectorIsPathable(cells))
+                /*if(!SectorIsPathable(cells))
                     type.Value = SectorTypes.UNPATHABLE;
                 else if(SectorIsLowest(cells[0].data.index) && noiseValue > 0.5f)
                     type.Value = SectorTypes.LAKE;
 
 
-                AddSectorComponentsToCells(noiseValue, type, cells, commandBuffer);                
+                AddSectorComponentsToCells(noiseValue, type, cells, commandBuffer);  */ 
+
+                float value = entityManager.GetComponentData<WorleyNoise.CellData>(sectorEntity).value;
+
+                commandBuffer.AddComponent<SectorNoiseValue>(sectorEntity, new SectorNoiseValue{ Value = value });
+                commandBuffer.AddComponent<TypeComponent>(sectorEntity, type);              
 
                 commandBuffer.AddComponent(sectorEntity, type);
             }

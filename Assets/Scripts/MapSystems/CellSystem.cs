@@ -35,8 +35,8 @@ public class CellSystem : ComponentSystem
     JobHandle runningJobHandle;
     JobHandle previousHandle;
 
-    NativeQueue<int2> floodFillQueue;
-    NativeList<SectorSystem.Cell> cellsInGroup;
+    //NativeQueue<int2> floodFillQueue;
+    //NativeList<SectorSystem.Cell> cellsInGroup;
 
     ArrayUtil arrayUtil;
 
@@ -69,10 +69,6 @@ public class CellSystem : ComponentSystem
             ComponentType.ReadWrite<Translation>(),
             ComponentType.ReadWrite<RenderMeshProxy>(),
             ComponentType.ReadWrite<Tags.TerrainCell>()
-        );
-
-        sectorArchetype = entityManager.CreateArchetype(
-            ComponentType.ReadWrite<SectorSystem.Cell>()
         );
 
         biomes = new TopologyUtil();
@@ -144,13 +140,16 @@ public class CellSystem : ComponentSystem
                 
                 if(cellMatrix.ItemIsSet(cellIndex)) continue;
 
-                NativeList<SectorSystem.Cell> group = FloodFillCellGroup(cellIndex);
+                Entity sectorEntity = CreateCell(cellIndex);
+                ScheduleCellJob(sectorEntity);
 
-                CreateSectorEntity(group);
+                //NativeList<SectorSystem.Cell> group = FloodFillCellGroup(cellIndex);
+
+                //CreateSectorEntity(group);
             }
     }
 
-    NativeList<SectorSystem.Cell> FloodFillCellGroup(int2 startIndex)
+    /*NativeList<SectorSystem.Cell> FloodFillCellGroup(int2 startIndex)
     {
         floodFillQueue = new NativeQueue<int2>(Allocator.Temp);
         cellsInGroup = new NativeList<SectorSystem.Cell>(Allocator.Temp);
@@ -170,26 +169,26 @@ public class CellSystem : ComponentSystem
         floodFillQueue.Dispose();
 
         return cellsInGroup;
-    }
+    } */
 
-    void CreateSectorEntity(NativeList<SectorSystem.Cell> group)
+    /*void CreateSectorEntity(NativeList<SectorSystem.Cell> group)
     {
         Entity sectorEntity = entityManager.CreateEntity(sectorArchetype);
         entityManager.GetBuffer<SectorSystem.Cell>(sectorEntity).AddRange(group);
                         
         group.Dispose();
-    }
+    } */
 
     Entity CreateCell(int2 cellIndex)
     {
         Entity cellEntity = entityManager.CreateEntity(cellArchetype);
         entityManager.AddComponentData<WorleyNoise.CellData>(cellEntity, worley.GetCellData(cellIndex));
 
-        cellsInGroup.Add(new SectorSystem.Cell{
+        /*cellsInGroup.Add(new SectorSystem.Cell{
                 data = worley.GetCellData(cellIndex),
                 entity = cellEntity
             }
-        );
+        ); */
 
         DebugSystem.Count("Cell height "+biomes.CellHeight(cellIndex));
 
@@ -214,7 +213,7 @@ public class CellSystem : ComponentSystem
         previousHandle = newHandle;
     }
 
-    void EnqueueAdjacentInGroup(int2 center)
+    /*void EnqueueAdjacentInGroup(int2 center)
     {
         float centerGrouping = biomes.CellGrouping(center);
         
@@ -234,7 +233,7 @@ public class CellSystem : ComponentSystem
     bool CornerOrCenter(int2 index)
     {
         return index.Equals(int2.zero) || !(index.x == 0 || index.y == 0);
-    }
+    } */
 
     public float GetHeightAtPosition(float3 position)
     {
