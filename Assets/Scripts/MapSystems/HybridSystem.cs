@@ -17,7 +17,7 @@ public class HybridSystem : ComponentSystem
     {
         hybridQuery = GetEntityQuery(
             new EntityQueryDesc{
-                All = new ComponentType[] { typeof(RenderMesh), typeof(Tags.TerrainCell) }
+                All = new ComponentType[] { typeof(RenderMesh), typeof(Tags.Sector) }
             }
         );
     }

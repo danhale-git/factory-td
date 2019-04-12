@@ -57,7 +57,7 @@ public class SectorSystem : ComponentSystem
         topologyUtil = new TopologyUtil();
 
         EntityQueryDesc sectorQuery = new EntityQueryDesc{
-            All = new ComponentType[] { typeof(Tags.TerrainCell), typeof(CellSet) },
+            All = new ComponentType[] { typeof(Tags.Sector), typeof(CellSet) },
             None = new ComponentType[] { typeof(TypeComponent) }
         };
         sectorGroup = GetEntityQuery(sectorQuery);
