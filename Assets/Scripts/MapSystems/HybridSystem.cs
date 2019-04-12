@@ -10,6 +10,7 @@ using Unity.Transforms;
 
 public class HybridSystem : ComponentSystem
 {
+    EntityManager entityManager = World.Active.EntityManager;
     EntityQuery hybridQuery;
 
     protected override void OnCreate()
@@ -43,5 +44,10 @@ public class HybridSystem : ComponentSystem
                 float3 position = translations[e].Value;
             }
         }
+
+        commandBuffer.Playback(entityManager);
+        commandBuffer.Dispose();
+
+        chunks.Dispose();
     }
 }
