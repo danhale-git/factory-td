@@ -33,6 +33,18 @@ public class SectorSystem : ComponentSystem
         public WorleyNoise.PointData data;
     }
 
+    [InternalBufferCapacity(0)]
+    public struct AdjacentCell : IBufferElementData
+    {
+        public WorleyNoise.CellData data;
+    }
+
+    [InternalBufferCapacity(0)]
+    public struct SectorCell : IBufferElementData
+    {
+        public WorleyNoise.CellData data;
+    }
+
     protected override void OnCreate()
     {
         entityManager = World.Active.EntityManager;
@@ -76,15 +88,25 @@ public class SectorSystem : ComponentSystem
                 commandBuffer.AddComponent<SectorNoiseValue>(sectorEntity, new SectorNoiseValue{ Value = value });
                 commandBuffer.AddComponent<TypeComponent>(sectorEntity, type); 
 
+                DynamicBuffer<SectorCell> sectorCells = commandBuffer.AddBuffer<SectorCell>(sectorEntity);
+                DynamicBuffer<AdjacentCell> adjacentCells = commandBuffer.AddBuffer<AdjacentCell>(sectorEntity);
+
                 float currentGrouping = topologyUtil.CellGrouping(startCell.index);
 
                 for(int i = 0; i < cellSet.Length; i++)
                 {
+                    WorleyNoise.CellData cellData = worley.GetCellData(cellSet[i].data.currentCellIndex);
                     if(topologyUtil.CellGrouping(cellSet[i].data.currentCellIndex) != currentGrouping)
-                        continue;
-                    
-                    DebugSystem.Cube(cellSet[i].data.currentCellPosition + new float3(0,20,0), new float4(0, 1, 1, 1));
-                    cellSystem.TrySetCell(sectorEntity, cellSet[i].data.currentCellIndex);
+                    {
+                        adjacentCells.Add(new AdjacentCell{ data = cellData });
+                    }
+                    else
+                    {
+                        DebugSystem.Cube(cellSet[i].data.currentCellPosition + new float3(0,20,0), new float4(0, 1, 1, 1));
+                        
+                        sectorCells.Add(new SectorCell{ data = cellData });
+                        cellSystem.TrySetCell(sectorEntity, cellSet[i].data.currentCellIndex);
+                    }
                 }
 
                 /*if(!AllEntitiesHaveWorley(cells))

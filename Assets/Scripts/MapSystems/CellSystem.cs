@@ -35,9 +35,6 @@ public class CellSystem : ComponentSystem
     JobHandle runningJobHandle;
     JobHandle previousHandle;
 
-    //NativeQueue<int2> floodFillQueue;
-    //NativeList<SectorSystem.Cell> cellsInGroup;
-
     ArrayUtil arrayUtil;
 
     public struct MatrixComponent : IComponentData
@@ -91,17 +88,29 @@ public class CellSystem : ComponentSystem
         cellMatrix.Dispose();
         if(runningCommandBuffer.IsCreated) runningCommandBuffer.Dispose();
     }
+    
+    protected override void OnStartRunning()
+    {
+        UpdateCurrentCellIndex();
+        GenerateOneSector(currentCellIndex);
+    }
 
     protected override void OnUpdate()
     {
+        UpdateCurrentCellIndex();
+
         if(runningCommandBuffer.IsCreated)
         {
             if(!runningJobHandle.IsCompleted) return;
             else JobCompleteAndBufferPlayback();
         }
+        else
+        {
+            GenerateAdjacentSectors();
+        }
 
-        if(!UpdateCurrentCellIndex()) return;
-        else GenerateSurroundingCells();
+        //if(!UpdateCurrentCellIndex()) return;
+        //else GenerateAdjacentSectors();
     }
 
     void JobCompleteAndBufferPlayback()
@@ -127,90 +136,71 @@ public class CellSystem : ComponentSystem
         }
     }
 
-    void GenerateSurroundingCells()
+    NativeList<int2> AdjacentCells()
+    {
+        NativeList<int2> adjacent = new NativeList<int2>(Allocator.Temp);
+       
+        return adjacent;
+    }
+
+    void GenerateOneSector(int2 index)
     {
         runningCommandBuffer = new EntityCommandBuffer(Allocator.TempJob);
         runningJobHandle = new JobHandle();
 		previousHandle = new JobHandle();
 
-        if(cellMatrix.ItemIsSet(currentCellIndex)) return;
-        Debug.Log("spawning cell at "+currentCellIndex);
-        Entity sectorEntity = CreateCell(currentCellIndex);
-        ScheduleCellJob(sectorEntity);
-
-        /*for(int x = -1; x < 1; x++)
-            for(int z = -1; z < 1; z++)
-            {
-                int2 cellIndex = new int2(x, z) + currentCellIndex;
-                
-                if(cellMatrix.ItemIsSet(cellIndex)) continue;
-
-                Entity sectorEntity = CreateCell(cellIndex);
-                ScheduleCellJob(sectorEntity);
-
-                //NativeList<SectorSystem.Cell> group = FloodFillCellGroup(cellIndex);
-
-                //CreateSectorEntity(group);
-            } */
+        if(cellMatrix.ItemIsSet(index))
+        {
+            return;
+        }
+        else
+        {
+            SpawnSector(index);
+        }   
     }
 
-    /*NativeList<SectorSystem.Cell> FloodFillCellGroup(int2 startIndex)
+    void GenerateAdjacentSectors()
     {
-        floodFillQueue = new NativeQueue<int2>(Allocator.Temp);
-        cellsInGroup = new NativeList<SectorSystem.Cell>(Allocator.Temp);
+        runningCommandBuffer = new EntityCommandBuffer(Allocator.TempJob);
+        runningJobHandle = new JobHandle();
+		previousHandle = new JobHandle();
 
-        floodFillQueue.Enqueue(startIndex);
-        while(floodFillQueue.Count > 0)
+        if(cellMatrix.ItemIsSet(currentCellIndex))
         {
-            int2 cellIndex = floodFillQueue.Dequeue();
-            if(cellMatrix.ItemIsSet(cellIndex)) continue;
+            Entity sectorEntity = cellMatrix.GetItem(currentCellIndex);
+            if(!entityManager.HasComponent<SectorSystem.AdjacentCell>(sectorEntity))
+                return;
 
-            Entity cellEntity = CreateCell(cellIndex);
-            ScheduleCellJob(cellEntity);
-
-            EnqueueAdjacentInGroup(cellIndex);
+            DynamicBuffer<SectorSystem.AdjacentCell> adjacentCells = entityManager.GetBuffer<SectorSystem.AdjacentCell>(sectorEntity);
+            NativeArray<SectorSystem.AdjacentCell> adjacentArray = new NativeArray<SectorSystem.AdjacentCell>(adjacentCells.AsNativeArray(), Allocator.Temp);
+            for(int i = 0; i < adjacentArray.Length; i++)
+            {
+                WorleyNoise.CellData cell = adjacentArray[i].data;
+                if(!cellMatrix.ItemIsSet(cell.index))
+                    SpawnSector(cell.index);
+            }
+            adjacentArray.Dispose();
         }
+    }
 
-        floodFillQueue.Dispose();
-
-        return cellsInGroup;
-    } */
-
-    /*void CreateSectorEntity(NativeList<SectorSystem.Cell> group)
+    void SpawnSector(int2 startIndex)
     {
-        Entity sectorEntity = entityManager.CreateEntity(sectorArchetype);
-        entityManager.GetBuffer<SectorSystem.Cell>(sectorEntity).AddRange(group);
-                        
-        group.Dispose();
-    } */
+        Entity sectorEntity = CreateSectorEntity(startIndex);
+        ScheduleCellGroupJob(sectorEntity);
+    }
 
-    Entity CreateCell(int2 cellIndex)
+    Entity CreateSectorEntity(int2 cellIndex)
     {
         Entity sectorEntity = entityManager.CreateEntity(cellArchetype);
         entityManager.AddComponentData<WorleyNoise.CellData>(sectorEntity, worley.GetCellData(cellIndex));
         TrySetCell(sectorEntity, cellIndex);
 
-        /*cellsInGroup.Add(new SectorSystem.Cell{
-                data = worley.GetCellData(cellIndex),
-                entity = cellEntity
-            }
-        ); */
-
         return sectorEntity;
     }
 
-    void ScheduleCellJob(Entity cellEntity)
+    void ScheduleCellGroupJob(Entity cellEntity)
     { 
         WorleyNoise.CellData startCell = entityManager.GetComponentData<WorleyNoise.CellData>(cellEntity);
-        //cellMatrix.AddItem(cellEntity, cell.index);
-
-        /*FloodFillCellJob job = new FloodFillCellJob{
-            commandBuffer = runningCommandBuffer,
-            cellEntity = cellEntity,
-            matrix = new Matrix<WorleyNoise.PointData>(10, Allocator.TempJob, cell.position, job: true),
-            worley = this.worley,
-            cell = cell
-        }; */
 
         FloodFillCellGroupJob job = new FloodFillCellGroupJob{
             commandBuffer = runningCommandBuffer,
@@ -224,28 +214,6 @@ public class CellSystem : ComponentSystem
         runningJobHandle = JobHandle.CombineDependencies(newHandle, runningJobHandle);
         previousHandle = newHandle;
     }
-
-    /*void EnqueueAdjacentInGroup(int2 center)
-    {
-        float centerGrouping = biomes.CellGrouping(center);
-        
-        for(int x = -1; x <= 1; x++)
-            for(int z = -1; z <= 1; z++)
-            {
-                int2 baseIndex = new int2(x, z);
-                if(CornerOrCenter(baseIndex)) continue;
-
-                int2 adjacent = center + baseIndex;
-                float adjacentGrouping = biomes.CellGrouping(adjacent);
-
-                if(adjacentGrouping == centerGrouping) floodFillQueue.Enqueue(adjacent);
-            }
-    }
-
-    bool CornerOrCenter(int2 index)
-    {
-        return index.Equals(int2.zero) || !(index.x == 0 || index.y == 0);
-    } */
 
     public float GetHeightAtPosition(float3 position)
     {
