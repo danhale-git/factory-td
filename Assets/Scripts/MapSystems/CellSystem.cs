@@ -88,12 +88,6 @@ public class CellSystem : ComponentSystem
         cellMatrix.Dispose();
         if(runningCommandBuffer.IsCreated) runningCommandBuffer.Dispose();
     }
-    
-    /*protected override void OnStartRunning()
-    {
-        UpdateCurrentCellIndex();
-        GenerateOneSector(currentCellIndex);
-    } */
 
     protected override void OnUpdate()
     {
