@@ -133,8 +133,13 @@ public class CellSystem : ComponentSystem
         runningJobHandle = new JobHandle();
 		previousHandle = new JobHandle();
 
-        for(int x = -2; x < 2; x++)
-            for(int z = -2; z < 2; z++)
+        if(cellMatrix.ItemIsSet(currentCellIndex)) return;
+        Debug.Log("spawning cell at "+currentCellIndex);
+        Entity sectorEntity = CreateCell(currentCellIndex);
+        ScheduleCellJob(sectorEntity);
+
+        /*for(int x = -1; x < 1; x++)
+            for(int z = -1; z < 1; z++)
             {
                 int2 cellIndex = new int2(x, z) + currentCellIndex;
                 
@@ -146,7 +151,7 @@ public class CellSystem : ComponentSystem
                 //NativeList<SectorSystem.Cell> group = FloodFillCellGroup(cellIndex);
 
                 //CreateSectorEntity(group);
-            }
+            } */
     }
 
     /*NativeList<SectorSystem.Cell> FloodFillCellGroup(int2 startIndex)
@@ -181,8 +186,9 @@ public class CellSystem : ComponentSystem
 
     Entity CreateCell(int2 cellIndex)
     {
-        Entity cellEntity = entityManager.CreateEntity(cellArchetype);
-        entityManager.AddComponentData<WorleyNoise.CellData>(cellEntity, worley.GetCellData(cellIndex));
+        Entity sectorEntity = entityManager.CreateEntity(cellArchetype);
+        entityManager.AddComponentData<WorleyNoise.CellData>(sectorEntity, worley.GetCellData(cellIndex));
+        TrySetCell(sectorEntity, cellIndex);
 
         /*cellsInGroup.Add(new SectorSystem.Cell{
                 data = worley.GetCellData(cellIndex),
@@ -190,14 +196,12 @@ public class CellSystem : ComponentSystem
             }
         ); */
 
-        DebugSystem.Count("Cell height "+biomes.CellHeight(cellIndex));
-
-        return cellEntity;
+        return sectorEntity;
     }
 
     void ScheduleCellJob(Entity cellEntity)
     { 
-        WorleyNoise.CellData cell = entityManager.GetComponentData<WorleyNoise.CellData>(cellEntity);
+        WorleyNoise.CellData startCell = entityManager.GetComponentData<WorleyNoise.CellData>(cellEntity);
         //cellMatrix.AddItem(cellEntity, cell.index);
 
         /*FloodFillCellJob job = new FloodFillCellJob{
@@ -210,9 +214,9 @@ public class CellSystem : ComponentSystem
 
         FloodFillCellGroupJob job = new FloodFillCellGroupJob{
             commandBuffer = runningCommandBuffer,
-            startCell = cell,
+            startCell = startCell,
             sectorEntity = cellEntity,
-            matrix = new Matrix<WorleyNoise.PointData>(10, Allocator.TempJob, cell.position, job: true),
+            matrix = new Matrix<WorleyNoise.PointData>(10, Allocator.TempJob, startCell.position, job: true),
             worley = this.worley
         };
 
@@ -245,7 +249,7 @@ public class CellSystem : ComponentSystem
 
     public float GetHeightAtPosition(float3 position)
     {
-        float3 roundedPosition = math.round(position);
+        /*float3 roundedPosition = math.round(position);
         int2 cellIndex = worley.GetPointData(roundedPosition.x, roundedPosition.z).currentCellIndex;
         Entity cellEntity = cellMatrix.GetItem(cellIndex);
 
@@ -255,12 +259,21 @@ public class CellSystem : ComponentSystem
         DynamicBuffer<TopologySystem.Height> heightData = entityManager.GetBuffer<TopologySystem.Height>(cellEntity);
         MatrixComponent matrix = entityManager.GetComponentData<MatrixComponent>(cellEntity);
 
-        return matrix.GetItem(roundedPosition, heightData, new ArrayUtil()).height;
+        return matrix.GetItem(roundedPosition, heightData, new ArrayUtil()).height; */
+        return 20;
     }
 
     public bool TryGetCell(int2 index, out Entity entity)
     {
         entity = new Entity();
         return cellMatrix.TryGetItem(index, out entity);
+    }
+
+    public bool TrySetCell(Entity sectorEntity, int2 index)
+    {
+        if(cellMatrix.ItemIsSet(index)) return false;
+
+        cellMatrix.AddItem(sectorEntity, index);
+        return true;
     }
 }

@@ -8,7 +8,9 @@ using Unity.Collections;
 public class SectorSystem : ComponentSystem
 {
     EntityManager entityManager;
+    CellSystem cellSystem;
 
+    WorleyNoise worley;
     TopologyUtil topologyUtil;
 
     EntityQuery sectorGroup;
@@ -26,20 +28,21 @@ public class SectorSystem : ComponentSystem
     }
     
     [InternalBufferCapacity(0)]
-    public struct Cell : IBufferElementData
+    public struct CellSet : IBufferElementData
     {
-        public WorleyNoise.CellData data;
-        public Entity entity;
+        public WorleyNoise.PointData data;
     }
 
     protected override void OnCreate()
     {
         entityManager = World.Active.EntityManager;
+        cellSystem = World.Active.GetOrCreateSystem<CellSystem>();
 
+        worley = TerrainSettings.CellWorley();
         topologyUtil = new TopologyUtil();
 
         EntityQueryDesc sectorQuery = new EntityQueryDesc{
-            All = new ComponentType[] { typeof(Tags.TerrainCell), typeof(WorleyNoise.CellData) },
+            All = new ComponentType[] { typeof(Tags.TerrainCell), typeof(CellSet) },
             None = new ComponentType[] { typeof(TypeComponent) }
         };
         sectorGroup = GetEntityQuery(sectorQuery);
@@ -51,40 +54,52 @@ public class SectorSystem : ComponentSystem
         NativeArray<ArchetypeChunk> chunks = sectorGroup.CreateArchetypeChunkArray(Allocator.TempJob);
 
         ArchetypeChunkEntityType entityType = GetArchetypeChunkEntityType();
-        //ArchetypeChunkBufferType<Cell> cellArrayType = GetArchetypeChunkBufferType<Cell>();
+        ArchetypeChunkBufferType<CellSet> cellArrayType = GetArchetypeChunkBufferType<CellSet>();
 
         for(int c = 0; c < chunks.Length; c++)
         {
             ArchetypeChunk chunk = chunks[c];
             NativeArray<Entity> entities = chunk.GetNativeArray(entityType);
-            //BufferAccessor<Cell> cellArrays = chunk.GetBufferAccessor(cellArrayType);
+            BufferAccessor<CellSet> cellArrays = chunk.GetBufferAccessor(cellArrayType);
 
             for(int e = 0; e < entities.Length; e++)
             {
                 Entity sectorEntity = entities[e];
-                //DynamicBuffer<Cell> cells = cellArrays[e];
+                DynamicBuffer<CellSet> cellSet = cellArrays[e];
+
+                WorleyNoise.CellData startCell = entityManager.GetComponentData<WorleyNoise.CellData>(sectorEntity);
+
+                TypeComponent type = new TypeComponent();
+                
+                float value = entityManager.GetComponentData<WorleyNoise.CellData>(sectorEntity).value;
+
+                commandBuffer.AddComponent<SectorNoiseValue>(sectorEntity, new SectorNoiseValue{ Value = value });
+                commandBuffer.AddComponent<TypeComponent>(sectorEntity, type); 
+
+                float currentGrouping = topologyUtil.CellGrouping(startCell.index);
+
+                for(int i = 0; i < cellSet.Length; i++)
+                {
+                    if(topologyUtil.CellGrouping(cellSet[i].data.currentCellIndex) != currentGrouping)
+                        continue;
+                    
+                    DebugSystem.Cube(cellSet[i].data.currentCellPosition + new float3(0,20,0), new float4(0, 1, 1, 1));
+                    cellSystem.TrySetCell(sectorEntity, cellSet[i].data.currentCellIndex);
+                }
 
                 /*if(!AllEntitiesHaveWorley(cells))
                     continue;
 
                 float noiseValue = GetSectorValue(cells); */
 
-                TypeComponent type = new TypeComponent();
-
                 /*if(!SectorIsPathable(cells))
                     type.Value = SectorTypes.UNPATHABLE;
                 else if(SectorIsLowest(cells[0].data.index) && noiseValue > 0.5f)
                     type.Value = SectorTypes.LAKE;
 
-
                 AddSectorComponentsToCells(noiseValue, type, cells, commandBuffer);  */ 
 
-                float value = entityManager.GetComponentData<WorleyNoise.CellData>(sectorEntity).value;
-
-                commandBuffer.AddComponent<SectorNoiseValue>(sectorEntity, new SectorNoiseValue{ Value = value });
-                commandBuffer.AddComponent<TypeComponent>(sectorEntity, type);              
-
-                commandBuffer.AddComponent(sectorEntity, type);
+                //commandBuffer.AddComponent(sectorEntity, type);
             }
         }
 
@@ -94,7 +109,7 @@ public class SectorSystem : ComponentSystem
         chunks.Dispose();
     }
 
-    bool SectorIsLowest(int2 cellIndex)
+    /*bool SectorIsLowest(int2 cellIndex)
     {
         return topologyUtil.CellHeight(cellIndex) <= TerrainSettings.cellheightMultiplier; 
     }
@@ -170,5 +185,5 @@ public class SectorSystem : ComponentSystem
     {
         int2 adjacentDirection = point.adjacentCellIndex - point.currentCellIndex;
         return topologyUtil.EdgeIsSloped(adjacentDirection, point);
-    }
+    } */
 }
