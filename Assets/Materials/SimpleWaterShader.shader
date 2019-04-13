@@ -1,4 +1,4 @@
-﻿Shader "Terrain/TerrainShader"
+﻿Shader "Terrain/WaterShader"
 {
   Properties
   {
