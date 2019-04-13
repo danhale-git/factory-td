@@ -18,6 +18,7 @@ namespace MapGeneration
         DynamicBuffer<Triangle> triangles;
 
         [ReadOnly] public Entity sectorEntity;
+        [ReadOnly] public SectorSystem.SectorTypes sectorType;
         [ReadOnly] public CellSystem.MatrixComponent matrix;
 
         [DeallocateOnJobCompletion][ReadOnly] public NativeArray<WorleyNoise.PointData> worley;
@@ -28,9 +29,6 @@ namespace MapGeneration
 
         public void Execute()
         {
-            float4 grey = new float4(0.6f, 0.6f, 0.6f, 1);
-            float4 green = new float4(0.2f, 0.8f, 0, 1);
-
             vertices = commandBuffer.AddBuffer<Vertex>(sectorEntity);
             colors = commandBuffer.AddBuffer<VertColor>(sectorEntity);
             triangles = commandBuffer.AddBuffer<Triangle>(sectorEntity);
@@ -63,18 +61,11 @@ namespace MapGeneration
                     vertices.Add(new Vertex{ vertex = new float3(tr.x, trHeight.height, tr.y) });
                     vertices.Add(new Vertex{ vertex = new float3(br.x, brHeight.height, br.y) });
 
-                    float4 color;
-
                     float difference = LargestHeightDifference(blHeight.height, tlHeight.height, trHeight.height, brHeight.height);
                     WorleyNoise.PointData worleyPoint = matrix.GetItem<WorleyNoise.PointData>(bl, worley, arrayUtil);
-                    if(difference > 1)
-                    {
-                        color = grey;
-                    }
-                    else
-                    {
-                        color = green;
-                    }
+                    float4 color = PointColor(worleyPoint, difference);
+
+                    
 
                     colors.Add(new VertColor{ color = color });
                     colors.Add(new VertColor{ color = color });
@@ -85,6 +76,21 @@ namespace MapGeneration
 
                     indexOffset += 4;
                 }
+        }
+
+        float4 PointColor(WorleyNoise.PointData worleyPoint, float difference)
+        {
+            float4 grey = new float4(0.6f, 0.6f, 0.6f, 1);
+            float4 green = new float4(0.2f, 0.6f, 0.1f, 1);
+
+            if(sectorType == SectorSystem.SectorTypes.MOUNTAIN || difference > 1)
+            {
+                return grey;
+            }
+            else
+            {
+                return green;
+            }
         }
 
         float LargestHeightDifference(float a, float b, float c, float d)

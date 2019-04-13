@@ -52,7 +52,7 @@ public class MeshDataSystem : ComponentSystem
 
         var entityType = GetArchetypeChunkEntityType();
         var matrixType = GetArchetypeChunkComponentType<CellSystem.MatrixComponent>(true);
-        var cellType = GetArchetypeChunkComponentType<WorleyNoise.CellData>(true);
+        var sectorType = GetArchetypeChunkComponentType<SectorSystem.TypeComponent>(true);
 
         var worleyType = GetArchetypeChunkBufferType<WorleyNoise.PointData>(true);
         var topologyType = GetArchetypeChunkBufferType<TopologySystem.Height>(true);
@@ -63,14 +63,13 @@ public class MeshDataSystem : ComponentSystem
 
             NativeArray<Entity> entities = chunk.GetNativeArray(entityType);
             NativeArray<CellSystem.MatrixComponent> matrices = chunk.GetNativeArray(matrixType);
-            NativeArray<WorleyNoise.CellData> cells = chunk.GetNativeArray(cellType);
+            NativeArray<SectorSystem.TypeComponent> sectorTypes = chunk.GetNativeArray(sectorType);
 
             BufferAccessor<WorleyNoise.PointData> worleyArrays = chunk.GetBufferAccessor(worleyType);
             BufferAccessor<TopologySystem.Height> topologyArrays = chunk.GetBufferAccessor(topologyType);
 
             for(int e = 0; e < entities.Length; e++)
             {
-
                 var worley = new NativeArray<WorleyNoise.PointData>(topologyArrays[e].Length, Allocator.TempJob);
                 var height = new NativeArray<TopologySystem.Height>(topologyArrays[e].Length, Allocator.TempJob);
 
@@ -80,6 +79,7 @@ public class MeshDataSystem : ComponentSystem
                 TerrainMeshDataJob job = new TerrainMeshDataJob{
                     commandBuffer = jobManager.commandBuffer,
                     sectorEntity = entities[e],
+                    sectorType = sectorTypes[e].Value,
                     matrix = matrices[e],
                     worley = worley,
                     pointHeight = height,
@@ -111,7 +111,7 @@ public class MeshDataSystem : ComponentSystem
         //float heightColor = bottomLeft.height / TerrainSettings.heightMultiplier;
         //color = new float4(heightColor, heightColor,heightColor, 1);
 
-        if(entityManager.GetComponentData<SectorSystem.TypeComponent>(entity).Value == SectorSystem.SectorTypes.UNPATHABLE)
+        if(entityManager.GetComponentData<SectorSystem.TypeComponent>(entity).Value == SectorSystem.SectorTypes.MOUNTAIN)
             color += new float4(0.5f,0,0,1);
 
         /*int2 adjacentDirection = worleyPoint.adjacentCellIndex - worleyPoint.currentCellIndex;

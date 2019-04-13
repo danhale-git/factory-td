@@ -17,6 +17,7 @@ public struct TopologyUtil
     {
         return CellHeightGroup(cellIndex) * TerrainSettings.cellheightMultiplier;
     }
+    
     public float CellHeightGroup(int2 cellIndex)
     {
         float simplexNoise = heightSimplex.GetSimplex(cellIndex.x, cellIndex.y);

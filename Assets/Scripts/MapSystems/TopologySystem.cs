@@ -78,7 +78,7 @@ public class TopologySystem : ComponentSystem
                     else
                         pointHeight.height = topologyUtil.CellHeight(worley[i].currentCellIndex);
 
-                    if(sectorType == SectorSystem.SectorTypes.UNPATHABLE)
+                    if(sectorType == SectorSystem.SectorTypes.MOUNTAIN)
                     {
                         pointHeight.height += (point.distance2Edge - 0.3f) * (TerrainSettings.cellheightMultiplier * 3);
                     }

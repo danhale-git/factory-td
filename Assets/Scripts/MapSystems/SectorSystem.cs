@@ -18,7 +18,7 @@ public class SectorSystem : ComponentSystem
     DynamicBuffer<SectorCell> sectorCells;
     DynamicBuffer<AdjacentCell> adjacentCells;
 
-    public enum SectorTypes { NONE, UNPATHABLE, LAKE }
+    public enum SectorTypes { NONE, MOUNTAIN, LAKE }
 
     public struct TypeComponent : IComponentData
     {
@@ -103,7 +103,7 @@ public class SectorSystem : ComponentSystem
                 
                 if(!pathable)
                 {
-                    type.Value = SectorTypes.UNPATHABLE;
+                    type.Value = SectorTypes.MOUNTAIN;
                 }
 
                 commandBuffer.AddComponent<TypeComponent>(sectorEntity, type); 
