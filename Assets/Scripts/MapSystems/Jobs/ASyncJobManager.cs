@@ -10,7 +10,8 @@ public struct ASyncJobManager
     public JobHandle previousDependency;
     JobHandle allJobDependencies;
 
-    public bool NoJobsRunning()
+    //  Run in OnUpdate(), only schedule more jobs if true
+    public bool AllJobsCompleted()
     {
         if(commandBuffer.IsCreated)
         {
@@ -29,12 +30,16 @@ public struct ASyncJobManager
         }
     }
 
-    public void NewJobScheduled(JobHandle newHandle)
+    //  Schedule jobs using this method
+    public void ScheduleNewJob<T>(T job) where T : struct, IJob
     {
+        JobHandle newHandle = IJobExtensions.Schedule<T>(job, previousDependency);
+
         allJobDependencies = JobHandle.CombineDependencies(newHandle, allJobDependencies);
         previousDependency = newHandle;
     }
 
+    //  Call in OnDestroy()
     public void Dispose()
     {
         if(commandBuffer.IsCreated) commandBuffer.Dispose();

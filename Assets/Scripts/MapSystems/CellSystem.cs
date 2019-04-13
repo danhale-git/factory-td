@@ -88,12 +88,12 @@ public class CellSystem : ComponentSystem
     {
         UpdateCurrentCellIndex();
 
-        if(!jobManager.NoJobsRunning()) return;
+        if(!jobManager.AllJobsCompleted()) return;
         
         if(cellMatrix.ItemIsSet(currentCellIndex))
             GenerateAdjacentSectors();
         else
-            GenerateOneSector(currentCellIndex);
+            CreateSector(currentCellIndex);
     }
 
     bool UpdateCurrentCellIndex()
@@ -110,11 +110,6 @@ public class CellSystem : ComponentSystem
             currentCellIndex = index;
             return true;
         }
-    }
-
-    void GenerateOneSector(int2 cellIndex)
-    {
-        CreateSector(cellIndex);
     }
 
     void GenerateAdjacentSectors()
@@ -168,8 +163,7 @@ public class CellSystem : ComponentSystem
             worley = this.worley
         };
 
-        JobHandle newHandle = job.Schedule(jobManager.previousDependency);
-        jobManager.NewJobScheduled(newHandle);
+        jobManager.ScheduleNewJob(job);
     }
 
     public float GetHeightAtPosition(float3 position)
