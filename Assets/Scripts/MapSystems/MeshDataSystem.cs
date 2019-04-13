@@ -52,7 +52,8 @@ public class MeshDataSystem : ComponentSystem
 
         var entityType = GetArchetypeChunkEntityType();
         var matrixType = GetArchetypeChunkComponentType<CellSystem.MatrixComponent>(true);
-        var sectorType = GetArchetypeChunkComponentType<SectorSystem.TypeComponent>(true);
+        var sectorTypeType = GetArchetypeChunkComponentType<SectorSystem.TypeComponent>(true);
+        var sectorGroupingType = GetArchetypeChunkComponentType<SectorSystem.SectorGrouping>(true);
 
         var worleyType = GetArchetypeChunkBufferType<WorleyNoise.PointData>(true);
         var topologyType = GetArchetypeChunkBufferType<TopologySystem.Height>(true);
@@ -63,7 +64,8 @@ public class MeshDataSystem : ComponentSystem
 
             NativeArray<Entity> entities = chunk.GetNativeArray(entityType);
             NativeArray<CellSystem.MatrixComponent> matrices = chunk.GetNativeArray(matrixType);
-            NativeArray<SectorSystem.TypeComponent> sectorTypes = chunk.GetNativeArray(sectorType);
+            NativeArray<SectorSystem.TypeComponent> sectorTypes = chunk.GetNativeArray(sectorTypeType);
+            NativeArray<SectorSystem.SectorGrouping> sectorGroupings = chunk.GetNativeArray(sectorGroupingType);
 
             BufferAccessor<WorleyNoise.PointData> worleyArrays = chunk.GetBufferAccessor(worleyType);
             BufferAccessor<TopologySystem.Height> topologyArrays = chunk.GetBufferAccessor(topologyType);
@@ -82,6 +84,7 @@ public class MeshDataSystem : ComponentSystem
                     sectorType = sectorTypes[e].Value,
                     matrix = matrices[e],
                     worley = worley,
+                    sectorGrouping = sectorGroupings[e].Value,
                     pointHeight = height,
                     arrayUtil = new ArrayUtil()
                 }; 

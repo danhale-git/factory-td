@@ -29,6 +29,11 @@ public class SectorSystem : ComponentSystem
     {
         public float Value;
     }
+
+    public struct SectorGrouping : IComponentData
+    {
+        public float Value;
+    }
     
     [InternalBufferCapacity(0)]
     public struct CellSet : IBufferElementData
@@ -107,6 +112,7 @@ public class SectorSystem : ComponentSystem
                 }
 
                 commandBuffer.AddComponent<TypeComponent>(sectorEntity, type); 
+                commandBuffer.AddComponent<SectorGrouping>(sectorEntity, new SectorGrouping{ Value = grouping }); 
             }
         }
 
@@ -181,5 +187,5 @@ public class SectorSystem : ComponentSystem
     bool AdjacentEdgeIsSlope(WorleyNoise.PointData point)
     {
         return topologyUtil.EdgeIsSloped(point);
-    } 
+    }
 }

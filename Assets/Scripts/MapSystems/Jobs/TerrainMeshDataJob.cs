@@ -24,6 +24,8 @@ namespace MapGeneration
         [DeallocateOnJobCompletion][ReadOnly] public NativeArray<WorleyNoise.PointData> worley;
         [DeallocateOnJobCompletion][ReadOnly] public NativeArray<TopologySystem.Height> pointHeight;
 
+        [ReadOnly] public float sectorGrouping;
+
         [ReadOnly] public ArrayUtil arrayUtil;
         [ReadOnly] public TopologyUtil topologyUti;
 
@@ -43,10 +45,15 @@ namespace MapGeneration
                     int2 tr = new int2(x+1, z+1);
                     int2 br = new int2(x+1, z  );
 
-                    if( matrix.GetItem<WorleyNoise.PointData>(bl, worley, arrayUtil).isSet == 0 ||
-                        matrix.GetItem<WorleyNoise.PointData>(tl, worley, arrayUtil).isSet == 0 ||
-                        matrix.GetItem<WorleyNoise.PointData>(tr, worley, arrayUtil).isSet == 0 ||
-                        matrix.GetItem<WorleyNoise.PointData>(br, worley, arrayUtil).isSet == 0 )
+                    WorleyNoise.PointData blWorley = matrix.GetItem<WorleyNoise.PointData>(bl, worley, arrayUtil);
+                    WorleyNoise.PointData tlWorley = matrix.GetItem<WorleyNoise.PointData>(tl, worley, arrayUtil);
+                    WorleyNoise.PointData trWorley = matrix.GetItem<WorleyNoise.PointData>(tr, worley, arrayUtil);
+                    WorleyNoise.PointData brWorley = matrix.GetItem<WorleyNoise.PointData>(br, worley, arrayUtil);
+
+                    if( blWorley.isSet == 0 ||
+                        tlWorley.isSet == 0 ||
+                        trWorley.isSet == 0 ||
+                        brWorley.isSet == 0 )
                     {
                         continue;
                     }
@@ -56,29 +63,84 @@ namespace MapGeneration
                     TopologySystem.Height trHeight = matrix.GetItem<TopologySystem.Height>(tr, pointHeight, arrayUtil);
                     TopologySystem.Height brHeight = matrix.GetItem<TopologySystem.Height>(br, pointHeight, arrayUtil);
 
-                    vertices.Add(new Vertex{ vertex = new float3(bl.x, blHeight.height, bl.y) });
-                    vertices.Add(new Vertex{ vertex = new float3(tl.x, tlHeight.height, tl.y) });
-                    vertices.Add(new Vertex{ vertex = new float3(tr.x, trHeight.height, tr.y) });
-                    vertices.Add(new Vertex{ vertex = new float3(br.x, brHeight.height, br.y) });
+                    bool northWestToSouthEast = NorthWestToSouthEast(blWorley, tlWorley, trWorley, brWorley);
 
-                    float difference = LargestHeightDifference(blHeight.height, tlHeight.height, trHeight.height, brHeight.height);
-                    WorleyNoise.PointData worleyPoint = matrix.GetItem<WorleyNoise.PointData>(bl, worley, arrayUtil);
-                    float4 color = PointColor(worleyPoint, difference);
+                    if(northWestToSouthEast)
+                    {
+                        vertices.Add(new Vertex{ vertex = new float3(bl.x, blHeight.height, bl.y) });
+                        vertices.Add(new Vertex{ vertex = new float3(tl.x, tlHeight.height, tl.y) });
+                        vertices.Add(new Vertex{ vertex = new float3(tr.x, trHeight.height, tr.y) });
 
-                    
+                        float difference = LargestHeightDifference(blHeight.height, tlHeight.height, trHeight.height);
+                        colors.Add(new VertColor{ color = PointColor(difference) });
+                        colors.Add(new VertColor{ color = PointColor(difference) });
+                        colors.Add(new VertColor{ color = PointColor(difference) });
 
-                    colors.Add(new VertColor{ color = color });
-                    colors.Add(new VertColor{ color = color });
-                    colors.Add(new VertColor{ color = color });
-                    colors.Add(new VertColor{ color = color });
 
-                    GetTriangleDataForPoint(indexOffset);
+                        vertices.Add(new Vertex{ vertex = new float3(bl.x, blHeight.height, bl.y) });
+                        vertices.Add(new Vertex{ vertex = new float3(tr.x, trHeight.height, tr.y) });
+                        vertices.Add(new Vertex{ vertex = new float3(br.x, brHeight.height, br.y) });
 
-                    indexOffset += 4;
+                        difference = LargestHeightDifference(blHeight.height, trHeight.height, brHeight.height);
+                        colors.Add(new VertColor{ color = PointColor(difference) });
+                        colors.Add(new VertColor{ color = PointColor(difference) });
+                        colors.Add(new VertColor{ color = PointColor(difference) });
+                    }
+                    else
+                    {
+                        
+                        vertices.Add(new Vertex{ vertex = new float3(bl.x, blHeight.height, bl.y) });
+                        vertices.Add(new Vertex{ vertex = new float3(tl.x, tlHeight.height, tl.y) });
+                        vertices.Add(new Vertex{ vertex = new float3(br.x, brHeight.height, br.y) });
+
+                        float difference = LargestHeightDifference(blHeight.height, tlHeight.height, brHeight.height);
+                        colors.Add(new VertColor{ color = PointColor(difference) });
+                        colors.Add(new VertColor{ color = PointColor(difference) });
+                        colors.Add(new VertColor{ color = PointColor(difference) });
+                        
+
+                        vertices.Add(new Vertex{ vertex = new float3(tl.x, tlHeight.height, tl.y) });
+                        vertices.Add(new Vertex{ vertex = new float3(tr.x, trHeight.height, tr.y) });
+                        vertices.Add(new Vertex{ vertex = new float3(br.x, brHeight.height, br.y) });
+
+                        difference = LargestHeightDifference(tlHeight.height, trHeight.height, brHeight.height);
+                        colors.Add(new VertColor{ color = PointColor(difference) });
+                        colors.Add(new VertColor{ color = PointColor(difference) });
+                        colors.Add(new VertColor{ color = PointColor(difference) });
+                    }
+
+                    GetTriangleDataForPoint(indexOffset, northWestToSouthEast);
+
+                    indexOffset += 6;
                 }
         }
 
-        float4 PointColor(WorleyNoise.PointData worleyPoint, float difference)
+        void AddVerticesForTriangle(int2 a, int2 b, int2 c, float aHeight, float bHeight, float cHeight)
+        {
+            vertices.Add(new Vertex{ vertex = new float3(a.x, aHeight, a.y) });
+            vertices.Add(new Vertex{ vertex = new float3(b.x, bHeight, b.y) });
+            vertices.Add(new Vertex{ vertex = new float3(b.x, cHeight, c.y) });
+
+            float difference = LargestHeightDifference(aHeight, bHeight, cHeight);
+            colors.Add(new VertColor{ color = PointColor(difference) });
+            colors.Add(new VertColor{ color = PointColor(difference) });
+            colors.Add(new VertColor{ color = PointColor(difference) });
+        }
+
+        bool NorthWestToSouthEast(WorleyNoise.PointData bl, WorleyNoise.PointData tl, WorleyNoise.PointData tr, WorleyNoise.PointData br)
+        {
+            int blHeight = (int)topologyUti.CellHeight(bl.currentCellIndex);
+            int tlHeight = (int)topologyUti.CellHeight(tl.currentCellIndex);
+            int trHeight = (int)topologyUti.CellHeight(tr.currentCellIndex);
+            int brHeight = (int)topologyUti.CellHeight(br.currentCellIndex);
+
+            if(blHeight != trHeight)
+                return false;
+            else
+                return true;
+        }
+
+        float4 PointColor(float difference)
         {
             float4 grey = new float4(0.6f, 0.6f, 0.6f, 1);
             float4 green = new float4(0.2f, 0.6f, 0.1f, 1);
@@ -93,21 +155,21 @@ namespace MapGeneration
             }
         }
 
-        float LargestHeightDifference(float a, float b, float c, float d)
+        float LargestHeightDifference(float a, float b, float c)
         {
-            float largest = math.max(a, math.max(b, math.max(c, d)));
-            float smallest = math.min(a, math.min(b, math.min(c, d)));
+            float largest = math.max(a, math.max(b, c));
+            float smallest = math.min(a, math.min(b, c));
             return largest - smallest;
         }
 
-        void GetTriangleDataForPoint(int indexOffset)
+        void GetTriangleDataForPoint(int indexOffset, bool slopeAngle)
         {
             triangles.Add(new Triangle{ triangle = 0 + indexOffset });
             triangles.Add(new Triangle{ triangle = 1 + indexOffset });
             triangles.Add(new Triangle{ triangle = 2 + indexOffset });
-            triangles.Add(new Triangle{ triangle = 0 + indexOffset });
-            triangles.Add(new Triangle{ triangle = 2 + indexOffset });
             triangles.Add(new Triangle{ triangle = 3 + indexOffset });
+            triangles.Add(new Triangle{ triangle = 4 + indexOffset });
+            triangles.Add(new Triangle{ triangle = 5 + indexOffset });
         }
 
 
