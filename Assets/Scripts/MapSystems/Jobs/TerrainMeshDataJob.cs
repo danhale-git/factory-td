@@ -67,64 +67,19 @@ namespace MapGeneration
 
                     if(northWestToSouthEast)
                     {
-                        vertices.Add(new Vertex{ vertex = new float3(bl.x, blHeight.height, bl.y) });
-                        vertices.Add(new Vertex{ vertex = new float3(tl.x, tlHeight.height, tl.y) });
-                        vertices.Add(new Vertex{ vertex = new float3(tr.x, trHeight.height, tr.y) });
-
-                        float difference = LargestHeightDifference(blHeight.height, tlHeight.height, trHeight.height);
-                        colors.Add(new VertColor{ color = PointColor(difference) });
-                        colors.Add(new VertColor{ color = PointColor(difference) });
-                        colors.Add(new VertColor{ color = PointColor(difference) });
-
-
-                        vertices.Add(new Vertex{ vertex = new float3(bl.x, blHeight.height, bl.y) });
-                        vertices.Add(new Vertex{ vertex = new float3(tr.x, trHeight.height, tr.y) });
-                        vertices.Add(new Vertex{ vertex = new float3(br.x, brHeight.height, br.y) });
-
-                        difference = LargestHeightDifference(blHeight.height, trHeight.height, brHeight.height);
-                        colors.Add(new VertColor{ color = PointColor(difference) });
-                        colors.Add(new VertColor{ color = PointColor(difference) });
-                        colors.Add(new VertColor{ color = PointColor(difference) });
+                        AddVerticesForTriangle(bl, tl, tr, blHeight.height, tlHeight.height, trHeight.height);
+                        AddVerticesForTriangle(bl, tr, br, blHeight.height, trHeight.height, brHeight.height);
                     }
                     else
                     {
-                        
-                        vertices.Add(new Vertex{ vertex = new float3(bl.x, blHeight.height, bl.y) });
-                        vertices.Add(new Vertex{ vertex = new float3(tl.x, tlHeight.height, tl.y) });
-                        vertices.Add(new Vertex{ vertex = new float3(br.x, brHeight.height, br.y) });
+                        AddVerticesForTriangle(bl, tl, br, blHeight.height, tlHeight.height, brHeight.height);
+                        AddVerticesForTriangle(tl, tr, br, tlHeight.height, trHeight.height, brHeight.height);
+                    } 
 
-                        float difference = LargestHeightDifference(blHeight.height, tlHeight.height, brHeight.height);
-                        colors.Add(new VertColor{ color = PointColor(difference) });
-                        colors.Add(new VertColor{ color = PointColor(difference) });
-                        colors.Add(new VertColor{ color = PointColor(difference) });
-                        
-
-                        vertices.Add(new Vertex{ vertex = new float3(tl.x, tlHeight.height, tl.y) });
-                        vertices.Add(new Vertex{ vertex = new float3(tr.x, trHeight.height, tr.y) });
-                        vertices.Add(new Vertex{ vertex = new float3(br.x, brHeight.height, br.y) });
-
-                        difference = LargestHeightDifference(tlHeight.height, trHeight.height, brHeight.height);
-                        colors.Add(new VertColor{ color = PointColor(difference) });
-                        colors.Add(new VertColor{ color = PointColor(difference) });
-                        colors.Add(new VertColor{ color = PointColor(difference) });
-                    }
-
-                    GetTriangleDataForPoint(indexOffset, northWestToSouthEast);
+                    GetTriangleIndicesForQuad(indexOffset, northWestToSouthEast);
 
                     indexOffset += 6;
                 }
-        }
-
-        void AddVerticesForTriangle(int2 a, int2 b, int2 c, float aHeight, float bHeight, float cHeight)
-        {
-            vertices.Add(new Vertex{ vertex = new float3(a.x, aHeight, a.y) });
-            vertices.Add(new Vertex{ vertex = new float3(b.x, bHeight, b.y) });
-            vertices.Add(new Vertex{ vertex = new float3(b.x, cHeight, c.y) });
-
-            float difference = LargestHeightDifference(aHeight, bHeight, cHeight);
-            colors.Add(new VertColor{ color = PointColor(difference) });
-            colors.Add(new VertColor{ color = PointColor(difference) });
-            colors.Add(new VertColor{ color = PointColor(difference) });
         }
 
         bool NorthWestToSouthEast(WorleyNoise.PointData bl, WorleyNoise.PointData tl, WorleyNoise.PointData tr, WorleyNoise.PointData br)
@@ -138,6 +93,25 @@ namespace MapGeneration
                 return false;
             else
                 return true;
+        }
+
+        void AddVerticesForTriangle(int2 a, int2 b, int2 c, float aHeight, float bHeight, float cHeight)
+        {
+            vertices.Add(new Vertex{ vertex = new float3(a.x, aHeight, a.y) });
+            vertices.Add(new Vertex{ vertex = new float3(b.x, bHeight, b.y) });
+            vertices.Add(new Vertex{ vertex = new float3(c.x, cHeight, c.y) });
+
+            float difference = LargestHeightDifference(aHeight, bHeight, cHeight);
+            colors.Add(new VertColor{ color = PointColor(difference) });
+            colors.Add(new VertColor{ color = PointColor(difference) });
+            colors.Add(new VertColor{ color = PointColor(difference) });
+        }
+
+        float LargestHeightDifference(float a, float b, float c)
+        {
+            float largest = math.max(a, math.max(b, c));
+            float smallest = math.min(a, math.min(b, c));
+            return largest - smallest;
         }
 
         float4 PointColor(float difference)
@@ -155,14 +129,7 @@ namespace MapGeneration
             }
         }
 
-        float LargestHeightDifference(float a, float b, float c)
-        {
-            float largest = math.max(a, math.max(b, c));
-            float smallest = math.min(a, math.min(b, c));
-            return largest - smallest;
-        }
-
-        void GetTriangleDataForPoint(int indexOffset, bool slopeAngle)
+        void GetTriangleIndicesForQuad(int indexOffset, bool slopeAngle)
         {
             triangles.Add(new Triangle{ triangle = 0 + indexOffset });
             triangles.Add(new Triangle{ triangle = 1 + indexOffset });
