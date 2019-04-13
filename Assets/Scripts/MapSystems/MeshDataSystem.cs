@@ -95,32 +95,4 @@ public class MeshDataSystem : ComponentSystem
 
         chunks.Dispose();
     }
-
-    float4 DebugTerrainColor(WorleyNoise.PointData point, WorleyNoise.CellData cell, float difference, float3 worldPosition, Entity entity)
-    {
-        float4 color;
-        
-        float distance = point.distance2Edge;
-
-        if(math.round(difference) > 1) color = new float4(0.7f, 0.7f, 0.7f, 1);
-        //else color = (entityManager.GetComponentData<SectorSystem.SectorNoiseValue>(entity).Value);
-        else color = new float4(0.2f, 0.8f, 0.1f, 1);
-        
-        color -= new float4(distance/2, distance/2, distance/2, 1); 
-
-        if(worldPosition.x == cell.position.x && worldPosition.z == cell.position.z)
-            color = new float4(1, 0, 0, 1);
-
-        //float heightColor = bottomLeft.height / TerrainSettings.heightMultiplier;
-        //color = new float4(heightColor, heightColor,heightColor, 1);
-
-        if(entityManager.GetComponentData<SectorSystem.TypeComponent>(entity).Value == SectorSystem.SectorTypes.MOUNTAIN)
-            color += new float4(0.5f,0,0,1);
-
-        /*int2 adjacentDirection = worleyPoint.adjacentCellIndex - worleyPoint.currentCellIndex;
-        if(biomes.EdgeIsSloped(adjacentDirection, worleyPoint.currentCellValue, worleyPoint.adjacentCellValue))
-            color += new float4(0, 0.5f, 0.5f, 1);  */
-
-        return color;
-    }
 }
