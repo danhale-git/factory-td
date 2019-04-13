@@ -24,9 +24,13 @@ namespace MapGeneration
         [DeallocateOnJobCompletion][ReadOnly] public NativeArray<TopologySystem.Height> pointHeight;
 
         [ReadOnly] public ArrayUtil arrayUtil;
+        [ReadOnly] public TopologyUtil topologyUti;
 
         public void Execute()
         {
+            float4 grey = new float4(0.6f, 0.6f, 0.6f, 1);
+            float4 green = new float4(0.2f, 0.8f, 0, 1);
+
             vertices = commandBuffer.AddBuffer<Vertex>(sectorEntity);
             colors = commandBuffer.AddBuffer<VertColor>(sectorEntity);
             triangles = commandBuffer.AddBuffer<Triangle>(sectorEntity);
@@ -49,10 +53,33 @@ namespace MapGeneration
                         continue;
                     }
 
-                    GetVertexDataForVertex(indexOffset, bl);
-                    GetVertexDataForVertex(indexOffset, tl);
-                    GetVertexDataForVertex(indexOffset, tr);
-                    GetVertexDataForVertex(indexOffset, br);
+                    TopologySystem.Height blHeight = matrix.GetItem<TopologySystem.Height>(bl, pointHeight, arrayUtil);
+                    TopologySystem.Height tlHeight = matrix.GetItem<TopologySystem.Height>(tl, pointHeight, arrayUtil);
+                    TopologySystem.Height trHeight = matrix.GetItem<TopologySystem.Height>(tr, pointHeight, arrayUtil);
+                    TopologySystem.Height brHeight = matrix.GetItem<TopologySystem.Height>(br, pointHeight, arrayUtil);
+
+                    vertices.Add(new Vertex{ vertex = new float3(bl.x, blHeight.height, bl.y) });
+                    vertices.Add(new Vertex{ vertex = new float3(tl.x, tlHeight.height, tl.y) });
+                    vertices.Add(new Vertex{ vertex = new float3(tr.x, trHeight.height, tr.y) });
+                    vertices.Add(new Vertex{ vertex = new float3(br.x, brHeight.height, br.y) });
+
+                    float4 color;
+
+                    float difference = LargestHeightDifference(blHeight.height, tlHeight.height, trHeight.height, brHeight.height);
+                    WorleyNoise.PointData worleyPoint = matrix.GetItem<WorleyNoise.PointData>(bl, worley, arrayUtil);
+                    if(difference > 1)
+                    {
+                        color = grey;
+                    }
+                    else
+                    {
+                        color = green;
+                    }
+
+                    colors.Add(new VertColor{ color = color });
+                    colors.Add(new VertColor{ color = color });
+                    colors.Add(new VertColor{ color = color });
+                    colors.Add(new VertColor{ color = color });
 
                     GetTriangleDataForPoint(indexOffset);
 
@@ -60,11 +87,11 @@ namespace MapGeneration
                 }
         }
 
-        void GetVertexDataForVertex(int indexOffset, int2 pointIndex)
+        float LargestHeightDifference(float a, float b, float c, float d)
         {
-            TopologySystem.Height height = matrix.GetItem<TopologySystem.Height>(pointIndex, pointHeight, arrayUtil);
-            vertices.Add(new Vertex{ vertex = new float3(pointIndex.x, height.height, pointIndex.y) });
-            colors.Add(new VertColor{ color = new float4(0.6f) });
+            float largest = math.max(a, math.max(b, math.max(c, d)));
+            float smallest = math.min(a, math.min(b, math.min(c, d)));
+            return largest - smallest;
         }
 
         void GetTriangleDataForPoint(int indexOffset)
@@ -76,5 +103,7 @@ namespace MapGeneration
             triangles.Add(new Triangle{ triangle = 2 + indexOffset });
             triangles.Add(new Triangle{ triangle = 3 + indexOffset });
         }
+
+
     }
 }
