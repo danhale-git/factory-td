@@ -44,9 +44,9 @@ public class TopologySystem : ComponentSystem
 
         NativeArray<ArchetypeChunk> chunks = topologyGroup.CreateArchetypeChunkArray(Allocator.TempJob);
 
-        ArchetypeChunkEntityType entityType = GetArchetypeChunkEntityType();
-        ArchetypeChunkComponentType<SectorSystem.TypeComponent> sectorTypeType = GetArchetypeChunkComponentType<SectorSystem.TypeComponent>(true);
-        ArchetypeChunkBufferType<WorleyNoise.PointData> worleyType = GetArchetypeChunkBufferType<WorleyNoise.PointData>(true);
+        var entityType = GetArchetypeChunkEntityType();
+        var sectorTypeType = GetArchetypeChunkComponentType<SectorSystem.TypeComponent>(true);
+        var worleyType = GetArchetypeChunkBufferType<WorleyNoise.PointData>(true);
 
         for(int c = 0; c < chunks.Length; c++)
         {
