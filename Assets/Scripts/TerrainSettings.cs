@@ -23,7 +23,7 @@ public static class TerrainSettings
 	public const int cellHeightLevelCount = 4;
 	public const float cellGroupNoiseFrequency = 0.3f;	
 	public const int cellGroupCount = 4;
-	public const WorleyNoise.Distance2EdgeBorder cellDistanceBorder = WorleyNoise.Distance2EdgeBorder.Height;
+	public const WorleyNoise.Distance2EdgeBorder cellDistanceBorder = WorleyNoise.Distance2EdgeBorder.Sector;
 
 	public const float slopeLength = 0.55f;
 

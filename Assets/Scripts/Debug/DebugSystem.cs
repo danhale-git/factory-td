@@ -83,6 +83,7 @@ public class DebugSystem : ComponentSystem
         Text("distance2Edge", point.distance2Edge.ToString());
 
         Text("group", topologyUtil.CellGrouping(point.currentCellIndex).ToString());
+        Text("cell index", point.currentCellIndex.ToString());
 
         worleyCurrentMarker.transform.position = math.round(point.currentCellPosition) + new float3(0.5f, cellSystem.GetHeightAtPosition(point.currentCellPosition)+1, 0.5f);
 
