@@ -84,7 +84,11 @@ public class TopologySystem : ComponentSystem
 
                     bool pointIsInSector = topologyUtil.CellGrouping(point.currentCellIndex) == topologyUtil.CellGrouping(sectorCells[0].data.index);
 
-                    if(pointIsInSector && sectorType == SectorSystem.SectorTypes.MOUNTAIN)
+                    if(sectorType == SectorSystem.SectorTypes.LAKE)
+                    {
+                        pointHeight.height -= (point.distance2Edge - 0.3f) * (TerrainSettings.cellheightMultiplier * 3);
+                    }
+                    else if(pointIsInSector && sectorType == SectorSystem.SectorTypes.MOUNTAIN)
                     {
                         float adjacentHeight = LargestAdjacentHeight(sectorAdjacentCells);
                         float cellHeight = topologyUtil.CellHeight(worley[i].currentCellIndex);
