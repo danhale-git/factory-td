@@ -34,6 +34,11 @@ public class SectorSystem : ComponentSystem
     {
         public float Value;
     }
+
+    public struct MasterCell : IComponentData
+    {
+        public WorleyNoise.CellData Value;
+    }
     
     [InternalBufferCapacity(0)]
     public struct CellSet : IBufferElementData
@@ -110,9 +115,14 @@ public class SectorSystem : ComponentSystem
                 {
                     type.Value = SectorTypes.MOUNTAIN;
                 }
+                else if(topologyUtil.CellHeightGroup(masterCell.index) < 2)
+                {
+                    type.Value = SectorTypes.LAKE;
+                }
 
                 commandBuffer.AddComponent<TypeComponent>(sectorEntity, type); 
                 commandBuffer.AddComponent<SectorGrouping>(sectorEntity, new SectorGrouping{ Value = grouping }); 
+                commandBuffer.AddComponent<MasterCell>(sectorEntity, new MasterCell{ Value = masterCell }); 
             }
         }
 
