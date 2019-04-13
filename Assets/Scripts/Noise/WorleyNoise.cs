@@ -85,6 +85,17 @@ public struct WorleyNoise
 		return cell;
     }
 
+	public PointData GetPointData(float x, float y, Distance2EdgeBorder newBorder)
+	{
+		Distance2EdgeBorder oldBorder = distance2EdgeBorder;
+		distance2EdgeBorder = newBorder;
+
+		PointData pointData = GetPointData(x, y);
+
+		distance2EdgeBorder = oldBorder;
+		return pointData;
+	}
+
     public PointData GetPointData(float x, float y)
 	{
 		if(perterbAmp > 0)SingleGradientPerturb(seed, perterbAmp, frequency, ref x, ref y);
