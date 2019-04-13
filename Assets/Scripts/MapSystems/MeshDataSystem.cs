@@ -18,6 +18,8 @@ public class MeshDataSystem : ComponentSystem
 
     TopologyUtil biomes;
 
+    ASyncJobManager jobManager;
+
     protected override void OnCreate()
     {
         entityManager = World.Active.EntityManager;
@@ -31,15 +33,21 @@ public class MeshDataSystem : ComponentSystem
         meshDataGroup = GetEntityQuery(meshDataQuery);
     }
 
+    protected override void OnDestroy()
+    {
+        jobManager.Dispose();
+    }
+
     protected override void OnUpdate()
     {
-        ScheduleMeshDataJobs();
+        if(!jobManager.AllJobsCompleted())
+            return;
+        else
+            ScheduleMeshDataJobs();
     }
 
     void ScheduleMeshDataJobs()
     {
-        EntityCommandBuffer commandBuffer = new EntityCommandBuffer(Allocator.TempJob);
-
         NativeArray<ArchetypeChunk> chunks = meshDataGroup.CreateArchetypeChunkArray(Allocator.TempJob);
 
         var entityType = GetArchetypeChunkEntityType();
@@ -63,21 +71,24 @@ public class MeshDataSystem : ComponentSystem
             for(int e = 0; e < entities.Length; e++)
             {
 
+                var worley = new NativeArray<WorleyNoise.PointData>(topologyArrays[e].Length, Allocator.TempJob);
+                var height = new NativeArray<TopologySystem.Height>(topologyArrays[e].Length, Allocator.TempJob);
+
+                worley.CopyFrom(worleyArrays[e].AsNativeArray());
+                height.CopyFrom(topologyArrays[e].AsNativeArray());
+
                 TerrainMeshDataJob job = new TerrainMeshDataJob{
-                    commandBuffer = commandBuffer,
+                    commandBuffer = jobManager.commandBuffer,
                     sectorEntity = entities[e],
                     matrix = matrices[e],
-                    worley = worleyArrays[e],
-                    topology = topologyArrays[e],
+                    worley = worley,
+                    pointHeight = height,
                     arrayUtil = new ArrayUtil()
                 }; 
-                job.Schedule().Complete();
                 
+                jobManager.ScheduleNewJob(job);
             }
         }
-
-        commandBuffer.Playback(entityManager);
-        commandBuffer.Dispose();
 
         chunks.Dispose();
     }

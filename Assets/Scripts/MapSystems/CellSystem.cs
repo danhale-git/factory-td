@@ -50,6 +50,12 @@ public class CellSystem : ComponentSystem
             return data[index];
         }
 
+        public T GetItem<T>(int2 matrixPosition, NativeArray<T> data, ArrayUtil util) where T : struct, IBufferElementData
+        {
+            int index = util.Flatten2D(matrixPosition.x, matrixPosition.y, width);
+            return data[index];
+        }
+
         public T GetItem<T>(int2 matrixPosition, DynamicBuffer<T> data, ArrayUtil util) where T : struct, IBufferElementData
         {
             int index = util.Flatten2D(matrixPosition.x, matrixPosition.y, width);

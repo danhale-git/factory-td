@@ -19,8 +19,10 @@ namespace MapGeneration
 
         [ReadOnly] public Entity sectorEntity;
         [ReadOnly] public CellSystem.MatrixComponent matrix;
-        [ReadOnly] public DynamicBuffer<WorleyNoise.PointData> worley;
-        [ReadOnly] public DynamicBuffer<TopologySystem.Height> topology;
+
+        [DeallocateOnJobCompletion][ReadOnly] public NativeArray<WorleyNoise.PointData> worley;
+        [DeallocateOnJobCompletion][ReadOnly] public NativeArray<TopologySystem.Height> pointHeight;
+
         [ReadOnly] public ArrayUtil arrayUtil;
 
         public void Execute()
@@ -39,15 +41,10 @@ namespace MapGeneration
                     int2 tr = new int2(x+1, z+1);
                     int2 br = new int2(x+1, z  );
 
-                    WorleyNoise.PointData bottomLeftWorley  = matrix.GetItem<WorleyNoise.PointData>(bl, worley, arrayUtil);
-                    WorleyNoise.PointData topLeftWorley     = matrix.GetItem<WorleyNoise.PointData>(tl, worley, arrayUtil);
-                    WorleyNoise.PointData topRightWorley    = matrix.GetItem<WorleyNoise.PointData>(tr, worley, arrayUtil);
-                    WorleyNoise.PointData bottomRightWorley = matrix.GetItem<WorleyNoise.PointData>(br, worley, arrayUtil);
-                    
-                    if( bottomLeftWorley.isSet  == 0 ||
-                        topLeftWorley.isSet     == 0 ||
-                        topRightWorley.isSet    == 0 ||
-                        bottomRightWorley.isSet == 0 )
+                    if( matrix.GetItem<WorleyNoise.PointData>(bl, worley, arrayUtil).isSet == 0 ||
+                        matrix.GetItem<WorleyNoise.PointData>(tl, worley, arrayUtil).isSet == 0 ||
+                        matrix.GetItem<WorleyNoise.PointData>(tr, worley, arrayUtil).isSet == 0 ||
+                        matrix.GetItem<WorleyNoise.PointData>(br, worley, arrayUtil).isSet == 0 )
                     {
                         continue;
                     }
@@ -65,7 +62,7 @@ namespace MapGeneration
 
         void GetVertexDataForVertex(int indexOffset, int2 pointIndex)
         {
-            TopologySystem.Height height = matrix.GetItem<TopologySystem.Height>(pointIndex, topology, arrayUtil);
+            TopologySystem.Height height = matrix.GetItem<TopologySystem.Height>(pointIndex, pointHeight, arrayUtil);
             vertices.Add(new Vertex{ vertex = new float3(pointIndex.x, height.height, pointIndex.y) });
             colors.Add(new VertColor{ color = new float4(0.6f) });
         }
