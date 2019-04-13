@@ -31,9 +31,11 @@ public class CellSystem : ComponentSystem
     int2 currentCellIndex;
     int2 previousCellIndex;
 
-	EntityCommandBuffer runningCommandBuffer;
-    JobHandle runningJobHandle;
-    JobHandle previousHandle;
+	//EntityCommandBuffer runningCommandBuffer;
+    //JobHandle runningJobHandle;
+    //JobHandle previousHandle;
+
+    ASyncJobManager jobManager;
 
     ArrayUtil arrayUtil;
 
@@ -79,31 +81,20 @@ public class CellSystem : ComponentSystem
     protected override void OnDestroy()
     {
         cellMatrix.Dispose();
-        if(runningCommandBuffer.IsCreated) runningCommandBuffer.Dispose();
+        jobManager.Dispose();
     }
 
     protected override void OnUpdate()
     {
         UpdateCurrentCellIndex();
 
-        if(runningCommandBuffer.IsCreated)
-        {
-            if(!runningJobHandle.IsCompleted) return;
-            else JobCompleteAndBufferPlayback();
-        }
+        if(!jobManager.NoJobsRunning()) return;
         
         if(cellMatrix.ItemIsSet(currentCellIndex))
             GenerateAdjacentSectors();
         else
             GenerateOneSector(currentCellIndex);
     }
-
-    void JobCompleteAndBufferPlayback()
-	{
-		runningJobHandle.Complete();
-		runningCommandBuffer.Playback(entityManager);
-		runningCommandBuffer.Dispose();
-	}
 
     bool UpdateCurrentCellIndex()
     {
@@ -123,19 +114,11 @@ public class CellSystem : ComponentSystem
 
     void GenerateOneSector(int2 cellIndex)
     {
-        runningCommandBuffer = new EntityCommandBuffer(Allocator.TempJob);
-        runningJobHandle = new JobHandle();
-		previousHandle = new JobHandle();
-
         CreateSector(cellIndex);
     }
 
     void GenerateAdjacentSectors()
     {
-        runningCommandBuffer = new EntityCommandBuffer(Allocator.TempJob);
-        runningJobHandle = new JobHandle();
-		previousHandle = new JobHandle();
-
         if(cellMatrix.ItemIsSet(currentCellIndex))
         {
             Entity sectorEntity = cellMatrix.GetItem(currentCellIndex);
@@ -178,16 +161,15 @@ public class CellSystem : ComponentSystem
         WorleyNoise.CellData startCell = entityManager.GetComponentData<WorleyNoise.CellData>(cellEntity);
 
         FloodFillCellGroupJob job = new FloodFillCellGroupJob{
-            commandBuffer = runningCommandBuffer,
+            commandBuffer = jobManager.commandBuffer,
             startCell = startCell,
             sectorEntity = cellEntity,
             matrix = new Matrix<WorleyNoise.PointData>(10, Allocator.TempJob, startCell.position, job: true),
             worley = this.worley
         };
 
-        JobHandle newHandle = job.Schedule(previousHandle);
-        runningJobHandle = JobHandle.CombineDependencies(newHandle, runningJobHandle);
-        previousHandle = newHandle;
+        JobHandle newHandle = job.Schedule(jobManager.previousDependency);
+        jobManager.NewJobScheduled(newHandle);
     }
 
     public float GetHeightAtPosition(float3 position)
