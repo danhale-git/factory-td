@@ -73,9 +73,7 @@ public class TopologySystem : ComponentSystem
                     WorleyNoise.PointData point = worley[i];
                     Height pointHeight = new Height();
 
-                    int2 adjacentDirection = point.adjacentCellIndex - point.currentCellIndex;
-
-                    if(topologyUtil.EdgeIsSloped(adjacentDirection, point))
+                    if(topologyUtil.EdgeIsSloped(point))
                         pointHeight.height = SmoothSlope(point);  
                     else
                         pointHeight.height = topologyUtil.CellHeight(worley[i].currentCellIndex);
@@ -103,8 +101,15 @@ public class TopologySystem : ComponentSystem
 
         if(currentHeight == adjacentHeight) return currentHeight;
 
+        float currentHeightGroup = topologyUtil.CellHeightGroup(point.currentCellIndex);
+        float adjacentHeightGroup = topologyUtil.CellHeightGroup(point.adjacentCellIndex);
+
+
+        float difference = math.max(currentHeightGroup, adjacentHeightGroup) - math.min(currentHeightGroup, adjacentHeightGroup);
+        int clampedDifference = (int)math.clamp(difference, 1, TerrainSettings.cellHeightLevelCount);
+
         float halfway = (currentHeight + adjacentHeight) / 2;
-        float interpolator = math.unlerp(0, TerrainSettings.slopeLength, point.distance2Edge);
+        float interpolator = math.unlerp(0, TerrainSettings.slopeLength * clampedDifference, point.distance2Edge);
 
         return math.lerp(halfway, currentHeight, math.clamp(interpolator, 0, 1));
     }

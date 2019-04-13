@@ -15,13 +15,18 @@ public struct TopologyUtil
 
     public float CellHeight(int2 cellIndex)
     {
+        return CellHeightGroup(cellIndex) * TerrainSettings.cellheightMultiplier;
+    }
+    public float CellHeightGroup(int2 cellIndex)
+    {
         float simplexNoise = heightSimplex.GetSimplex(cellIndex.x, cellIndex.y);
-        int grouped = (int)math.round(math.lerp(0, TerrainSettings.cellHeightLevelCount, simplexNoise));
-        return grouped * TerrainSettings.cellheightMultiplier;
+        int group = (int)math.round(math.lerp(0, TerrainSettings.cellHeightLevelCount, simplexNoise));
+        return group;
     }
 
-    public bool EdgeIsSloped(int2 edge, WorleyNoise.PointData point)
+    public bool EdgeIsSloped(WorleyNoise.PointData point)
     {
+        int2 edge = point.adjacentCellIndex - point.currentCellIndex;
         int2 slopeSide = SlopedSide(point);
         return slopeSide.Equals(edge);
     }
