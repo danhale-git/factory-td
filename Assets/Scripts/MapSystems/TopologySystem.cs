@@ -84,9 +84,14 @@ public class TopologySystem : ComponentSystem
 
                     bool pointIsInSector = topologyUtil.CellGrouping(point.currentCellIndex) == topologyUtil.CellGrouping(sectorCells[0].data.index);
 
+                    if(topologyUtil.EdgeIsSloped(point))
+                        pointHeight.height = SmoothSlope(point);  
+                    else
+                        pointHeight.height = topologyUtil.CellHeight(worley[i].currentCellIndex);
+
                     if(sectorType == SectorSystem.SectorTypes.LAKE)
                     {
-                        pointHeight.height -= (point.distance2Edge - 0.3f) * (TerrainSettings.cellheightMultiplier * 3);
+                        pointHeight.height -= math.clamp(point.distance2Edge - 0.3f, 0, 1) * (TerrainSettings.cellheightMultiplier * 3);
                     }
                     else if(pointIsInSector && sectorType == SectorSystem.SectorTypes.MOUNTAIN)
                     {
@@ -96,10 +101,7 @@ public class TopologySystem : ComponentSystem
                         pointHeight.height = math.max(adjacentHeight, cellHeight);
                         pointHeight.height += (point.distance2Edge) * (TerrainSettings.cellheightMultiplier * 3);
                     }
-                    else if(topologyUtil.EdgeIsSloped(point))
-                        pointHeight.height = SmoothSlope(point);  
-                    else
-                        pointHeight.height = topologyUtil.CellHeight(worley[i].currentCellIndex);
+                    
 
                     topology[i] = pointHeight;
                 }
