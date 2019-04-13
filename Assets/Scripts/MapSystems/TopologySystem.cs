@@ -59,7 +59,7 @@ public class TopologySystem : ComponentSystem
             for(int e = 0; e < entities.Length; e++)
             {
                 Entity entity = entities[e];
-                SectorSystem.SectorTypes type = sectorTypes[e].Value;
+                SectorSystem.SectorTypes sectorType = sectorTypes[e].Value;
                 DynamicBuffer<WorleyNoise.PointData> worley = worleyArrays[e];
 
                 DynamicBuffer<Height> topology = commandBuffer.AddBuffer<Height>(entity);
@@ -80,12 +80,13 @@ public class TopologySystem : ComponentSystem
                     else
                         pointHeight.height = topologyUtil.CellHeight(worley[i].currentCellIndex);
 
-                    if(type == SectorSystem.SectorTypes.LAKE && point.distance2Edge > 0.3f)
-                        pointHeight.height -= (point.distance2Edge - 0.3f) * (TerrainSettings.cellheightMultiplier * 3);
+                    if(sectorType == SectorSystem.SectorTypes.UNPATHABLE)
+                    {
+                        pointHeight.height += (point.distance2Edge - 0.3f) * (TerrainSettings.cellheightMultiplier * 3);
+                    }
 
                     topology[i] = pointHeight;
                 }
-
             }
         }
 
