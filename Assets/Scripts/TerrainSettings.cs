@@ -23,6 +23,7 @@ public static class TerrainSettings
 	public const int cellHeightLevelCount = 4;
 	public const float cellGroupNoiseFrequency = 0.3f;	
 	public const int cellGroupCount = 4;
+	public const WorleyNoise.Distance2EdgeBorder cellDistanceBorder = WorleyNoise.Distance2EdgeBorder.Height;
 
 	public const float slopeLength = 0.55f;
 
@@ -56,7 +57,8 @@ public static class TerrainSettings
             cellEdgeSmoothing,
             cellularJitter,
             cellDistanceFunction,
-            cellReturnType
+            cellReturnType,
+			cellDistanceBorder
         );
 	}
 }
