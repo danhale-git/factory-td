@@ -48,6 +48,9 @@ public class TopologySystem : ComponentSystem
         var sectorTypeType = GetArchetypeChunkComponentType<SectorSystem.TypeComponent>(true);
         var worleyType = GetArchetypeChunkBufferType<WorleyNoise.PointData>(true);
 
+        var sectorCellArrayType = GetArchetypeChunkBufferType<SectorSystem.SectorCell>(true);
+        var sectorAdjacentCellArrayType = GetArchetypeChunkBufferType<SectorSystem.AdjacentCell>(true);
+
         for(int c = 0; c < chunks.Length; c++)
         {
             ArchetypeChunk chunk = chunks[c];
@@ -56,11 +59,17 @@ public class TopologySystem : ComponentSystem
             NativeArray<SectorSystem.TypeComponent> sectorTypes = chunk.GetNativeArray(sectorTypeType);
             BufferAccessor<WorleyNoise.PointData> worleyArrays = chunk.GetBufferAccessor(worleyType);
 
+            BufferAccessor<SectorSystem.SectorCell> sectorCellArrays = chunk.GetBufferAccessor(sectorCellArrayType);
+            BufferAccessor<SectorSystem.AdjacentCell> sectorAdjacentCellArrays = chunk.GetBufferAccessor(sectorAdjacentCellArrayType);
+
             for(int e = 0; e < entities.Length; e++)
             {
                 Entity entity = entities[e];
                 SectorSystem.SectorTypes sectorType = sectorTypes[e].Value;
                 DynamicBuffer<WorleyNoise.PointData> worley = worleyArrays[e];
+
+                DynamicBuffer<SectorSystem.SectorCell> sectorCells = sectorCellArrays[e];
+                DynamicBuffer<SectorSystem.AdjacentCell> sectorAdjacentCells = sectorAdjacentCellArrays[e];
 
                 DynamicBuffer<Height> topology = commandBuffer.AddBuffer<Height>(entity);
                 topology.ResizeUninitialized(worley.Length);
@@ -73,15 +82,20 @@ public class TopologySystem : ComponentSystem
                     WorleyNoise.PointData point = worley[i];
                     Height pointHeight = new Height();
 
-                    if(topologyUtil.EdgeIsSloped(point))
+                    bool pointIsInSector = topologyUtil.CellGrouping(point.currentCellIndex) == topologyUtil.CellGrouping(sectorCells[0].data.index);
+
+                    if(pointIsInSector && sectorType == SectorSystem.SectorTypes.MOUNTAIN)
+                    {
+                        float adjacentHeight = LargestAdjacentHeight(sectorAdjacentCells);
+                        float cellHeight = topologyUtil.CellHeight(worley[i].currentCellIndex);
+
+                        pointHeight.height = math.max(adjacentHeight, cellHeight);
+                        pointHeight.height += (point.distance2Edge) * (TerrainSettings.cellheightMultiplier * 3);
+                    }
+                    else if(topologyUtil.EdgeIsSloped(point))
                         pointHeight.height = SmoothSlope(point);  
                     else
                         pointHeight.height = topologyUtil.CellHeight(worley[i].currentCellIndex);
-
-                    if(sectorType == SectorSystem.SectorTypes.MOUNTAIN)
-                    {
-                        pointHeight.height += (point.distance2Edge - 0.3f) * (TerrainSettings.cellheightMultiplier * 3);
-                    }
 
                     topology[i] = pointHeight;
                 }
@@ -112,5 +126,18 @@ public class TopologySystem : ComponentSystem
         float interpolator = math.unlerp(0, TerrainSettings.slopeLength * clampedDifference, point.distance2Edge);
 
         return math.lerp(halfway, currentHeight, math.clamp(interpolator, 0, 1));
+    }
+
+    float LargestAdjacentHeight(DynamicBuffer<SectorSystem.AdjacentCell> adjacent)
+    {
+        float largest = 0;
+        for(int i = 0; i < adjacent.Length; i++)
+        {
+            float height = topologyUtil.CellHeight(adjacent[i].data.index);
+            if(height > largest)
+                largest = height;
+        }
+            
+        return largest;
     }
 }
