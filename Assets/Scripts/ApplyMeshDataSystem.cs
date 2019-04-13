@@ -16,7 +16,7 @@ public class ApplyMeshDataSystem : ComponentSystem
 
     EntityQuery applyMeshGroup;
 
-	public static Material material = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/DefaultMaterial.mat");
+	public static Material material = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/Terrain.mat");
 
     protected override void OnCreate()
     {
