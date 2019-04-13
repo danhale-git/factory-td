@@ -69,14 +69,7 @@ public class CellSystem : ComponentSystem
         );
 
         biomes = new TopologyUtil();
-        worley = new WorleyNoise(
-            TerrainSettings.seed,
-            TerrainSettings.cellFrequency,
-            TerrainSettings.cellEdgeSmoothing,
-            TerrainSettings.cellularJitter,
-            TerrainSettings.cellDistanceFunction,
-            TerrainSettings.cellReturnType
-        );
+        worley = TerrainSettings.CellWorley();
         
         arrayUtil = new ArrayUtil();
 
