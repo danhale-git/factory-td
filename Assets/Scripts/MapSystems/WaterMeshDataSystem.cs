@@ -85,7 +85,7 @@ public class WaterMeshDataSystem : ComponentSystem
             {
                 CellSystem.MatrixComponent matrix = matrices[e];
                 WorleyNoise.CellData masterCell = sectorMasterCells[e].Value;
-                Debug.Log(matrix.root);
+
                 var worley = new NativeArray<WorleyNoise.PointData>(worleyArrays[e].AsNativeArray(), Allocator.Persistent);
 
                 WaterMeshDataJob waterJob = new WaterMeshDataJob{
