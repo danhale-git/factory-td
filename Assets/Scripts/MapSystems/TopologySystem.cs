@@ -114,21 +114,26 @@ public class TopologySystem : ComponentSystem
         float cellHeight = topologyUtil.CellHeight(point.currentCellIndex);
         float gullyHeight = point.distance2Edge * TerrainSettings.cellheightMultiplier / 2;
 
-        float result = math.lerp(cellHeight, cellHeight-gullyHeight, point.distance2Edge);
+        float clampedInterpolator = math.clamp(point.distance2Edge - 0.2f, 0, 1);
 
-        result -= (simplex.GetSimplex(position.x, position.z, 0.1f) * 10) * point.distance2Edge;
+        float result = math.lerp(cellHeight, cellHeight-gullyHeight, clampedInterpolator);
+
+        result -= (simplex.GetSimplex(position.x, position.z, 0.1f) * 10) * clampedInterpolator;
 
         return result;
     }
 
     float Mountain(WorleyNoise.PointData point, float3 position)
     {
+        float adjacentCellHeight = topologyUtil.CellHeight(point.adjacentCellIndex);        
         float cellHeight = topologyUtil.CellHeight(point.currentCellIndex);
         float mountainHeight = point.distance2Edge * TerrainSettings.cellheightMultiplier;
 
-        float result = math.lerp(cellHeight, cellHeight+mountainHeight, point.distance2Edge);
+        float clampedInterpolator = math.clamp(point.distance2Edge - 0.2f, 0, 1);
 
-        result += (simplex.GetSimplex(position.x, position.z, 0.1f) * 5) * point.distance2Edge;
+        float result = math.lerp(/*math.min(adjacentCellHeight, cellHeight) */cellHeight, cellHeight+mountainHeight, clampedInterpolator);
+
+        result += (simplex.GetSimplex(position.x, position.z, 0.1f) * 5) * clampedInterpolator;
 
         return result;
     }
