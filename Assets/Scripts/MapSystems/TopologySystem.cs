@@ -48,8 +48,8 @@ public class TopologySystem : ComponentSystem
         var sectorTypeType = GetArchetypeChunkComponentType<SectorSystem.TypeComponent>(true);
         var worleyType = GetArchetypeChunkBufferType<WorleyNoise.PointData>(true);
 
-        var sectorCellArrayType = GetArchetypeChunkBufferType<SectorSystem.SectorCell>(true);
-        var sectorAdjacentCellArrayType = GetArchetypeChunkBufferType<SectorSystem.AdjacentCell>(true);
+        var sectorCellArrayType = GetArchetypeChunkBufferType<CellSystem.SectorCell>(true);
+        var sectorAdjacentCellArrayType = GetArchetypeChunkBufferType<CellSystem.AdjacentCell>(true);
 
         for(int c = 0; c < chunks.Length; c++)
         {
@@ -59,8 +59,8 @@ public class TopologySystem : ComponentSystem
             NativeArray<SectorSystem.TypeComponent> sectorTypes = chunk.GetNativeArray(sectorTypeType);
             BufferAccessor<WorleyNoise.PointData> worleyArrays = chunk.GetBufferAccessor(worleyType);
 
-            BufferAccessor<SectorSystem.SectorCell> sectorCellArrays = chunk.GetBufferAccessor(sectorCellArrayType);
-            BufferAccessor<SectorSystem.AdjacentCell> sectorAdjacentCellArrays = chunk.GetBufferAccessor(sectorAdjacentCellArrayType);
+            BufferAccessor<CellSystem.SectorCell> sectorCellArrays = chunk.GetBufferAccessor(sectorCellArrayType);
+            BufferAccessor<CellSystem.AdjacentCell> sectorAdjacentCellArrays = chunk.GetBufferAccessor(sectorAdjacentCellArrayType);
 
             for(int e = 0; e < entities.Length; e++)
             {
@@ -68,8 +68,8 @@ public class TopologySystem : ComponentSystem
                 SectorSystem.SectorTypes sectorType = sectorTypes[e].Value;
                 DynamicBuffer<WorleyNoise.PointData> worley = worleyArrays[e];
 
-                DynamicBuffer<SectorSystem.SectorCell> sectorCells = sectorCellArrays[e];
-                DynamicBuffer<SectorSystem.AdjacentCell> sectorAdjacentCells = sectorAdjacentCellArrays[e];
+                DynamicBuffer<CellSystem.SectorCell> sectorCells = sectorCellArrays[e];
+                DynamicBuffer<CellSystem.AdjacentCell> sectorAdjacentCells = sectorAdjacentCellArrays[e];
 
                 DynamicBuffer<Height> topology = commandBuffer.AddBuffer<Height>(entity);
                 topology.ResizeUninitialized(worley.Length);
@@ -134,7 +134,7 @@ public class TopologySystem : ComponentSystem
         return math.lerp(halfway, currentHeight, math.clamp(interpolator, 0, 1));
     }
 
-    float LargestAdjacentHeight(DynamicBuffer<SectorSystem.AdjacentCell> adjacent)
+    float LargestAdjacentHeight(DynamicBuffer<CellSystem.AdjacentCell> adjacent)
     {
         float largest = 0;
         for(int i = 0; i < adjacent.Length; i++)

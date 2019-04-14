@@ -21,6 +21,8 @@ public class CellSystem : ComponentSystem
     EntityManager entityManager;
     PlayerEntitySystem playerSystem;
 
+    EntityQuery sectorSortQuery;
+
     WorleyNoise worley;
     TopologyUtil biomes;
 
@@ -31,13 +33,10 @@ public class CellSystem : ComponentSystem
     int2 currentCellIndex;
     int2 previousCellIndex;
 
-	//EntityCommandBuffer runningCommandBuffer;
-    //JobHandle runningJobHandle;
-    //JobHandle previousHandle;
-
     ASyncJobManager jobManager;
 
     ArrayUtil arrayUtil;
+    TopologyUtil topologyUtil;
 
     public struct MatrixComponent : IComponentData
     {
@@ -63,6 +62,24 @@ public class CellSystem : ComponentSystem
         }
     }
 
+    [InternalBufferCapacity(0)]
+    public struct CellSet : IBufferElementData
+    {
+        public WorleyNoise.PointData data;
+    }
+
+    [InternalBufferCapacity(0)]
+    public struct AdjacentCell : IBufferElementData
+    {
+        public WorleyNoise.CellData data;
+    }
+
+    [InternalBufferCapacity(0)]
+    public struct SectorCell : IBufferElementData
+    {
+        public WorleyNoise.CellData data;
+    }
+
     protected override void OnCreate()
     {
         entityManager = World.Active.EntityManager;
@@ -76,11 +93,15 @@ public class CellSystem : ComponentSystem
             ComponentType.ReadWrite<Tags.TerrainEntity>()
         );
 
+        EntityQueryDesc sectorSortQueryDesc = new EntityQueryDesc{
+            All = new ComponentType[] { typeof(Tags.TerrainEntity), typeof(CellSet) },
+            None = new ComponentType[] { typeof(AdjacentCell), typeof(SectorCell) }
+        };
+        sectorSortQuery = GetEntityQuery(sectorSortQueryDesc);
+
         biomes = new TopologyUtil();
         worley = TerrainSettings.CellWorley();
         
-        arrayUtil = new ArrayUtil();
-
         previousCellIndex = new int2(100); 
     }
 
@@ -95,6 +116,8 @@ public class CellSystem : ComponentSystem
         UpdateCurrentCellIndex();
 
         if(!jobManager.AllJobsCompleted()) return;
+        
+        ProcessNewTerrainCells();
         
         if(cellMatrix.ItemIsSet(currentCellIndex))
             GenerateAdjacentSectors();
@@ -118,34 +141,87 @@ public class CellSystem : ComponentSystem
         }
     }
 
+    void ProcessNewTerrainCells()
+    {
+        var commandBuffer = new EntityCommandBuffer(Allocator.TempJob);
+        var chunks = sectorSortQuery.CreateArchetypeChunkArray(Allocator.TempJob);
+
+        var entityType = GetArchetypeChunkEntityType();
+        var startCellType = GetArchetypeChunkComponentType<WorleyNoise.CellData>(true);
+        var cellArrayType = GetArchetypeChunkBufferType<CellSet>(true);
+
+        for(int c = 0; c < chunks.Length; c++)
+        {
+            ArchetypeChunk chunk = chunks[c];
+            NativeArray<Entity> entities = chunk.GetNativeArray(entityType);
+            NativeArray<WorleyNoise.CellData> startCells = chunk.GetNativeArray(startCellType);
+            BufferAccessor<CellSet> cellArrays = chunk.GetBufferAccessor(cellArrayType);
+
+            for(int e = 0; e < entities.Length; e++)
+            {
+                Entity sectorEntity = entities[e];
+                DynamicBuffer<CellSet> cellSet = cellArrays[e];
+
+                DynamicBuffer<SectorCell> sectorCells = commandBuffer.AddBuffer<SectorCell>(sectorEntity);
+                DynamicBuffer<AdjacentCell> adjacentCells = commandBuffer.AddBuffer<AdjacentCell>(sectorEntity);
+
+                float grouping = topologyUtil.CellGrouping(startCells[e].index);
+                for(int i = 0; i < cellSet.Length; i++)
+                {
+                    WorleyNoise.CellData cellData = worley.GetCellData(cellSet[i].data.currentCellIndex);
+
+                    if(cellData.value == 0) continue;
+
+                    if(topologyUtil.CellGrouping(cellSet[i].data.currentCellIndex) != grouping)
+                    {
+                        adjacentCells.Add(new AdjacentCell{ data = cellData });
+                    }
+                    else
+                    {
+                        sectorCells.Add(new SectorCell{ data = cellData });
+                        TrySetCell(sectorEntity, cellSet[i].data.currentCellIndex);
+                    }
+                }
+            }
+        }
+
+        commandBuffer.Playback(entityManager);
+        commandBuffer.Dispose();
+
+        chunks.Dispose();
+    }
+
     void GenerateAdjacentSectors()
     {
         if(cellMatrix.ItemIsSet(currentCellIndex))
         {
             Entity sectorEntity = cellMatrix.GetItem(currentCellIndex);
-            if(!entityManager.HasComponent<SectorSystem.AdjacentCell>(sectorEntity))
+            if(!entityManager.HasComponent<AdjacentCell>(sectorEntity))
                 return;
 
-            NativeArray<SectorSystem.AdjacentCell> adjacentCells = AdjacentCells(sectorEntity);
+            NativeArray<AdjacentCell> adjacentCells = AdjacentCells(sectorEntity);
             
             for(int i = 0; i < adjacentCells.Length; i++)
-                CreateSector(adjacentCells[i].data.index);
-
-            adjacentCells.Dispose();
+                if(CreateSector(adjacentCells[i].data.index))
+                {
+                    adjacentCells.Dispose();
+                    return;
+                }
         }
     }
 
-    NativeArray<SectorSystem.AdjacentCell> AdjacentCells(Entity sectorEntity)
+    NativeArray<AdjacentCell> AdjacentCells(Entity sectorEntity)
     {
-        DynamicBuffer<SectorSystem.AdjacentCell> adjacentCells = entityManager.GetBuffer<SectorSystem.AdjacentCell>(sectorEntity);
-        return new NativeArray<SectorSystem.AdjacentCell>(adjacentCells.AsNativeArray(), Allocator.Temp);
+        DynamicBuffer<AdjacentCell> adjacentCells = entityManager.GetBuffer<AdjacentCell>(sectorEntity);
+        return new NativeArray<AdjacentCell>(adjacentCells.AsNativeArray(), Allocator.Temp);
     }
 
-    void CreateSector(int2 startIndex)
+    bool CreateSector(int2 startIndex)
     {
-        if(cellMatrix.ItemIsSet(startIndex)) return;
+        if(cellMatrix.ItemIsSet(startIndex)) return false;
         Entity sectorEntity = CreateSectorEntity(startIndex);
         ScheduleCellGroupJob(sectorEntity);
+        return true;
     }
 
     Entity CreateSectorEntity(int2 cellIndex)

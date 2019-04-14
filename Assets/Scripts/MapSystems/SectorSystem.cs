@@ -20,9 +20,6 @@ public class SectorSystem : ComponentSystem
 
     EntityQuery sectorGroup;
 
-    DynamicBuffer<SectorCell> sectorCells;
-    DynamicBuffer<AdjacentCell> adjacentCells;
-
     public enum SectorTypes { NONE, MOUNTAIN, LAKE }
 
     public struct TypeComponent : IComponentData
@@ -44,24 +41,6 @@ public class SectorSystem : ComponentSystem
     {
         public WorleyNoise.CellData Value;
     }
-    
-    [InternalBufferCapacity(0)]
-    public struct CellSet : IBufferElementData
-    {
-        public WorleyNoise.PointData data;
-    }
-
-    [InternalBufferCapacity(0)]
-    public struct AdjacentCell : IBufferElementData
-    {
-        public WorleyNoise.CellData data;
-    }
-
-    [InternalBufferCapacity(0)]
-    public struct SectorCell : IBufferElementData
-    {
-        public WorleyNoise.CellData data;
-    }
 
     protected override void OnCreate()
     {
@@ -72,7 +51,7 @@ public class SectorSystem : ComponentSystem
         topologyUtil = new TopologyUtil();
 
         EntityQueryDesc sectorQuery = new EntityQueryDesc{
-            All = new ComponentType[] { typeof(Tags.TerrainEntity), typeof(CellSet) },
+            All = new ComponentType[] { typeof(Tags.TerrainEntity), typeof(CellSystem.AdjacentCell), typeof(CellSystem.SectorCell) },
             None = new ComponentType[] { typeof(TypeComponent) }
         };
         sectorGroup = GetEntityQuery(sectorQuery);
@@ -85,30 +64,25 @@ public class SectorSystem : ComponentSystem
 
         var entityType = GetArchetypeChunkEntityType();
         var startCellType = GetArchetypeChunkComponentType<WorleyNoise.CellData>(true);
-        var cellArrayType = GetArchetypeChunkBufferType<CellSet>(true);
         var pointArrayType = GetArchetypeChunkBufferType<WorleyNoise.PointData>(true);
+        var sectorCellType = GetArchetypeChunkBufferType<CellSystem.SectorCell>(true);
 
         for(int c = 0; c < chunks.Length; c++)
         {
             ArchetypeChunk chunk = chunks[c];
             NativeArray<Entity> entities = chunk.GetNativeArray(entityType);
             NativeArray<WorleyNoise.CellData> startCells = chunk.GetNativeArray(startCellType);
-            BufferAccessor<CellSet> cellArrays = chunk.GetBufferAccessor(cellArrayType);
             BufferAccessor<WorleyNoise.PointData> pointArrays = chunk.GetBufferAccessor(pointArrayType);
+            BufferAccessor<CellSystem.SectorCell> sectorCellArrays = chunk.GetBufferAccessor(sectorCellType);
 
             for(int e = 0; e < entities.Length; e++)
             {
                 Entity sectorEntity = entities[e];
-                DynamicBuffer<CellSet> cellSet = cellArrays[e];
                 DynamicBuffer<WorleyNoise.PointData> points = pointArrays[e];
 
-                sectorCells = commandBuffer.AddBuffer<SectorCell>(sectorEntity);
-                adjacentCells = commandBuffer.AddBuffer<AdjacentCell>(sectorEntity);
-
                 float grouping = topologyUtil.CellGrouping(startCells[e].index);
-                SortCellData(sectorEntity, grouping, cellSet);
                 
-                WorleyNoise.CellData masterCell = sectorCells[0].data;
+                WorleyNoise.CellData masterCell = sectorCellArrays[e][0].data;
                 commandBuffer.AddComponent<SectorNoiseValue>(sectorEntity, new SectorNoiseValue{ Value = masterCell.value });
 
                 TypeComponent type = new TypeComponent();
@@ -136,35 +110,6 @@ public class SectorSystem : ComponentSystem
         commandBuffer.Dispose();
 
         chunks.Dispose();
-    }
-
-    void SortCellData(Entity sectorEntity, float grouping, DynamicBuffer<CellSet> set)
-    {
-        for(int i = 0; i < set.Length; i++)
-        {
-            WorleyNoise.CellData cellData = worley.GetCellData(set[i].data.currentCellIndex);
-
-            if(cellData.value == 0) continue;
-
-            if(topologyUtil.CellGrouping(set[i].data.currentCellIndex) != grouping)
-            {
-                adjacentCells.Add(new AdjacentCell{ data = cellData });
-            }
-            else
-            {
-                sectorCells.Add(new SectorCell{ data = cellData });
-                cellSystem.TrySetCell(sectorEntity, set[i].data.currentCellIndex);
-            }
-        }
-    }
-
-    float GetSectorValue()
-    {
-        float value = 0;
-        for(int i = 0; i < sectorCells.Length; i++)
-            value += sectorCells[i].data.value;
-
-        return value / sectorCells.Length;
     }
 
     bool SectorIsPathable(DynamicBuffer<WorleyNoise.PointData> points, float grouping)

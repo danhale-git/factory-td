@@ -65,10 +65,10 @@ namespace MapGeneration
             ArrayUtil arrayUtil = new ArrayUtil();
 
             NativeArray<WorleyNoise.PointData> cellSet = arrayUtil.Set(matrix.matrix, Allocator.Temp);
-            DynamicBuffer<SectorSystem.CellSet> allCells = commandBuffer.AddBuffer<SectorSystem.CellSet>(sectorEntity);
+            DynamicBuffer<CellSystem.CellSet> allCells = commandBuffer.AddBuffer<CellSystem.CellSet>(sectorEntity);
             for(int i = 0; i < cellSet.Length; i++)
             {
-                allCells.Add(new SectorSystem.CellSet{ data = cellSet[i] });
+                allCells.Add(new CellSystem.CellSet{ data = cellSet[i] });
             }
             cellSet.Dispose();
 
