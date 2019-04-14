@@ -20,20 +20,21 @@ namespace MapGeneration
         [ReadOnly] public Entity sectorEntity;
         [ReadOnly] public SectorSystem.SectorTypes sectorType;
         [ReadOnly] public CellSystem.MatrixComponent matrix;
+        [ReadOnly] public WorleyNoise.CellData masterCell;
 
         [DeallocateOnJobCompletion][ReadOnly] public NativeArray<WorleyNoise.PointData> worley;
         [DeallocateOnJobCompletion][ReadOnly] public NativeArray<TopologySystem.Height> pointHeight;
 
         [ReadOnly] public ArrayUtil arrayUtil;
-        [ReadOnly] public TopologyUtil topologyUti;
+        [ReadOnly] public TopologyUtil topologyUtil;
+
+        int indexOffset;
 
         public void Execute()
         {
             vertices = commandBuffer.AddBuffer<Vertex>(sectorEntity);
             colors = commandBuffer.AddBuffer<VertColor>(sectorEntity);
             triangles = commandBuffer.AddBuffer<Triangle>(sectorEntity);
-
-            int indexOffset = 0;
 
             for(int x = 0; x < matrix.width-1; x++)
                 for(int z = 0; z < matrix.width-1; z++)
@@ -48,53 +49,71 @@ namespace MapGeneration
                     WorleyNoise.PointData trWorley = matrix.GetItem<WorleyNoise.PointData>(tr, worley, arrayUtil);
                     WorleyNoise.PointData brWorley = matrix.GetItem<WorleyNoise.PointData>(br, worley, arrayUtil);
 
-                    if( blWorley.isSet == 0 ||
-                        tlWorley.isSet == 0 ||
-                        trWorley.isSet == 0 ||
-                        brWorley.isSet == 0 )
-                    {
-                        continue;
-                    }
-
                     TopologySystem.Height blHeight = matrix.GetItem<TopologySystem.Height>(bl, pointHeight, arrayUtil);
                     TopologySystem.Height tlHeight = matrix.GetItem<TopologySystem.Height>(tl, pointHeight, arrayUtil);
                     TopologySystem.Height trHeight = matrix.GetItem<TopologySystem.Height>(tr, pointHeight, arrayUtil);
                     TopologySystem.Height brHeight = matrix.GetItem<TopologySystem.Height>(br, pointHeight, arrayUtil);
 
-                    bool northWestToSouthEast = NorthWestToSouthEast(blWorley, tlWorley, trWorley, brWorley);
+                    bool northWestToSouthEast = brHeight.height != tlHeight.height;
+
+                    int trianglesAdded = 0;
 
                     if(northWestToSouthEast)
                     {
-                        AddVerticesForTriangle(bl, tl, tr, blHeight.height, tlHeight.height, trHeight.height);
-                        AddVerticesForTriangle(bl, tr, br, blHeight.height, trHeight.height, brHeight.height);
+                        trianglesAdded += AddVerticesForTriangle(bl, tl, tr, blWorley, tlWorley, trWorley, blHeight.height, tlHeight.height, trHeight.height);
+                        trianglesAdded += AddVerticesForTriangle(bl, tr, br, blWorley, trWorley, brWorley, blHeight.height, trHeight.height, brHeight.height);
                     }
                     else
                     {
-                        AddVerticesForTriangle(bl, tl, br, blHeight.height, tlHeight.height, brHeight.height);
-                        AddVerticesForTriangle(tl, tr, br, tlHeight.height, trHeight.height, brHeight.height);
+                        trianglesAdded += AddVerticesForTriangle(bl, tl, br, blWorley, tlWorley, brWorley, blHeight.height, tlHeight.height, brHeight.height);
+                        trianglesAdded += AddVerticesForTriangle(tl, tr, br, tlWorley, trWorley, brWorley, tlHeight.height, trHeight.height, brHeight.height);
                     } 
 
-                    GetTriangleIndicesForQuad(indexOffset, northWestToSouthEast);
-
-                    indexOffset += 6;
+                    for(int i = 0; i < trianglesAdded; i++)
+                    {
+                        GetIndicesForTriangle();
+                        indexOffset += 3;
+                    }
                 }
         }
 
-        bool NorthWestToSouthEast(WorleyNoise.PointData bl, WorleyNoise.PointData tl, WorleyNoise.PointData tr, WorleyNoise.PointData br)
+        int AddVerticesForTriangle(int2 a, int2 b, int2 c, WorleyNoise.PointData aWorley, WorleyNoise.PointData bWorley, WorleyNoise.PointData cWorley, float aHeight, float bHeight, float cHeight)
         {
-            int blHeight = (int)topologyUti.CellHeight(bl.currentCellIndex);
-            int tlHeight = (int)topologyUti.CellHeight(tl.currentCellIndex);
-            int trHeight = (int)topologyUti.CellHeight(tr.currentCellIndex);
-            int brHeight = (int)topologyUti.CellHeight(br.currentCellIndex);
+            if( aWorley.isSet == 0 ||
+                bWorley.isSet == 0 ||
+                cWorley.isSet == 0 )
+                return 0;
 
-            if(blHeight != trHeight)
-                return false;
+            float aGrouping = topologyUtil.CellGrouping(aWorley.currentCellIndex);
+            float bGrouping = topologyUtil.CellGrouping(bWorley.currentCellIndex);
+            float cGrouping = topologyUtil.CellGrouping(cWorley.currentCellIndex);
+
+            float masterGrouping = topologyUtil.CellGrouping(masterCell.index);
+
+            bool threeDifferentCells = (aGrouping != bGrouping) && (aGrouping != cGrouping) && (bGrouping != cGrouping) ;
+
+            if(threeDifferentCells)
+            {
+                NativeArray<WorleyNoise.PointData> sorted = new NativeArray<WorleyNoise.PointData>(3, Allocator.Temp);
+                sorted[0] = aWorley;
+                sorted[1] = bWorley;
+                sorted[2] = cWorley;
+                sorted.Sort();
+
+                if(masterGrouping != topologyUtil.CellGrouping(sorted[0].currentCellIndex))
+                    return 0;
+            }
             else
-                return true;
-        }
+            {
+                int ownedCount = 0;
+                if(masterGrouping == aGrouping) ownedCount++;
+                if(masterGrouping == bGrouping) ownedCount++;
+                if(masterGrouping == cGrouping) ownedCount++;
 
-        void AddVerticesForTriangle(int2 a, int2 b, int2 c, float aHeight, float bHeight, float cHeight)
-        {
+                if(ownedCount < 2)
+                return 0;
+            }
+
             vertices.Add(new Vertex{ vertex = new float3(a.x, aHeight, a.y) });
             vertices.Add(new Vertex{ vertex = new float3(b.x, bHeight, b.y) });
             vertices.Add(new Vertex{ vertex = new float3(c.x, cHeight, c.y) });
@@ -103,7 +122,10 @@ namespace MapGeneration
             colors.Add(new VertColor{ color = PointColor(difference) });
             colors.Add(new VertColor{ color = PointColor(difference) });
             colors.Add(new VertColor{ color = PointColor(difference) });
+
+            return 1;
         }
+
 
         float LargestHeightDifference(float a, float b, float c)
         {
@@ -127,14 +149,11 @@ namespace MapGeneration
             }
         }
 
-        void GetTriangleIndicesForQuad(int indexOffset, bool slopeAngle)
+        void GetIndicesForTriangle()
         {
             triangles.Add(new Triangle{ triangle = 0 + indexOffset });
             triangles.Add(new Triangle{ triangle = 1 + indexOffset });
             triangles.Add(new Triangle{ triangle = 2 + indexOffset });
-            triangles.Add(new Triangle{ triangle = 3 + indexOffset });
-            triangles.Add(new Triangle{ triangle = 4 + indexOffset });
-            triangles.Add(new Triangle{ triangle = 5 + indexOffset });
         }
 
 

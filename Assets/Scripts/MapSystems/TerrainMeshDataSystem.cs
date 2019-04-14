@@ -57,6 +57,7 @@ public class TerrainMeshDataSystem : ComponentSystem
         var entityType = GetArchetypeChunkEntityType();
         var matrixType = GetArchetypeChunkComponentType<CellSystem.MatrixComponent>(true);
         var sectorTypeType = GetArchetypeChunkComponentType<SectorSystem.TypeComponent>(true);
+        var masterCellType = GetArchetypeChunkComponentType<SectorSystem.MasterCell>(true);
 
         var worleyType = GetArchetypeChunkBufferType<WorleyNoise.PointData>(true);
         var topologyType = GetArchetypeChunkBufferType<TopologySystem.Height>(true);
@@ -68,6 +69,7 @@ public class TerrainMeshDataSystem : ComponentSystem
             NativeArray<Entity> entities = chunk.GetNativeArray(entityType);
             NativeArray<CellSystem.MatrixComponent> matrices = chunk.GetNativeArray(matrixType);
             NativeArray<SectorSystem.TypeComponent> sectorTypes = chunk.GetNativeArray(sectorTypeType);
+            NativeArray<SectorSystem.MasterCell> masterCells = chunk.GetNativeArray(masterCellType);
 
             BufferAccessor<WorleyNoise.PointData> worleyArrays = chunk.GetBufferAccessor(worleyType);
             BufferAccessor<TopologySystem.Height> topologyArrays = chunk.GetBufferAccessor(topologyType);
@@ -82,6 +84,7 @@ public class TerrainMeshDataSystem : ComponentSystem
                     sectorEntity = entities[e],
                     sectorType = sectorTypes[e].Value,
                     matrix = matrices[e],
+                    masterCell = masterCells[e].Value,
                     worley = worley,
                     pointHeight = height,
                 }; 
