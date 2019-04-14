@@ -24,8 +24,6 @@ namespace MapGeneration
         [DeallocateOnJobCompletion][ReadOnly] public NativeArray<WorleyNoise.PointData> worley;
         [DeallocateOnJobCompletion][ReadOnly] public NativeArray<TopologySystem.Height> pointHeight;
 
-        [ReadOnly] public float sectorGrouping;
-
         [ReadOnly] public ArrayUtil arrayUtil;
         [ReadOnly] public TopologyUtil topologyUti;
 

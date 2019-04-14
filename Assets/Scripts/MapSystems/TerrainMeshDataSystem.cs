@@ -65,8 +65,6 @@ public class TerrainMeshDataSystem : ComponentSystem
         var entityType = GetArchetypeChunkEntityType();
         var matrixType = GetArchetypeChunkComponentType<CellSystem.MatrixComponent>(true);
         var sectorTypeType = GetArchetypeChunkComponentType<SectorSystem.TypeComponent>(true);
-        var sectorGroupingType = GetArchetypeChunkComponentType<SectorSystem.SectorGrouping>(true);
-        var sectorMasterCellType = GetArchetypeChunkComponentType<SectorSystem.MasterCell>(true);
 
         var worleyType = GetArchetypeChunkBufferType<WorleyNoise.PointData>(true);
         var topologyType = GetArchetypeChunkBufferType<TopologySystem.Height>(true);
@@ -78,23 +76,14 @@ public class TerrainMeshDataSystem : ComponentSystem
             NativeArray<Entity> entities = chunk.GetNativeArray(entityType);
             NativeArray<CellSystem.MatrixComponent> matrices = chunk.GetNativeArray(matrixType);
             NativeArray<SectorSystem.TypeComponent> sectorTypes = chunk.GetNativeArray(sectorTypeType);
-            NativeArray<SectorSystem.SectorGrouping> sectorGroupings = chunk.GetNativeArray(sectorGroupingType);
-            NativeArray<SectorSystem.MasterCell> sectorMasterCells = chunk.GetNativeArray(sectorMasterCellType);
 
             BufferAccessor<WorleyNoise.PointData> worleyArrays = chunk.GetBufferAccessor(worleyType);
             BufferAccessor<TopologySystem.Height> topologyArrays = chunk.GetBufferAccessor(topologyType);
 
             for(int e = 0; e < entities.Length; e++)
             {
-                SectorSystem.SectorTypes sectorType = sectorTypes[e].Value;
-                CellSystem.MatrixComponent matrix = matrices[e];
-                WorleyNoise.CellData masterCell = sectorMasterCells[e].Value;
-
-                var worley = new NativeArray<WorleyNoise.PointData>(worleyArrays[e].Length, Allocator.Persistent);
-                var height = new NativeArray<TopologySystem.Height>(topologyArrays[e].Length, Allocator.TempJob);
-
-                worley.CopyFrom(worleyArrays[e].AsNativeArray());
-                height.CopyFrom(topologyArrays[e].AsNativeArray());
+                var worley = new NativeArray<WorleyNoise.PointData>(worleyArrays[e].AsNativeArray(), Allocator.TempJob);
+                var height = new NativeArray<TopologySystem.Height>(topologyArrays[e].AsNativeArray(), Allocator.TempJob);
 
                 TerrainMeshDataJob job = new TerrainMeshDataJob{
                     commandBuffer = jobManager.commandBuffer,
@@ -102,8 +91,7 @@ public class TerrainMeshDataSystem : ComponentSystem
                     sectorType = sectorTypes[e].Value,
                     matrix = matrices[e],
                     worley = worley,
-                    sectorGrouping = sectorGroupings[e].Value,
-                    pointHeight = height
+                    pointHeight = height,
                 }; 
                 
                 jobManager.ScheduleNewJob(job);
