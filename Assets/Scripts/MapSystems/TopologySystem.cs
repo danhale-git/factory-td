@@ -15,6 +15,8 @@ public class TopologySystem : ComponentSystem
 
     TopologyUtil topologyUtil;
 
+    SimplexNoiseGenerator simplex;
+
     public struct Height : IBufferElementData
     {
         public float height;
@@ -25,6 +27,7 @@ public class TopologySystem : ComponentSystem
         entityManager = World.Active.EntityManager;
 
         topologyUtil = new TopologyUtil();
+        simplex = new SimplexNoiseGenerator(TerrainSettings.seed, 0.01f);
 
         EntityQueryDesc topologyQuery = new EntityQueryDesc{
             All = new ComponentType[] { typeof(WorleyNoise.CellData), typeof(WorleyNoise.PointData), typeof(SectorSystem.SectorNoiseValue) },
@@ -100,6 +103,7 @@ public class TopologySystem : ComponentSystem
 
                         pointHeight.height = math.max(adjacentHeight, cellHeight);
                         pointHeight.height += (point.distance2Edge) * (TerrainSettings.cellheightMultiplier * 3);
+                        pointHeight.height += (simplex.GetSimplex(position.x, position.z, 0.1f) * 5) * point.distance2Edge;
                     }
                     
 
