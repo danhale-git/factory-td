@@ -11,12 +11,19 @@ using ECSMesh;
 using MapGeneration;
 using Unity.Rendering;
 
+namespace Tags
+{
+    public struct WaterEntity : IComponentData { }
+}
+
+[AlwaysUpdateSystem]
 [UpdateBefore(typeof(TransformSystemGroup))]
-public class TerrainMeshDataSystem : ComponentSystem
+public class WaterMeshDataSystem : ComponentSystem
 {
     EntityManager entityManager;
 
     EntityQuery meshDataGroup;
+    EntityArchetype waterArchetype;
 
     TopologyUtil biomes;
 
@@ -28,8 +35,15 @@ public class TerrainMeshDataSystem : ComponentSystem
 
         biomes = new TopologyUtil();
 
+        waterArchetype = entityManager.CreateArchetype(
+            ComponentType.ReadWrite<LocalToWorld>(),
+            ComponentType.ReadWrite<Translation>(),
+            ComponentType.ReadWrite<RenderMeshProxy>(),
+            ComponentType.ReadWrite<Tags.WaterEntity>()
+        );
+
         EntityQueryDesc meshDataQuery = new EntityQueryDesc{
-            All = new ComponentType[] { typeof(Tags.TerrainEntity), typeof(WorleyNoise.CellData), typeof(TopologySystem.Height) },
+            All = new ComponentType[] { typeof(Tags.TerrainEntity), typeof(Tags.CreateWaterEntity), typeof(WorleyNoise.CellData), typeof(TopologySystem.Height) },
             None = new ComponentType[] { typeof(Unity.Rendering.RenderMesh), typeof(Vertex) }
         };
         meshDataGroup = GetEntityQuery(meshDataQuery);
@@ -55,10 +69,8 @@ public class TerrainMeshDataSystem : ComponentSystem
 
         var entityType = GetArchetypeChunkEntityType();
         var matrixType = GetArchetypeChunkComponentType<CellSystem.MatrixComponent>(true);
-        var sectorTypeType = GetArchetypeChunkComponentType<SectorSystem.TypeComponent>(true);
-
+        var sectorMasterCellType = GetArchetypeChunkComponentType<SectorSystem.MasterCell>(true);
         var worleyType = GetArchetypeChunkBufferType<WorleyNoise.PointData>(true);
-        var topologyType = GetArchetypeChunkBufferType<TopologySystem.Height>(true);
 
         for(int c = 0; c < chunks.Length; c++)
         {
@@ -66,26 +78,27 @@ public class TerrainMeshDataSystem : ComponentSystem
 
             NativeArray<Entity> entities = chunk.GetNativeArray(entityType);
             NativeArray<CellSystem.MatrixComponent> matrices = chunk.GetNativeArray(matrixType);
-            NativeArray<SectorSystem.TypeComponent> sectorTypes = chunk.GetNativeArray(sectorTypeType);
-
+            NativeArray<SectorSystem.MasterCell> sectorMasterCells = chunk.GetNativeArray(sectorMasterCellType);
             BufferAccessor<WorleyNoise.PointData> worleyArrays = chunk.GetBufferAccessor(worleyType);
-            BufferAccessor<TopologySystem.Height> topologyArrays = chunk.GetBufferAccessor(topologyType);
 
             for(int e = 0; e < entities.Length; e++)
             {
-                var worley = new NativeArray<WorleyNoise.PointData>(worleyArrays[e].AsNativeArray(), Allocator.TempJob);
-                var height = new NativeArray<TopologySystem.Height>(topologyArrays[e].AsNativeArray(), Allocator.TempJob);
+                CellSystem.MatrixComponent matrix = matrices[e];
+                WorleyNoise.CellData masterCell = sectorMasterCells[e].Value;
+                Debug.Log(matrix.root);
+                var worley = new NativeArray<WorleyNoise.PointData>(worleyArrays[e].AsNativeArray(), Allocator.Persistent);
 
-                TerrainMeshDataJob job = new TerrainMeshDataJob{
+                WaterMeshDataJob waterJob = new WaterMeshDataJob{
                     commandBuffer = jobManager.commandBuffer,
-                    sectorEntity = entities[e],
-                    sectorType = sectorTypes[e].Value,
-                    matrix = matrices[e],
-                    worley = worley,
-                    pointHeight = height,
-                }; 
-                
-                jobManager.ScheduleNewJob(job);
+                    waterEntityArchetype = waterArchetype,
+                    matrix = matrix,
+                    masterCell = masterCell,
+                    worley = worley
+                };
+
+                jobManager.ScheduleNewJob(waterJob);
+
+                commandBuffer.RemoveComponent<Tags.CreateWaterEntity>(entities[e]);
             }
         }
 

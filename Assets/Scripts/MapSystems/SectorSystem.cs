@@ -7,7 +7,7 @@ using Unity.Collections;
 
 namespace Tags
 {
-    public struct WaterEntity : IComponentData { }
+    public struct CreateWaterEntity : IComponentData { }
 }
 
 public class SectorSystem : ComponentSystem
@@ -123,6 +123,7 @@ public class SectorSystem : ComponentSystem
                 else if(topologyUtil.CellHeightGroup(masterCell.index) < 2)
                 {
                     type.Value = SectorTypes.LAKE;
+                    commandBuffer.AddComponent<Tags.CreateWaterEntity>(sectorEntity, new Tags.CreateWaterEntity());
                 }
 
                 commandBuffer.AddComponent<TypeComponent>(sectorEntity, type); 
