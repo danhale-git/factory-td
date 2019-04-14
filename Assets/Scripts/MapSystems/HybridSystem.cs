@@ -33,7 +33,7 @@ public class HybridSystem : ComponentSystem
     {
         hybridQuery = GetEntityQuery(
             new EntityQueryDesc{
-                All = new ComponentType[] { typeof(RenderMesh), typeof(Tags.Sector) },
+                All = new ComponentType[] { typeof(RenderMesh), typeof(Tags.TerrainEntity) },
                 None = new ComponentType[] { typeof(Tags.HybridGameObjectCreated) }
             }
         );

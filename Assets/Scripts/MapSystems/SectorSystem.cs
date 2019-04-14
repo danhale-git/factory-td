@@ -5,6 +5,11 @@ using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Collections;
 
+namespace Tags
+{
+    public struct WaterEntity : IComponentData { }
+}
+
 public class SectorSystem : ComponentSystem
 {
     EntityManager entityManager;
@@ -67,7 +72,7 @@ public class SectorSystem : ComponentSystem
         topologyUtil = new TopologyUtil();
 
         EntityQueryDesc sectorQuery = new EntityQueryDesc{
-            All = new ComponentType[] { typeof(Tags.Sector), typeof(CellSet) },
+            All = new ComponentType[] { typeof(Tags.TerrainEntity), typeof(CellSet) },
             None = new ComponentType[] { typeof(TypeComponent) }
         };
         sectorGroup = GetEntityQuery(sectorQuery);

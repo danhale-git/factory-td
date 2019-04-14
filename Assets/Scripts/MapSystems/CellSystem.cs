@@ -12,7 +12,7 @@ using MapGeneration;
 
 namespace Tags
 {
-    public struct Sector : IComponentData { }
+    public struct TerrainEntity : IComponentData { }
 }
 
 [AlwaysUpdateSystem]
@@ -73,7 +73,7 @@ public class CellSystem : ComponentSystem
             ComponentType.ReadWrite<LocalToWorld>(),
             ComponentType.ReadWrite<Translation>(),
             ComponentType.ReadWrite<RenderMeshProxy>(),
-            ComponentType.ReadWrite<Tags.Sector>()
+            ComponentType.ReadWrite<Tags.TerrainEntity>()
         );
 
         biomes = new TopologyUtil();
