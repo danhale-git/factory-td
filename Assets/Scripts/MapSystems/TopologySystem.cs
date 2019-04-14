@@ -98,11 +98,13 @@ public class TopologySystem : ComponentSystem
                     }
                     else if(pointIsInSector && sectorType == SectorSystem.SectorTypes.MOUNTAIN)
                     {
-                        float adjacentHeight = LargestAdjacentHeight(sectorAdjacentCells);
+                        float adjacentHeight = topologyUtil.CellHeight(worley[i].adjacentCellIndex);
                         float cellHeight = topologyUtil.CellHeight(worley[i].currentCellIndex);
 
-                        pointHeight.height = math.max(adjacentHeight, cellHeight);
-                        pointHeight.height += (point.distance2Edge) * (TerrainSettings.cellheightMultiplier * 3);
+                        float mountainHeight = point.distance2Edge * TerrainSettings.cellheightMultiplier;
+
+                        pointHeight.height = math.lerp(adjacentHeight, cellHeight + mountainHeight, point.distance2Edge);
+
                         pointHeight.height += (simplex.GetSimplex(position.x, position.z, 0.1f) * 5) * point.distance2Edge;
                     }
                     
