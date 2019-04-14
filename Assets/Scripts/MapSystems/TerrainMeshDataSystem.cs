@@ -11,6 +11,7 @@ using ECSMesh;
 using MapGeneration;
 using Unity.Rendering;
 
+[AlwaysUpdateSystem]
 [UpdateBefore(typeof(TransformSystemGroup))]
 public class TerrainMeshDataSystem : ComponentSystem
 {
