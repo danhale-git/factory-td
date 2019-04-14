@@ -89,25 +89,12 @@ public class TopologySystem : ComponentSystem
 
                     if(topologyUtil.EdgeIsSloped(point))
                         pointHeight.height = SmoothSlope(point);  
+                    else if(sectorType == SectorSystem.SectorTypes.LAKE)
+                        pointHeight.height = Lake(worley[i]);
+                    else if(pointIsInSector && sectorType == SectorSystem.SectorTypes.MOUNTAIN)
+                        pointHeight.height  = Mountain(worley[i], position, pointIsInSector);
                     else
                         pointHeight.height = topologyUtil.CellHeight(worley[i].currentCellIndex);
-
-                    if(sectorType == SectorSystem.SectorTypes.LAKE)
-                    {
-                        pointHeight.height -= math.clamp(point.distance2Edge - 0.3f, 0, 1) * (TerrainSettings.cellheightMultiplier * 3);
-                    }
-                    else if(pointIsInSector && sectorType == SectorSystem.SectorTypes.MOUNTAIN)
-                    {
-                        float adjacentHeight = topologyUtil.CellHeight(worley[i].adjacentCellIndex);
-                        float cellHeight = topologyUtil.CellHeight(worley[i].currentCellIndex);
-
-                        float mountainHeight = point.distance2Edge * TerrainSettings.cellheightMultiplier;
-
-                        pointHeight.height = math.lerp(adjacentHeight, cellHeight + mountainHeight, point.distance2Edge);
-
-                        pointHeight.height += (simplex.GetSimplex(position.x, position.z, 0.1f) * 5) * point.distance2Edge;
-                    }
-                    
 
                     topology[i] = pointHeight;
                 }
@@ -118,6 +105,25 @@ public class TopologySystem : ComponentSystem
         commandBuffer.Dispose();
 
         chunks.Dispose();
+    }
+
+    float Mountain(WorleyNoise.PointData point, float3 position, bool pointIsInSector)
+    {
+        float cellHeight = topologyUtil.CellHeight(point.currentCellIndex);
+        float mountainHeight = point.distance2Edge * TerrainSettings.cellheightMultiplier;
+
+        float result = math.lerp(cellHeight, cellHeight+mountainHeight, point.distance2Edge);
+
+        result += (simplex.GetSimplex(position.x, position.z, 0.1f) * 5) * point.distance2Edge;
+
+        return result;
+    }
+
+    float Lake(WorleyNoise.PointData point)
+    {
+        float cellHeight = topologyUtil.CellHeight(point.currentCellIndex);
+        float lakeDepth = math.clamp(point.distance2Edge - 0.3f, 0, 1) * (TerrainSettings.cellheightMultiplier * 3);
+        return cellHeight - lakeDepth;
     }
 
     float SmoothSlope(WorleyNoise.PointData point)
