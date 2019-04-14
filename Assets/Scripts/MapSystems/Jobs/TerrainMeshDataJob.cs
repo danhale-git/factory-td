@@ -117,7 +117,7 @@ namespace MapGeneration
             float4 grey = new float4(0.6f, 0.6f, 0.6f, 1);
             float4 green = new float4(0.2f, 0.6f, 0.1f, 1);
 
-            if(sectorType == SectorSystem.SectorTypes.MOUNTAIN || difference > 1)
+            if(sectorType == SectorSystem.SectorTypes.GULLY || sectorType == SectorSystem.SectorTypes.MOUNTAIN || difference > 1)
             {
                 return grey;
             }

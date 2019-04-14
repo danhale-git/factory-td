@@ -20,7 +20,7 @@ public class SectorSystem : ComponentSystem
 
     EntityQuery sectorGroup;
 
-    public enum SectorTypes { NONE, MOUNTAIN, LAKE }
+    public enum SectorTypes { NONE, MOUNTAIN, LAKE, GULLY }
 
     public struct TypeComponent : IComponentData
     {
@@ -66,6 +66,7 @@ public class SectorSystem : ComponentSystem
         var startCellType = GetArchetypeChunkComponentType<WorleyNoise.CellData>(true);
         var pointArrayType = GetArchetypeChunkBufferType<WorleyNoise.PointData>(true);
         var sectorCellType = GetArchetypeChunkBufferType<CellSystem.SectorCell>(true);
+        var adjacentCellType = GetArchetypeChunkBufferType<CellSystem.AdjacentCell>(true);
 
         for(int c = 0; c < chunks.Length; c++)
         {
@@ -74,6 +75,7 @@ public class SectorSystem : ComponentSystem
             NativeArray<WorleyNoise.CellData> startCells = chunk.GetNativeArray(startCellType);
             BufferAccessor<WorleyNoise.PointData> pointArrays = chunk.GetBufferAccessor(pointArrayType);
             BufferAccessor<CellSystem.SectorCell> sectorCellArrays = chunk.GetBufferAccessor(sectorCellType);
+            BufferAccessor<CellSystem.AdjacentCell> adjacentCellArrays = chunk.GetBufferAccessor(adjacentCellType);
 
             for(int e = 0; e < entities.Length; e++)
             {
@@ -92,9 +94,12 @@ public class SectorSystem : ComponentSystem
                 
                 if(!pathable)
                 {
-                    type.Value = SectorTypes.MOUNTAIN;
+                    if(AllAdjacentAreHigher(adjacentCellArrays[e], topologyUtil.CellHeightGroup(masterCell.index)))
+                        type.Value = SectorTypes.GULLY;
+                    else
+                        type.Value = SectorTypes.MOUNTAIN;
                 }
-                else if(topologyUtil.CellHeightGroup(masterCell.index) < 2)
+                else if(topologyUtil.CellHeightGroup(masterCell.index) < 2 && sectorCellArrays[e].Length > 2)
                 {
                     type.Value = SectorTypes.LAKE;
                     commandBuffer.AddComponent<Tags.CreateWaterEntity>(sectorEntity, new Tags.CreateWaterEntity());
@@ -110,6 +115,17 @@ public class SectorSystem : ComponentSystem
         commandBuffer.Dispose();
 
         chunks.Dispose();
+    }
+
+    bool AllAdjacentAreHigher(DynamicBuffer<CellSystem.AdjacentCell> adjacentCells, float heightGrouping)
+    {
+        for(int i = 0; i < adjacentCells.Length; i++)
+        {
+            WorleyNoise.CellData cell = adjacentCells[i].data;
+            if(topologyUtil.CellHeightGroup(cell.index) <= heightGrouping)
+                return false;
+        }
+        return true;
     }
 
     bool SectorIsPathable(DynamicBuffer<WorleyNoise.PointData> points, float grouping)

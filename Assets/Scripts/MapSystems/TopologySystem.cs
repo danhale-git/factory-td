@@ -92,7 +92,9 @@ public class TopologySystem : ComponentSystem
                     else if(sectorType == SectorSystem.SectorTypes.LAKE)
                         pointHeight.height = Lake(worley[i]);
                     else if(pointIsInSector && sectorType == SectorSystem.SectorTypes.MOUNTAIN)
-                        pointHeight.height  = Mountain(worley[i], position, pointIsInSector);
+                        pointHeight.height  = Mountain(worley[i], position);
+                    else if(sectorType == SectorSystem.SectorTypes.GULLY)
+                        pointHeight.height = Gully(point, position);
                     else
                         pointHeight.height = topologyUtil.CellHeight(worley[i].currentCellIndex);
 
@@ -107,7 +109,19 @@ public class TopologySystem : ComponentSystem
         chunks.Dispose();
     }
 
-    float Mountain(WorleyNoise.PointData point, float3 position, bool pointIsInSector)
+    float Gully(WorleyNoise.PointData point, float3 position)
+    {
+        float cellHeight = topologyUtil.CellHeight(point.currentCellIndex);
+        float gullyHeight = point.distance2Edge * TerrainSettings.cellheightMultiplier / 2;
+
+        float result = math.lerp(cellHeight, cellHeight-gullyHeight, point.distance2Edge);
+
+        result -= (simplex.GetSimplex(position.x, position.z, 0.1f) * 10) * point.distance2Edge;
+
+        return result;
+    }
+
+    float Mountain(WorleyNoise.PointData point, float3 position)
     {
         float cellHeight = topologyUtil.CellHeight(point.currentCellIndex);
         float mountainHeight = point.distance2Edge * TerrainSettings.cellheightMultiplier;
