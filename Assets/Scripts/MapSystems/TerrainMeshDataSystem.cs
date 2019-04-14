@@ -9,16 +9,20 @@ using Unity.Transforms;
 
 using ECSMesh;
 using MapGeneration;
+using Unity.Rendering;
 
-public class MeshDataSystem : ComponentSystem
+[UpdateBefore(typeof(TransformSystemGroup))]
+public class TerrainMeshDataSystem : ComponentSystem
 {
     EntityManager entityManager;
 
     EntityQuery meshDataGroup;
+    EntityArchetype waterArchetype;
 
     TopologyUtil biomes;
 
     ASyncJobManager jobManager;
+    ASyncJobManager waterJobManager;
 
     protected override void OnCreate()
     {
@@ -26,8 +30,15 @@ public class MeshDataSystem : ComponentSystem
 
         biomes = new TopologyUtil();
 
+        waterArchetype = entityManager.CreateArchetype(
+            ComponentType.ReadWrite<LocalToWorld>(),
+            ComponentType.ReadWrite<Translation>(),
+            ComponentType.ReadWrite<RenderMeshProxy>(),
+            ComponentType.ReadWrite<Tags.WaterEntity>()
+        );
+
         EntityQueryDesc meshDataQuery = new EntityQueryDesc{
-            All = new ComponentType[] { typeof(WorleyNoise.CellData), typeof(TopologySystem.Height) },
+            All = new ComponentType[] { typeof(Tags.TerrainEntity), typeof(WorleyNoise.CellData), typeof(TopologySystem.Height) },
             None = new ComponentType[] { typeof(Unity.Rendering.RenderMesh), typeof(Vertex) }
         };
         meshDataGroup = GetEntityQuery(meshDataQuery);
@@ -48,6 +59,7 @@ public class MeshDataSystem : ComponentSystem
 
     void ScheduleMeshDataJobs()
     {
+        EntityCommandBuffer commandBuffer = new EntityCommandBuffer(Allocator.Temp);
         NativeArray<ArchetypeChunk> chunks = meshDataGroup.CreateArchetypeChunkArray(Allocator.TempJob);
 
         var entityType = GetArchetypeChunkEntityType();
@@ -74,7 +86,11 @@ public class MeshDataSystem : ComponentSystem
 
             for(int e = 0; e < entities.Length; e++)
             {
-                var worley = new NativeArray<WorleyNoise.PointData>(topologyArrays[e].Length, Allocator.TempJob);
+                SectorSystem.SectorTypes sectorType = sectorTypes[e].Value;
+                CellSystem.MatrixComponent matrix = matrices[e];
+                WorleyNoise.CellData masterCell = sectorMasterCells[e].Value;
+
+                var worley = new NativeArray<WorleyNoise.PointData>(worleyArrays[e].Length, Allocator.Persistent);
                 var height = new NativeArray<TopologySystem.Height>(topologyArrays[e].Length, Allocator.TempJob);
 
                 worley.CopyFrom(worleyArrays[e].AsNativeArray());
@@ -87,14 +103,15 @@ public class MeshDataSystem : ComponentSystem
                     matrix = matrices[e],
                     worley = worley,
                     sectorGrouping = sectorGroupings[e].Value,
-                    pointHeight = height,
-                    arrayUtil = new ArrayUtil()
+                    pointHeight = height
                 }; 
                 
                 jobManager.ScheduleNewJob(job);
             }
         }
 
+        commandBuffer.Playback(entityManager);
+        commandBuffer.Dispose();
         chunks.Dispose();
     }
 }
