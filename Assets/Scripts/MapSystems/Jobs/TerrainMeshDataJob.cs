@@ -84,35 +84,11 @@ namespace MapGeneration
                 cWorley.isSet == 0 )
                 return 0;
 
-            float aGrouping = topologyUtil.CellGrouping(aWorley.currentCellIndex);
-            float bGrouping = topologyUtil.CellGrouping(bWorley.currentCellIndex);
-            float cGrouping = topologyUtil.CellGrouping(cWorley.currentCellIndex);
-
             float masterGrouping = topologyUtil.CellGrouping(masterCell.index);
+            float ownerGrouping = topologyUtil.CellGrouping(Owner(aWorley, bWorley, cWorley));
 
-            bool threeDifferentCells = (aGrouping != bGrouping) && (aGrouping != cGrouping) && (bGrouping != cGrouping) ;
+            if(masterGrouping != ownerGrouping) return 0;
 
-            if(threeDifferentCells)
-            {
-                NativeArray<WorleyNoise.PointData> sorted = new NativeArray<WorleyNoise.PointData>(3, Allocator.Temp);
-                sorted[0] = aWorley;
-                sorted[1] = bWorley;
-                sorted[2] = cWorley;
-                sorted.Sort();
-
-                if(masterGrouping != topologyUtil.CellGrouping(sorted[0].currentCellIndex))
-                    return 0;
-            }
-            else
-            {
-                int ownedCount = 0;
-                if(masterGrouping == aGrouping) ownedCount++;
-                if(masterGrouping == bGrouping) ownedCount++;
-                if(masterGrouping == cGrouping) ownedCount++;
-
-                if(ownedCount < 2)
-                return 0;
-            }
 
             vertices.Add(new Vertex{ vertex = new float3(a.x, aHeight, a.y) });
             vertices.Add(new Vertex{ vertex = new float3(b.x, bHeight, b.y) });
@@ -124,6 +100,17 @@ namespace MapGeneration
             colors.Add(new VertColor{ color = PointColor(difference) });
 
             return 1;
+        }
+
+        int2 Owner(WorleyNoise.PointData aWorley, WorleyNoise.PointData bWorley, WorleyNoise.PointData cWorley)
+        {
+            NativeArray<WorleyNoise.PointData> sortPoints = new NativeArray<WorleyNoise.PointData>(3, Allocator.Temp);
+            sortPoints[0] = aWorley;
+            sortPoints[1] = bWorley;
+            sortPoints[2] = cWorley;
+
+            sortPoints.Sort();
+            return sortPoints[0].currentCellIndex;
         }
 
 

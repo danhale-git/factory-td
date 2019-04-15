@@ -118,7 +118,7 @@ public class TopologySystem : ComponentSystem
 
         float result = math.lerp(cellHeight, cellHeight-gullyHeight, clampedInterpolator);
 
-        result -= (simplex.GetSimplex(position.x, position.z, 0.1f) * 10) * clampedInterpolator;
+        result -= ((simplex.GetSimplex(position.x, position.z, 0.1f) - 0.5f) * 10) * clampedInterpolator;
 
         return result;
     }
@@ -131,7 +131,7 @@ public class TopologySystem : ComponentSystem
 
         float clampedInterpolator = math.clamp(point.distance2Edge - 0.2f, 0, 1);
 
-        float result = math.lerp(/*math.min(adjacentCellHeight, cellHeight) */cellHeight, cellHeight+mountainHeight, clampedInterpolator);
+        float result = math.lerp(cellHeight, cellHeight+mountainHeight, clampedInterpolator);
 
         result += (simplex.GetSimplex(position.x, position.z, 0.1f) * 5) * clampedInterpolator;
 
