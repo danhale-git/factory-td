@@ -29,9 +29,12 @@ namespace MapGeneration
         [ReadOnly] public TopologyUtil topologyUtil;
 
         int indexOffset;
+        float masterGrouping;
 
         public void Execute()
         {
+            masterGrouping = topologyUtil.CellGrouping(masterCell.index);
+
             vertices = commandBuffer.AddBuffer<Vertex>(sectorEntity);
             colors = commandBuffer.AddBuffer<VertColor>(sectorEntity);
             triangles = commandBuffer.AddBuffer<Triangle>(sectorEntity);
@@ -56,27 +59,35 @@ namespace MapGeneration
 
                     bool northWestToSouthEast = brVertex.vertex.y != tlVertex.vertex.y;
 
-                    //bool sloped = ( topologyUtil.EdgeIsSloped(blWorley) || topologyUtil.EdgeIsSloped(tlWorley) || topologyUtil.EdgeIsSloped(trWorley) || topologyUtil.EdgeIsSloped(brWorley) )
+                    bool sloped = ( topologyUtil.EdgeIsSloped(blWorley) || 
+                                    topologyUtil.EdgeIsSloped(tlWorley) || 
+                                    topologyUtil.EdgeIsSloped(trWorley) || 
+                                    topologyUtil.EdgeIsSloped(brWorley) );
 
-                    int trianglesAdded = 0;
-
-                    
                     if(northWestToSouthEast)
                     {
-                        trianglesAdded += AddVerticesForTriangle(blVertex, tlVertex, trVertex, blWorley, tlWorley, trWorley);
-                        trianglesAdded += AddVerticesForTriangle(blVertex, trVertex, brVertex, blWorley, trWorley, brWorley);
+                        if(sloped)
+                        {
+                            AddVertexDataQuad(blVertex, tlVertex, trVertex, brVertex, blWorley, tlWorley, trWorley, brWorley);
+                        }
+                        else
+                        {
+                            AddVertexDataForTriangle(blVertex, tlVertex, trVertex, blWorley, tlWorley, trWorley);
+                            AddVertexDataForTriangle(blVertex, trVertex, brVertex, blWorley, trWorley, brWorley);
+                        }
                     }
                     else
                     {
-                        trianglesAdded += AddVerticesForTriangle(blVertex, tlVertex, brVertex, blWorley, tlWorley, brWorley);
-                        trianglesAdded += AddVerticesForTriangle(tlVertex, trVertex, brVertex, tlWorley, trWorley, brWorley);
+                        if(sloped)
+                        {
+                            AddVertexDataQuad(tlVertex, trVertex, brVertex, blVertex, tlWorley, trWorley, brWorley, blWorley);
+                        }
+                        else
+                        {
+                            AddVertexDataForTriangle(blVertex, tlVertex, brVertex, blWorley, tlWorley, brWorley);
+                            AddVertexDataForTriangle(tlVertex, trVertex, brVertex, tlWorley, trWorley, brWorley);
+                        }
                     } 
-
-                    for(int i = 0; i < trianglesAdded; i++)
-                    {
-                        GetIndicesForTriangle();
-                        indexOffset += 3;
-                    }
                 }
         }
 
@@ -86,77 +97,79 @@ namespace MapGeneration
             return new Vertex() { vertex = new float3(matrixPosition.x, terrainHeight.height, matrixPosition.y) };
         }
 
-        int AddVerticesForTriangle(Vertex a, Vertex b, Vertex c, WorleyNoise.PointData aWorley, WorleyNoise.PointData bWorley, WorleyNoise.PointData cWorley)
+        void AddVertexDataForTriangle(Vertex a, Vertex b, Vertex c, WorleyNoise.PointData aWorley, WorleyNoise.PointData bWorley, WorleyNoise.PointData cWorley)
+        {
+            if(!CurrentCellIsOwner(aWorley, bWorley, cWorley)) return;
+
+            float difference = LargestHeightDifference(a.vertex.y, b.vertex.y, c.vertex.y);
+            float4 color = PointColor(difference);
+
+            AddVertexData(a, color);
+            AddVertexData(b, color);
+            AddVertexData(c, color);
+
+            AddIndicesForTriangle();
+
+            return;
+        }
+        void AddVertexDataQuad(Vertex a, Vertex b, Vertex c, Vertex d, WorleyNoise.PointData aWorley, WorleyNoise.PointData bWorley, WorleyNoise.PointData cWorley, WorleyNoise.PointData dWorley)
+        {
+            if(!CurrentCellIsOwner(aWorley, bWorley, cWorley, dWorley)) return;
+
+            float difference = LargestHeightDifference(a.vertex.y, b.vertex.y, c.vertex.y, d.vertex.y);
+            float4 color = PointColor(difference);
+
+            AddVertexData(a, color);
+            AddVertexData(b, color);
+            AddVertexData(c, color);
+            AddVertexData(d, color);
+
+            AddIndicesForQuad();
+
+            return;
+        }
+
+        void AddVertexData(Vertex vertex, float4 color)
+        {
+            vertices.Add(vertex);
+            colors.Add(new VertColor{ color = color });
+        }
+
+        bool CurrentCellIsOwner(WorleyNoise.PointData aWorley, WorleyNoise.PointData bWorley, WorleyNoise.PointData cWorley)
         {
             if( aWorley.isSet == 0 ||
                 bWorley.isSet == 0 ||
                 cWorley.isSet == 0 )
-                return 0;
+                return false;
 
-            float masterGrouping = topologyUtil.CellGrouping(masterCell.index);
-            float ownerGrouping = topologyUtil.CellGrouping(Owner(aWorley, bWorley, cWorley));
-
-            if(masterGrouping != ownerGrouping) return 0;
-
-            vertices.Add(a);
-            vertices.Add(b);
-            vertices.Add(c);
-
-            float difference = LargestHeightDifference(a.vertex.y, b.vertex.y, c.vertex.y);
-            colors.Add(new VertColor{ color = PointColor(difference) });
-            colors.Add(new VertColor{ color = PointColor(difference) });
-            colors.Add(new VertColor{ color = PointColor(difference) });
-
-            return 1;
-        }
-
-        int AddVerticesForQuad(Vertex a, Vertex b, Vertex c, Vertex d, WorleyNoise.PointData aWorley, WorleyNoise.PointData bWorley, WorleyNoise.PointData cWorley, WorleyNoise.PointData dWorley)
-        {
-            if( aWorley.isSet == 0 ||
-                bWorley.isSet == 0 ||
-                cWorley.isSet == 0 ||
-                dWorley.isSet == 0 )
-                return 0;
-
-            float masterGrouping = topologyUtil.CellGrouping(masterCell.index);
-            float ownerGrouping = topologyUtil.CellGrouping(Owner(aWorley, bWorley, cWorley, dWorley));
-
-            if(masterGrouping != ownerGrouping) return 0;
-
-            vertices.Add(a);
-            vertices.Add(b);
-            vertices.Add(c);
-            vertices.Add(d);
-
-            float difference = LargestHeightDifference(a.vertex.y, b.vertex.y, c.vertex.y, d.vertex.y);
-            colors.Add(new VertColor{ color = PointColor(difference) });
-            colors.Add(new VertColor{ color = PointColor(difference) });
-            colors.Add(new VertColor{ color = PointColor(difference) });
-            colors.Add(new VertColor{ color = PointColor(difference) });
-
-            return 2;
-        }
-
-        int2 Owner(WorleyNoise.PointData aWorley, WorleyNoise.PointData bWorley, WorleyNoise.PointData cWorley)
-        {
             NativeArray<WorleyNoise.PointData> sortPoints = new NativeArray<WorleyNoise.PointData>(3, Allocator.Temp);
             sortPoints[0] = aWorley;
             sortPoints[1] = bWorley;
             sortPoints[2] = cWorley;
 
             sortPoints.Sort();
-            return sortPoints[0].currentCellIndex;
+            float ownerGrouping = topologyUtil.CellGrouping(sortPoints[0].currentCellIndex);
+            
+            return masterGrouping == ownerGrouping;
         }
-        int2 Owner(WorleyNoise.PointData aWorley, WorleyNoise.PointData bWorley, WorleyNoise.PointData cWorley, WorleyNoise.PointData dWorley)
+        bool CurrentCellIsOwner(WorleyNoise.PointData aWorley, WorleyNoise.PointData bWorley, WorleyNoise.PointData cWorley, WorleyNoise.PointData dWorley)
         {
-            NativeArray<WorleyNoise.PointData> sortPoints = new NativeArray<WorleyNoise.PointData>(3, Allocator.Temp);
+            if( aWorley.isSet == 0 ||
+                bWorley.isSet == 0 ||
+                cWorley.isSet == 0 ||
+                dWorley.isSet == 0 )
+                return false;
+
+            NativeArray<WorleyNoise.PointData> sortPoints = new NativeArray<WorleyNoise.PointData>(4, Allocator.Temp);
             sortPoints[0] = aWorley;
             sortPoints[1] = bWorley;
             sortPoints[2] = cWorley;
             sortPoints[3] = dWorley;
 
             sortPoints.Sort();
-            return sortPoints[0].currentCellIndex;
+            float ownerGrouping = topologyUtil.CellGrouping(sortPoints[0].currentCellIndex);
+            
+            return masterGrouping == ownerGrouping;
         }
 
 
@@ -173,28 +186,15 @@ namespace MapGeneration
             return largest - smallest;
         }
 
-        float4 PointColor(float difference)
-        {
-            float4 grey = new float4(0.6f, 0.6f, 0.6f, 1);
-            float4 green = new float4(0.2f, 0.6f, 0.1f, 1);
-
-            if(sectorType == SectorSystem.SectorTypes.GULLY || sectorType == SectorSystem.SectorTypes.MOUNTAIN || difference > 1)
-            {
-                return grey;
-            }
-            else
-            {
-                return green;
-            }
-        }
-
-        void GetIndicesForTriangle()
+        void AddIndicesForTriangle()
         {
             triangles.Add(new Triangle{ triangle = 0 + indexOffset });
             triangles.Add(new Triangle{ triangle = 1 + indexOffset });
             triangles.Add(new Triangle{ triangle = 2 + indexOffset });
+
+            indexOffset += 3;
         }
-        void GetIndicesForQuad()
+        void AddIndicesForQuad()
         {
             triangles.Add(new Triangle{ triangle = 0 + indexOffset });
             triangles.Add(new Triangle{ triangle = 1 + indexOffset });
@@ -202,8 +202,19 @@ namespace MapGeneration
             triangles.Add(new Triangle{ triangle = 0 + indexOffset });
             triangles.Add(new Triangle{ triangle = 2 + indexOffset });
             triangles.Add(new Triangle{ triangle = 3 + indexOffset });
+            
+            indexOffset += 4;
         }
 
+        float4 PointColor(float difference)
+        {
+            float4 grey = new float4(0.6f, 0.6f, 0.6f, 1);
+            float4 green = new float4(0.2f, 0.6f, 0.1f, 1);
 
+            if(sectorType == SectorSystem.SectorTypes.GULLY || sectorType == SectorSystem.SectorTypes.MOUNTAIN || difference > 1)
+                return grey;
+            else
+                return green;
+        }
     }
 }
