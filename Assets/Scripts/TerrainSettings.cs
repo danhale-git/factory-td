@@ -25,7 +25,7 @@ public static class TerrainSettings
 	public const int cellGroupCount = 4;
 	public const WorleyNoise.Distance2EdgeBorder cellDistanceBorder = WorleyNoise.Distance2EdgeBorder.Sector;
 
-	public const float slopeLength = 0.55f;
+	public const float slopeLength = 0.45f;
 
 	public const WorleyNoise.DistanceFunction cellDistanceFunction = WorleyNoise.DistanceFunction.Natural;
 	public const WorleyNoise.CellularReturnType cellReturnType = WorleyNoise.CellularReturnType.Distance2Sub;
