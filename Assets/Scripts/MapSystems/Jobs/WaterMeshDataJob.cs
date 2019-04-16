@@ -59,7 +59,7 @@ namespace MapGeneration
                     }
 
                     float waterHeight = topologyUtil.CellHeight(masterCell.index);
-                    float4 waterColor = new float4(0, 0.5f, 1, 0.3f);
+                    float4 waterColor = new float4(0, 0.5f, 1, 0.5f);
 
                     vertices.Add(new Vertex{ vertex = new float3(bl.x, waterHeight-1, bl.y) });
                     vertices.Add(new Vertex{ vertex = new float3(tl.x, waterHeight-1, tl.y) });
