@@ -15,8 +15,6 @@ public class TopologySystem : ComponentSystem
 
     TopologyUtil topologyUtil;
 
-    SimplexNoiseGenerator simplex;
-
     public struct Height : IBufferElementData
     {
         public float height;
@@ -27,7 +25,6 @@ public class TopologySystem : ComponentSystem
         entityManager = World.Active.EntityManager;
 
         topologyUtil = new TopologyUtil();
-        simplex = new SimplexNoiseGenerator(TerrainSettings.seed, 0.01f);
 
         EntityQueryDesc topologyQuery = new EntityQueryDesc{
             All = new ComponentType[] { typeof(WorleyNoise.CellData), typeof(WorleyNoise.PointData), typeof(SectorSystem.SectorNoiseValue) },
@@ -93,10 +90,6 @@ public class TopologySystem : ComponentSystem
                         pointHeight.height = SmoothSlope(point);  
                     else if(sectorType == SectorSystem.SectorTypes.LAKE)
                         pointHeight.height = Lake(worley[i], sloped);
-                    //else if(pointIsInSector && sectorType == SectorSystem.SectorTypes.MOUNTAIN)
-                    //    pointHeight.height  = Mountain(worley[i], position);
-                    //else if(sectorType == SectorSystem.SectorTypes.GULLY)
-                    //    pointHeight.height = Gully(point, position);//
                     else
                         pointHeight.height = topologyUtil.CellHeight(worley[i].currentCellIndex);
 
@@ -110,35 +103,6 @@ public class TopologySystem : ComponentSystem
 
         chunks.Dispose();
     }
-
-    /*float Gully(WorleyNoise.PointData point, float3 position)
-    {
-        float cellHeight = topologyUtil.CellHeight(point.currentCellIndex);
-        float gullyHeight = point.distance2Edge * TerrainSettings.cellheightMultiplier / 2;
-
-        float clampedInterpolator = math.clamp(point.distance2Edge - 0.2f, 0, 1);
-
-        float result = math.lerp(cellHeight, cellHeight-gullyHeight, clampedInterpolator);
-
-        result -= ((simplex.GetSimplex(position.x, position.z, 0.1f) - 0.5f) * 10) * clampedInterpolator;
-
-        return result;
-    }
-
-    float Mountain(WorleyNoise.PointData point, float3 position)
-    {
-        float adjacentCellHeight = topologyUtil.CellHeight(point.adjacentCellIndex);        
-        float cellHeight = topologyUtil.CellHeight(point.currentCellIndex);
-        float mountainHeight = point.distance2Edge * TerrainSettings.cellheightMultiplier;
-
-        float clampedInterpolator = math.clamp(point.distance2Edge - 0.2f, 0, 1);
-
-        float result = math.lerp(cellHeight, cellHeight+mountainHeight, clampedInterpolator);
-
-        result += (simplex.GetSimplex(position.x, position.z, 0.1f) * 5) * clampedInterpolator;
-
-        return result;
-    } */
 
     float Lake(WorleyNoise.PointData point, bool sloped)
     {
