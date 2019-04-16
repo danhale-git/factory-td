@@ -96,7 +96,7 @@ public class TopologySystem : ComponentSystem
                     //else if(pointIsInSector && sectorType == SectorSystem.SectorTypes.MOUNTAIN)
                     //    pointHeight.height  = Mountain(worley[i], position);
                     //else if(sectorType == SectorSystem.SectorTypes.GULLY)
-                    //    pointHeight.height = Gully(point, position);
+                    //    pointHeight.height = Gully(point, position);//
                     else
                         pointHeight.height = topologyUtil.CellHeight(worley[i].currentCellIndex);
 
