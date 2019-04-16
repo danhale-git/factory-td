@@ -211,7 +211,7 @@ namespace MapGeneration
             float4 grey = new float4(0.6f, 0.6f, 0.6f, 1);
             float4 green = new float4(0.2f, 0.6f, 0.1f, 1);
 
-            bool rockyBiome = (sectorType == SectorSystem.SectorTypes.GULLY || sectorType == SectorSystem.SectorTypes.MOUNTAIN);
+            bool rockyBiome = (sectorType == SectorSystem.SectorTypes.GULLY || sectorType == SectorSystem.SectorTypes.MOUNTAIN || sectorType == SectorSystem.SectorTypes.LAKE);
 
             if(rockyBiome || difference > 2)
                 return grey;
