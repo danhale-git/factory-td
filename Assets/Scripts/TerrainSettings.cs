@@ -14,14 +14,14 @@ public static class TerrainSettings
 	public const int terrainHeight = 16;
 	public const int seed = 5678;
 
-	public const float cellFrequency = 0.04f;
+	public const float cellFrequency = 0.03f;
 	public const float cellEdgeSmoothing = 0;
 	public const float cellularJitter = 0.3f;
 
     public const float cellheightMultiplier = 3f;
 	public const float cellHeightNoiseFrequency = 0.6f;	
 	public const int cellHeightLevelCount = 4;
-	public const float cellGroupNoiseFrequency = 0.3f;	
+	public const float cellGroupNoiseFrequency = 0.4f;	
 	public const int cellGroupCount = 4;
 	public const WorleyNoise.Distance2EdgeBorder cellDistanceBorder = WorleyNoise.Distance2EdgeBorder.Sector;
 
