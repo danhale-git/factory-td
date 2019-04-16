@@ -104,9 +104,9 @@ namespace MapGeneration
             float difference = LargestHeightDifference(a.vertex.y, b.vertex.y, c.vertex.y);
             float4 color = PointColor(difference);
 
-            AddVertexData(a, color);
-            AddVertexData(b, color);
-            AddVertexData(c, color);
+            AddVertexData(a, color - new float4(aWorley.distance2Edge * 0.1));
+            AddVertexData(b, color - new float4(bWorley.distance2Edge * 0.1));
+            AddVertexData(c, color - new float4(cWorley.distance2Edge * 0.1));
 
             AddIndicesForTriangle();
 
@@ -119,10 +119,12 @@ namespace MapGeneration
             float difference = LargestHeightDifference(a.vertex.y, b.vertex.y, c.vertex.y, d.vertex.y);
             float4 color = PointColor(difference);
 
-            AddVertexData(a, color);
-            AddVertexData(b, color);
-            AddVertexData(c, color);
-            AddVertexData(d, color);
+            bool cliff = difference > 2;
+
+            AddVertexData(a, color - new float4(aWorley.distance2Edge * 0.1));
+            AddVertexData(b, color - new float4(bWorley.distance2Edge * 0.1));
+            AddVertexData(c, color - new float4(cWorley.distance2Edge * 0.1));
+            AddVertexData(d, color - new float4(dWorley.distance2Edge * 0.1));
 
             AddIndicesForQuad();
 
