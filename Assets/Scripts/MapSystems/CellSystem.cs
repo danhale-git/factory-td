@@ -89,13 +89,12 @@ public class CellSystem : ComponentSystem
         cellArchetype = entityManager.CreateArchetype(
             ComponentType.ReadWrite<LocalToWorld>(),
             ComponentType.ReadWrite<Translation>(),
-            ComponentType.ReadWrite<RenderMeshProxy>(),
-            ComponentType.ReadWrite<Tags.TerrainEntity>()
+            ComponentType.ReadWrite<RenderMeshProxy>()
         );
 
         EntityQueryDesc sectorSortQueryDesc = new EntityQueryDesc{
-            All = new ComponentType[] { typeof(Tags.TerrainEntity), typeof(CellSet) },
-            None = new ComponentType[] { typeof(AdjacentCell), typeof(SectorCell) }
+            All = new ComponentType[] { typeof(AdjacentCell), typeof(SectorCell), typeof(WorleyNoise.PointData) },
+            None = new ComponentType[] { typeof(Tags.TerrainEntity) }
         };
         sectorSortQuery = GetEntityQuery(sectorSortQueryDesc);
 
@@ -147,41 +146,23 @@ public class CellSystem : ComponentSystem
         var chunks = sectorSortQuery.CreateArchetypeChunkArray(Allocator.TempJob);
 
         var entityType = GetArchetypeChunkEntityType();
-        var startCellType = GetArchetypeChunkComponentType<WorleyNoise.CellData>(true);
-        var cellArrayType = GetArchetypeChunkBufferType<CellSet>(true);
+        var cellArrayType = GetArchetypeChunkBufferType<SectorCell>(true);
 
         for(int c = 0; c < chunks.Length; c++)
         {
             ArchetypeChunk chunk = chunks[c];
             NativeArray<Entity> entities = chunk.GetNativeArray(entityType);
-            NativeArray<WorleyNoise.CellData> startCells = chunk.GetNativeArray(startCellType);
-            BufferAccessor<CellSet> cellArrays = chunk.GetBufferAccessor(cellArrayType);
+            BufferAccessor<SectorCell> cellArrays = chunk.GetBufferAccessor(cellArrayType);
 
             for(int e = 0; e < entities.Length; e++)
             {
                 Entity sectorEntity = entities[e];
-                DynamicBuffer<CellSet> cellSet = cellArrays[e];
+                DynamicBuffer<SectorCell> cells = cellArrays[e];
 
-                DynamicBuffer<SectorCell> sectorCells = commandBuffer.AddBuffer<SectorCell>(sectorEntity);
-                DynamicBuffer<AdjacentCell> adjacentCells = commandBuffer.AddBuffer<AdjacentCell>(sectorEntity);
+                for(int i = 0; i < cells.Length; i++)
+                    TrySetCell(sectorEntity, cells[i].data.index);
 
-                float grouping = topologyUtil.CellGrouping(startCells[e].index);
-                for(int i = 0; i < cellSet.Length; i++)
-                {
-                    WorleyNoise.CellData cellData = worley.GetCellData(cellSet[i].data.currentCellIndex);
-
-                    if(cellData.value == 0) continue;
-
-                    if(topologyUtil.CellGrouping(cellSet[i].data.currentCellIndex) != grouping)
-                    {
-                        adjacentCells.Add(new AdjacentCell{ data = cellData });
-                    }
-                    else
-                    {
-                        sectorCells.Add(new SectorCell{ data = cellData });
-                        TrySetCell(sectorEntity, cellSet[i].data.currentCellIndex);
-                    }
-                }
+                commandBuffer.AddComponent<Tags.TerrainEntity>(sectorEntity, new Tags.TerrainEntity());
             }
         }
 

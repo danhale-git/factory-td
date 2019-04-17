@@ -64,11 +64,24 @@ namespace MapGeneration
 
             ArrayUtil arrayUtil = new ArrayUtil();
 
+            DynamicBuffer<CellSystem.SectorCell> sectorCells = commandBuffer.AddBuffer<CellSystem.SectorCell>(sectorEntity);
+            DynamicBuffer<CellSystem.AdjacentCell> adjacentCells = commandBuffer.AddBuffer<CellSystem.AdjacentCell>(sectorEntity);
+
             NativeArray<WorleyNoise.PointData> cellSet = arrayUtil.Set(matrix.matrix, Allocator.Temp);
-            DynamicBuffer<CellSystem.CellSet> allCells = commandBuffer.AddBuffer<CellSystem.CellSet>(sectorEntity);
             for(int i = 0; i < cellSet.Length; i++)
             {
-                allCells.Add(new CellSystem.CellSet{ data = cellSet[i] });
+                WorleyNoise.CellData cellData = worley.GetCellData(cellSet[i].currentCellIndex);
+
+                if(cellData.value == 0) continue;
+
+                if(topologyUtil.CellGrouping(cellSet[i].currentCellIndex) != startCellGrouping)
+                {
+                    adjacentCells.Add(new CellSystem.AdjacentCell{ data = cellData });
+                }
+                else
+                {
+                    sectorCells.Add(new CellSystem.SectorCell{ data = cellData });
+                }
             }
             cellSet.Dispose();
 
