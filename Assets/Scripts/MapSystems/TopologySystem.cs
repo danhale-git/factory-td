@@ -82,8 +82,6 @@ public class TopologySystem : ComponentSystem
                     WorleyNoise.PointData point = worley[i];
                     Height pointHeight = new Height();
 
-                    bool pointIsInSector = topologyUtil.CellGrouping(point.currentCellIndex) == topologyUtil.CellGrouping(sectorCells[0].data.index);
-
                     bool sloped = topologyUtil.EdgeIsSloped(point);
 
                     if(sloped && !(sectorType == SectorSystem.SectorTypes.LAKE))
