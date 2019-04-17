@@ -17,7 +17,7 @@ public struct WorleyNoise
 	CellularReturnType cellularReturnType;
 	Distance2EdgeBorder distance2EdgeBorder;
 	
-	TopologyUtil biomes;
+	TopologyUtil topologyUtil;
     CELL_2D cell_2D;
 
     int X_PRIME;
@@ -61,7 +61,7 @@ public struct WorleyNoise
 		this.cellularReturnType = cellularReturnType;
 		this.distance2EdgeBorder = distance2EdgeBorder;
 
-		biomes = new TopologyUtil();
+		topologyUtil = new TopologyUtil().Construct();
 		cell_2D = new CELL_2D();
 
 		X_PRIME = 1619;
@@ -261,9 +261,9 @@ public struct WorleyNoise
 		switch(distance2EdgeBorder)
 		{
 			case Distance2EdgeBorder.Height:
-				return biomes.CellHeight(cellIndex);
+				return topologyUtil.CellHeight(cellIndex);
 			case Distance2EdgeBorder.Sector:
-				return biomes.CellGrouping(cellIndex);
+				return topologyUtil.CellGrouping(cellIndex);
 			
 			default: throw new System.Exception("Unrecognised border type");
 		}

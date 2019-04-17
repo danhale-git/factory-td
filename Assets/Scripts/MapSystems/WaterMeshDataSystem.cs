@@ -25,7 +25,7 @@ public class WaterMeshDataSystem : ComponentSystem
     EntityQuery meshDataGroup;
     EntityArchetype waterArchetype;
 
-    TopologyUtil biomes;
+    TopologyUtil topologyUtil;
 
     ASyncJobManager jobManager;
 
@@ -33,7 +33,7 @@ public class WaterMeshDataSystem : ComponentSystem
     {
         entityManager = World.Active.EntityManager;
 
-        biomes = new TopologyUtil();
+        topologyUtil = new TopologyUtil().Construct();
 
         waterArchetype = entityManager.CreateArchetype(
             ComponentType.ReadWrite<LocalToWorld>(),
@@ -93,7 +93,8 @@ public class WaterMeshDataSystem : ComponentSystem
                     waterEntityArchetype = waterArchetype,
                     matrix = matrix,
                     masterCell = masterCell,
-                    worley = worley
+                    worley = worley,
+                    topologyUtil = topologyUtil
                 };
 
                 jobManager.ScheduleNewJob(waterJob);

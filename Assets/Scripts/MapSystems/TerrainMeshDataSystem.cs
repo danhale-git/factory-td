@@ -19,7 +19,7 @@ public class TerrainMeshDataSystem : ComponentSystem
 
     EntityQuery meshDataGroup;
 
-    TopologyUtil biomes;
+    TopologyUtil topologyUtil;
 
     ASyncJobManager jobManager;
 
@@ -27,7 +27,7 @@ public class TerrainMeshDataSystem : ComponentSystem
     {
         entityManager = World.Active.EntityManager;
 
-        biomes = new TopologyUtil();
+        topologyUtil = new TopologyUtil().Construct();
 
         EntityQueryDesc meshDataQuery = new EntityQueryDesc{
             All = new ComponentType[] { typeof(Tags.TerrainEntity), typeof(WorleyNoise.CellData), typeof(TopologySystem.Height) },
@@ -87,6 +87,7 @@ public class TerrainMeshDataSystem : ComponentSystem
                     masterCell = masterCells[e].Value,
                     worley = worley,
                     pointHeight = height,
+                    topologyUtil = topologyUtil
                 }; 
                 
                 jobManager.ScheduleNewJob(job);

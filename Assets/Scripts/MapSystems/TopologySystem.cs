@@ -24,7 +24,7 @@ public class TopologySystem : ComponentSystem
     {
         entityManager = World.Active.EntityManager;
 
-        topologyUtil = new TopologyUtil();
+        topologyUtil = new TopologyUtil().Construct();
 
         EntityQueryDesc topologyQuery = new EntityQueryDesc{
             All = new ComponentType[] { typeof(WorleyNoise.CellData), typeof(WorleyNoise.PointData), typeof(SectorSystem.SectorNoiseValue) },

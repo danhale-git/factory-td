@@ -48,7 +48,7 @@ public class SectorSystem : ComponentSystem
         cellSystem = World.Active.GetOrCreateSystem<CellSystem>();
 
         worley = TerrainSettings.CellWorley();
-        topologyUtil = new TopologyUtil();
+        topologyUtil = new TopologyUtil().Construct();
 
         EntityQueryDesc sectorQuery = new EntityQueryDesc{
             All = new ComponentType[] { typeof(Tags.TerrainEntity), typeof(CellSystem.AdjacentCell), typeof(CellSystem.SectorCell) },

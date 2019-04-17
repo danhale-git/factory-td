@@ -24,7 +24,6 @@ public class CellSystem : ComponentSystem
     EntityQuery sectorSortQuery;
 
     WorleyNoise worley;
-    TopologyUtil biomes;
 
     EntityArchetype cellArchetype;
     Matrix<Entity> cellMatrix;
@@ -36,7 +35,6 @@ public class CellSystem : ComponentSystem
     ASyncJobManager jobManager;
 
     ArrayUtil arrayUtil;
-    TopologyUtil topologyUtil;
 
     public struct MatrixComponent : IComponentData
     {
@@ -98,7 +96,6 @@ public class CellSystem : ComponentSystem
         };
         sectorSortQuery = GetEntityQuery(sectorSortQueryDesc);
 
-        biomes = new TopologyUtil();
         worley = TerrainSettings.CellWorley();
         
         previousCellIndex = new int2(100); 
@@ -223,7 +220,8 @@ public class CellSystem : ComponentSystem
             startCell = startCell,
             sectorEntity = cellEntity,
             matrix = new Matrix<WorleyNoise.PointData>(10, Allocator.TempJob, startCell.position, job: true),
-            worley = this.worley
+            worley = this.worley,
+            topologyUtil = new TopologyUtil().Construct()
         };
 
         jobManager.ScheduleNewJob(job);

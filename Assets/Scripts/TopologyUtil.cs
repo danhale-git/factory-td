@@ -2,9 +2,18 @@
 
 public struct TopologyUtil
 {
-    static SimplexNoiseGenerator groupSimplex = TerrainSettings.GroupSimplex();
-    static SimplexNoiseGenerator heightSimplex = TerrainSettings.HeightSimplex();
-    static SimplexNoiseGenerator slopeSimplex = new SimplexNoiseGenerator(TerrainSettings.seed, 0.1f);
+    SimplexNoiseGenerator groupSimplex;
+    SimplexNoiseGenerator heightSimplex;
+    SimplexNoiseGenerator slopeSimplex;
+
+    public TopologyUtil Construct()
+    {
+        groupSimplex = TerrainSettings.GroupSimplex();
+        heightSimplex = TerrainSettings.HeightSimplex();
+        slopeSimplex = new SimplexNoiseGenerator(TerrainSettings.seed, 0.1f);
+
+        return this;
+    }
 
     public float CellGrouping(int2 cellIndex)
     {

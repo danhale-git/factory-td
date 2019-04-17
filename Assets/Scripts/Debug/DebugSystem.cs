@@ -30,7 +30,7 @@ public class DebugSystem : ComponentSystem
         cellSystem = World.Active.GetOrCreateSystem<CellSystem>();
         monoBehaviour = GameObject.FindObjectOfType<DebugMonoBehaviour>();
         debugWorley = TerrainSettings.CellWorley();
-        topologyUtil = new TopologyUtil();
+        topologyUtil = new TopologyUtil().Construct();
 
         worleyCurrentMarker = CreateCube(float3.zero, new float4(0, 1, 0, 1));
         worleyAdjacentMarker = CreateCube(float3.zero, new float4(0, 0, 1, 1));
