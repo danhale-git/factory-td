@@ -45,7 +45,7 @@ namespace MapGeneration
             {
                 WorleyNoise.PointData data = dataToCheck.Dequeue();
 
-                bool currentPointInCell = topologyUtil.CellGrouping(data.currentCellIndex) == startCellGrouping;
+                bool currentIsOutsideCell = topologyUtil.CellGrouping(data.currentCellIndex) != startCellGrouping;
 
                 for(int x = -1; x <= 1; x++)
                     for(int z = -1; z <= 1; z++)
@@ -53,8 +53,8 @@ namespace MapGeneration
                         float3 adjacentPosition = new float3(x, 0, z) + data.pointWorldPosition;
                         WorleyNoise.PointData adjacentData = GetPointData(adjacentPosition);
 
-                        bool adjacentPointInCell = topologyUtil.CellGrouping(adjacentData.currentCellIndex) == startCellGrouping;
-                        if(matrix.ItemIsSet(adjacentPosition) || (!currentPointInCell && !adjacentPointInCell)) continue;
+                        bool adjacentIsOutsideCell = topologyUtil.CellGrouping(adjacentData.currentCellIndex) != startCellGrouping;
+                        if(matrix.ItemIsSet(adjacentPosition) || (currentIsOutsideCell && adjacentIsOutsideCell)) continue;
 
                         dataToCheck.Enqueue(adjacentData);
                         matrix.AddItem(adjacentData, adjacentData.pointWorldPosition);
