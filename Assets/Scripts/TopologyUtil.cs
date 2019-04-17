@@ -4,6 +4,7 @@ public struct TopologyUtil
 {
     static SimplexNoiseGenerator groupSimplex = TerrainSettings.GroupSimplex();
     static SimplexNoiseGenerator heightSimplex = TerrainSettings.HeightSimplex();
+    static SimplexNoiseGenerator slopeSimplex = new SimplexNoiseGenerator(TerrainSettings.seed, 0.1f);
 
     public float CellGrouping(int2 cellIndex)
     {
@@ -28,23 +29,33 @@ public struct TopologyUtil
     public bool EdgeIsSloped(WorleyNoise.PointData point)
     {
         int2 edge = point.adjacentCellIndex - point.currentCellIndex;
-        int2 slopeSide = SlopedSide(point);
-        return slopeSide.Equals(edge);
+        SlopedSideDirections slopeSides = SlopedSide(point.currentCellValue, point.adjacentCellValue);
+        return (slopeSides.a.Equals(edge) || slopeSides.b.Equals(edge));
     }
 
-    public int2 SlopedSide(WorleyNoise.PointData point)
+    SlopedSideDirections SlopedSide(float currentCellValue, float adjacentCellValue)
     {
-        return SlopedSide(point.currentCellValue, point.adjacentCellValue);
-    }
+        float firsDeterministicNoiseValue = (currentCellValue + adjacentCellValue)/2;
+        float seconDeterministicNoiseValue = slopeSimplex.GetSimplex(currentCellValue, adjacentCellValue);
 
-    int2 SlopedSide(float currentCellValue, float adjacentCellValue)
-    {
-        int side = (int)math.round( math.lerp(0, 7, (currentCellValue + adjacentCellValue)/2) );
+        int firstSideNumber = (int)math.round( math.lerp(0, 7, firsDeterministicNoiseValue) );
+        int secondSideNumber = (int)math.round( math.lerp(0, 7, seconDeterministicNoiseValue) );
 
         if(currentCellValue > adjacentCellValue)
-            side = ReverseSide(side);
+        {
+            firstSideNumber = OppositeSideNumber(firstSideNumber);
+            secondSideNumber = OppositeSideNumber(secondSideNumber);
+        }
 
-        switch(side)
+        int2 sideA = GetSideDirection(firstSideNumber);
+        int2 sideB = GetSideDirection(secondSideNumber);
+
+        return new SlopedSideDirections(sideA, sideB);
+    }
+
+    public int2 GetSideDirection(int noiseGroup)
+    {
+        switch(noiseGroup)
         {
             case 0:
                 return new int2(0, 1);
@@ -66,7 +77,19 @@ public struct TopologyUtil
                 throw new System.IndexOutOfRangeException();
         }
     }
-    public int ReverseSide(int side)
+    
+    struct SlopedSideDirections
+    {
+        public SlopedSideDirections(int2 a, int2 b)
+        {
+            this.a = a;
+            this.b = b;
+        }   
+        readonly public int2 a;
+        readonly public int2 b;
+    }
+
+    public int OppositeSideNumber(int side)
     {
         int reversed = side + 4;
         if(reversed > 7) reversed -= 8;
