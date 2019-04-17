@@ -15,9 +15,10 @@ public class PlayerEntitySystem : ComponentSystem
     CellSystem cellSystem;
     int squareWidth;
 
+    const int cameraOffset = 25;
     Camera camera;
     float cameraSwivelSpeed = 1;
-    float3 currentOffset = new float3(0, 10, -10);
+    float3 currentOffset = new float3(0, cameraOffset, -cameraOffset);
 
     public GameObject player;
 
@@ -101,7 +102,7 @@ public class PlayerEntitySystem : ComponentSystem
         //  Clamp zoom 
         float3 withZoom = currentOffset + zoomOffset;
         float magnitude = math.sqrt(math.pow(withZoom.x, 2) + math.pow(withZoom.y, 2) + math.pow(withZoom.z, 2));
-        if(magnitude > 10 && magnitude < 150)
+        if(magnitude > cameraOffset && magnitude < 150)
         {
             //  x & z smoothed for zoom because y is smoothed for everything later
             //  This prevents jumpy camera movement when zooming
