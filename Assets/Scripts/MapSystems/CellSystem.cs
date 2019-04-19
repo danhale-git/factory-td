@@ -35,6 +35,7 @@ public class CellSystem : ComponentSystem
     ASyncJobManager jobManager;
 
     ArrayUtil arrayUtil;
+    TopologyUtil topologyUtil;
 
     public struct MatrixComponent : IComponentData
     {
@@ -97,6 +98,7 @@ public class CellSystem : ComponentSystem
         sectorSortQuery = GetEntityQuery(sectorSortQueryDesc);
 
         worley = TerrainSettings.CellWorley();
+        topologyUtil = new TopologyUtil().Construct();
         
         previousCellIndex = new int2(100); 
     }
@@ -178,13 +180,22 @@ public class CellSystem : ComponentSystem
                 return;
 
             NativeArray<AdjacentCell> adjacentCells = AdjacentCells(sectorEntity);
+            NativeList<float> alreadyCreatedCellGroups = new NativeList<float>(Allocator.Temp);
             
             for(int i = 0; i < adjacentCells.Length; i++)
-                if(CreateSector(adjacentCells[i].data.index))
-                {
-                    adjacentCells.Dispose();
-                    return;
-                }
+            {
+                int2 cellIndex = adjacentCells[i].data.index;
+                float grouping = topologyUtil.CellGrouping(cellIndex);
+
+                if(alreadyCreatedCellGroups.Contains(grouping))
+                    continue;
+                
+                if(CreateSector(cellIndex))
+                    alreadyCreatedCellGroups.Add(grouping);
+            }
+            
+            adjacentCells.Dispose();
+            alreadyCreatedCellGroups.Dispose();
         }
     }
 
