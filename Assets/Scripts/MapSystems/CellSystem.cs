@@ -113,7 +113,7 @@ public class CellSystem : ComponentSystem
 
         if(!jobManager.AllJobsCompleted()) return;
         
-        ProcessNewTerrainCells();
+        AddNewSectorsToMatrix();
         
         if(cellMatrix.ItemIsSet(currentCellIndex))
             GenerateAdjacentSectors();
@@ -137,7 +137,7 @@ public class CellSystem : ComponentSystem
         }
     }
 
-    void ProcessNewTerrainCells()
+    void AddNewSectorsToMatrix()
     {
         var commandBuffer = new EntityCommandBuffer(Allocator.TempJob);
         var chunks = sectorSortQuery.CreateArchetypeChunkArray(Allocator.TempJob);
