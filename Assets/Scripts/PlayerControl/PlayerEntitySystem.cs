@@ -39,6 +39,8 @@ public class PlayerEntitySystem : ComponentSystem
 
     protected override void OnUpdate()
     {
+        if(player == null) return;
+        
         DebugSystem.Text("player position", player.transform.position.ToString());
 
         MoveCamera();
