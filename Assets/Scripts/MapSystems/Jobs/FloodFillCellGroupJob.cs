@@ -45,6 +45,7 @@ namespace MapGeneration
 
             while(dataToCheck.Count > 0)
             {
+                DebugSystem.Count("Points flood filled");
                 WorleyNoise.PointData data = dataToCheck.Dequeue();
 
                 bool currentIsOutsideCell = topologyUtil.CellGrouping(data.currentCellIndex) != startCellGrouping;

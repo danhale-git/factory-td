@@ -52,6 +52,9 @@ namespace MapGeneration
                     WorleyNoise.PointData trWorley = matrix.GetItem<WorleyNoise.PointData>(tr, worley, arrayUtil);
                     WorleyNoise.PointData brWorley = matrix.GetItem<WorleyNoise.PointData>(br, worley, arrayUtil);
 
+                    if(!blWorley.isSet || !tlWorley.isSet || !trWorley.isSet || !brWorley.isSet)
+                        continue;
+
                     Vertex blVertex = GetVertex(bl);
                     Vertex tlVertex = GetVertex(tl);
                     Vertex trVertex = GetVertex(tr);
@@ -64,9 +67,13 @@ namespace MapGeneration
                                     topologyUtil.EdgeIsSloped(trWorley) || 
                                     topologyUtil.EdgeIsSloped(brWorley) );
 
+                    bool flat = (   blVertex.vertex.y == tlVertex.vertex.y &&
+                                    blVertex.vertex.y == trVertex.vertex.y &&
+                                    blVertex.vertex.y == brVertex.vertex.y );
+
                     if(northWestToSouthEast)
                     {
-                        if(sloped)
+                        if(sloped || flat)
                         {
                             AddVertexDataQuad(blVertex, tlVertex, trVertex, brVertex, blWorley, tlWorley, trWorley, brWorley);
                         }
@@ -78,7 +85,7 @@ namespace MapGeneration
                     }
                     else
                     {
-                        if(sloped)
+                        if(sloped || flat)
                         {
                             AddVertexDataQuad(tlVertex, trVertex, brVertex, blVertex, tlWorley, trWorley, brWorley, blWorley);
                         }
@@ -133,6 +140,8 @@ namespace MapGeneration
 
         void AddVertexData(Vertex vertex, float4 color)
         {
+            DebugSystem.Count("Vertices drawn");
+
             vertices.Add(vertex);
             colors.Add(new VertColor{ color = color });
         }
