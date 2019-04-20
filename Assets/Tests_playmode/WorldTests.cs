@@ -38,12 +38,16 @@ namespace Tests
 
             DynamicBuffer<WorleyNoise.PointData> worleyData = entityManager.GetBuffer<WorleyNoise.PointData>(currentCellEntity);
 
+            bool pointIsPopulated = false;
+
             for(int i = 0; i < worleyData.Length; i++)
             {
-                //bool pointIsPopulated = worleyData[i].isSet;
-
-
+                pointIsPopulated = worleyData[i].isSet;
+                if(pointIsPopulated)
+                    break;
             }
+
+            Assert.IsTrue(pointIsPopulated);
         }
     }
 }
