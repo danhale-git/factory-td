@@ -76,7 +76,7 @@ public class TopologySystem : ComponentSystem
 
                 for(int i = 0; i < topology.Length; i++)
                 {
-                    if(worley[i].isSet == 0) continue;
+                    if(!worley[i].isSet) continue;
 
                     float3 position = worley[i].pointWorldPosition;
                     WorleyNoise.PointData point = worley[i];

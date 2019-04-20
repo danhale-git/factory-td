@@ -50,10 +50,10 @@ namespace MapGeneration
                     WorleyNoise.PointData trWorley = matrix.GetItem<WorleyNoise.PointData>(tr, worley, arrayUtil);
                     WorleyNoise.PointData brWorley = matrix.GetItem<WorleyNoise.PointData>(br, worley, arrayUtil);
 
-                    if( blWorley.isSet == 0 ||
-                        tlWorley.isSet == 0 ||
-                        trWorley.isSet == 0 ||
-                        brWorley.isSet == 0 )
+                    if( !blWorley.isSet ||
+                        !tlWorley.isSet ||
+                        !trWorley.isSet ||
+                        !brWorley.isSet )
                     {
                         continue;
                     }

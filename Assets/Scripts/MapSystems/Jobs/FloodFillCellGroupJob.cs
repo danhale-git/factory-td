@@ -92,7 +92,7 @@ namespace MapGeneration
         {
             WorleyNoise.PointData data = worley.GetPointData(position.x, position.z);
             data.pointWorldPosition = position;
-            data.isSet = 1;
+            data.isSet = true;
             return data;
         }
 

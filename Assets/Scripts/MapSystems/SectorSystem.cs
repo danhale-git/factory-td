@@ -144,7 +144,7 @@ public class SectorSystem : ComponentSystem
 
     bool PointIsOutsideGroup(WorleyNoise.PointData point, float grouping)
     {
-        return (point.isSet == 0) || (topologyUtil.CellGrouping(point.adjacentCellIndex) != grouping);
+        return !point.isSet || (topologyUtil.CellGrouping(point.adjacentCellIndex) != grouping);
     }
 
     bool AdjacentInSameGroup(WorleyNoise.PointData point)

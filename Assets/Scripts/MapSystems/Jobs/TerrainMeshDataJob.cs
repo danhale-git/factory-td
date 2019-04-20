@@ -139,9 +139,9 @@ namespace MapGeneration
 
         bool CurrentCellIsOwner(WorleyNoise.PointData aWorley, WorleyNoise.PointData bWorley, WorleyNoise.PointData cWorley)
         {
-            if( aWorley.isSet == 0 ||
-                bWorley.isSet == 0 ||
-                cWorley.isSet == 0 )
+            if( !aWorley.isSet ||
+                !bWorley.isSet ||
+                !cWorley.isSet )
                 return false;
 
             NativeArray<WorleyNoise.PointData> sortPoints = new NativeArray<WorleyNoise.PointData>(3, Allocator.Temp);
@@ -156,10 +156,10 @@ namespace MapGeneration
         }
         bool CurrentCellIsOwner(WorleyNoise.PointData aWorley, WorleyNoise.PointData bWorley, WorleyNoise.PointData cWorley, WorleyNoise.PointData dWorley)
         {
-            if( aWorley.isSet == 0 ||
-                bWorley.isSet == 0 ||
-                cWorley.isSet == 0 ||
-                dWorley.isSet == 0 )
+            if( !aWorley.isSet ||
+                !bWorley.isSet ||
+                !cWorley.isSet ||
+                !dWorley.isSet )
                 return false;
 
             NativeArray<WorleyNoise.PointData> sortPoints = new NativeArray<WorleyNoise.PointData>(4, Allocator.Temp);
