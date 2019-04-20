@@ -29,7 +29,7 @@ public class CellSystem : ComponentSystem
     Matrix<Entity> cellMatrix;
     EntityArchetype sectorArchetype;
 
-    int2 currentCellIndex;
+    public int2 currentCellIndex;
     int2 previousCellIndex;
 
     ASyncJobManager jobManager;
@@ -118,9 +118,9 @@ public class CellSystem : ComponentSystem
         AddNewSectorsToMatrix();
         
         if(cellMatrix.ItemIsSet(currentCellIndex))
-            GenerateAdjacentSectors();
+            ScheduleFloodFillJobsForAdjacentGroups();
         else
-            CreateSector(currentCellIndex);
+            ScheduleFloodFillJobForCellGroup(currentCellIndex);
     }
 
     bool UpdateCurrentCellIndex()
@@ -171,41 +171,40 @@ public class CellSystem : ComponentSystem
         chunks.Dispose();
     }
 
-    void GenerateAdjacentSectors()
+    void ScheduleFloodFillJobsForAdjacentGroups()
     {
-        if(cellMatrix.ItemIsSet(currentCellIndex))
+        Entity sectorEntity = cellMatrix.GetItem(currentCellIndex);
+        if(!entityManager.HasComponent<AdjacentCell>(sectorEntity))
+            return;
+
+        NativeArray<AdjacentCell> adjacentCells = GetAdjacentCellArray(sectorEntity);
+        NativeList<float> alreadyCreatedCellGroups = new NativeList<float>(Allocator.Temp);
+        
+        for(int i = 0; i < adjacentCells.Length; i++)
         {
-            Entity sectorEntity = cellMatrix.GetItem(currentCellIndex);
-            if(!entityManager.HasComponent<AdjacentCell>(sectorEntity))
-                return;
+            int2 cellIndex = adjacentCells[i].data.index;
+            float grouping = topologyUtil.CellGrouping(cellIndex);
 
-            NativeArray<AdjacentCell> adjacentCells = AdjacentCells(sectorEntity);
-            NativeList<float> alreadyCreatedCellGroups = new NativeList<float>(Allocator.Temp);
-            
-            for(int i = 0; i < adjacentCells.Length; i++)
-            {
-                int2 cellIndex = adjacentCells[i].data.index;
-                float grouping = topologyUtil.CellGrouping(cellIndex);
+            if(alreadyCreatedCellGroups.Contains(grouping))
+                continue;
 
-                if(alreadyCreatedCellGroups.Contains(grouping))
-                    continue;
-                
-                if(CreateSector(cellIndex))
-                    alreadyCreatedCellGroups.Add(grouping);
-            }
+            bool groupWasCreated = ScheduleFloodFillJobForCellGroup(cellIndex);
             
-            adjacentCells.Dispose();
-            alreadyCreatedCellGroups.Dispose();
+            if(groupWasCreated)
+                alreadyCreatedCellGroups.Add(grouping);
         }
+        
+        adjacentCells.Dispose();
+        alreadyCreatedCellGroups.Dispose();
     }
 
-    NativeArray<AdjacentCell> AdjacentCells(Entity sectorEntity)
+    NativeArray<AdjacentCell> GetAdjacentCellArray(Entity sectorEntity)
     {
         DynamicBuffer<AdjacentCell> adjacentCells = entityManager.GetBuffer<AdjacentCell>(sectorEntity);
         return new NativeArray<AdjacentCell>(adjacentCells.AsNativeArray(), Allocator.Temp);
     }
 
-    bool CreateSector(int2 startIndex)
+    bool ScheduleFloodFillJobForCellGroup(int2 startIndex)
     {
         if(cellMatrix.ItemIsSet(startIndex)) return false;
         Entity sectorEntity = CreateSectorEntity(startIndex);
@@ -250,7 +249,7 @@ public class CellSystem : ComponentSystem
         DynamicBuffer<TopologySystem.Height> heightData = entityManager.GetBuffer<TopologySystem.Height>(cellEntity);
         MatrixComponent matrix = entityManager.GetComponentData<MatrixComponent>(cellEntity);
 
-        return matrix.GetItem(roundedPosition, heightData, new ArrayUtil()).height;
+        return matrix.GetItem(roundedPosition, heightData, arrayUtil).height;
     }
 
     public bool TryGetCell(int2 index, out Entity entity)
