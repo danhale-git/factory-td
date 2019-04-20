@@ -86,7 +86,7 @@ public class TerrainMeshDataSystem : ComponentSystem
                     matrix = matrices[e],
                     masterCell = masterCells[e].Value,
                     worley = worley,
-                    pointHeight = height,
+                    terrainHeightArray = height,
                     topologyUtil = topologyUtil
                 }; 
                 

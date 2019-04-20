@@ -30,6 +30,7 @@ public struct WorleyNoise
 		{ return currentCellValue.CompareTo(other.currentCellValue); }
 
 		public bool isSet;
+		public float cellGrouping;
 
 		public float3 pointWorldPosition;
 

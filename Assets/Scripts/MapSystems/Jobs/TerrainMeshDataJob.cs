@@ -23,7 +23,7 @@ namespace MapGeneration
         [ReadOnly] public WorleyNoise.CellData masterCell;
 
         [DeallocateOnJobCompletion][ReadOnly] public NativeArray<WorleyNoise.PointData> worley;
-        [DeallocateOnJobCompletion][ReadOnly] public NativeArray<TopologySystem.Height> pointHeight;
+        [DeallocateOnJobCompletion][ReadOnly] public NativeArray<TopologySystem.Height> terrainHeightArray;
 
         [ReadOnly] public ArrayUtil arrayUtil;
         [ReadOnly] public TopologyUtil topologyUtil;
@@ -93,7 +93,7 @@ namespace MapGeneration
 
         Vertex GetVertex(int2 matrixPosition)
         {
-            TopologySystem.Height terrainHeight = matrix.GetItem<TopologySystem.Height>(matrixPosition, pointHeight, arrayUtil);
+            TopologySystem.Height terrainHeight = matrix.GetItem<TopologySystem.Height>(matrixPosition, terrainHeightArray, arrayUtil);
             return new Vertex() { vertex = new float3(matrixPosition.x, terrainHeight.height, matrixPosition.y) };
         }
 
@@ -150,7 +150,7 @@ namespace MapGeneration
             sortPoints[2] = cWorley;
 
             sortPoints.Sort();
-            float ownerGrouping = topologyUtil.CellGrouping(sortPoints[0].currentCellIndex);
+            float ownerGrouping = sortPoints[0].cellGrouping;
             
             return masterGrouping == ownerGrouping;
         }
@@ -169,7 +169,7 @@ namespace MapGeneration
             sortPoints[3] = dWorley;
 
             sortPoints.Sort();
-            float ownerGrouping = topologyUtil.CellGrouping(sortPoints[0].currentCellIndex);
+            float ownerGrouping = sortPoints[0].cellGrouping;
             
             return masterGrouping == ownerGrouping;
         }
