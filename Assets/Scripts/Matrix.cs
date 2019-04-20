@@ -170,8 +170,8 @@ public struct Matrix<T> where T : struct
             rootPositionChange.z = bottomGap;
         }
 
-        rootPositionChange -= 3;
-        widthChange += 6;
+        rootPositionChange -= 5;
+        widthChange += 10;
 
         int newWidth = width;
         if(widthChange.x+widthChange.z > 0)
