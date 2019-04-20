@@ -116,15 +116,21 @@ public class TopologySystem : ComponentSystem
 
         if(currentHeight == adjacentHeight) return currentHeight;
 
+        float halfway = (currentHeight + adjacentHeight) / 2;
+
         float currentHeightGroup = topologyUtil.CellHeightGroup(point.currentCellIndex);
         float adjacentHeightGroup = topologyUtil.CellHeightGroup(point.adjacentCellIndex);
-
 
         float difference = math.max(currentHeightGroup, adjacentHeightGroup) - math.min(currentHeightGroup, adjacentHeightGroup);
         int clampedDifference = (int)math.clamp(difference, 1, TerrainSettings.cellHeightLevelCount);
 
-        float halfway = (currentHeight + adjacentHeight) / 2;
-        float interpolator = math.unlerp(0, TerrainSettings.slopeLength * clampedDifference, point.distance2Edge);
+        float adjustedSlopeLength = TerrainSettings.slopeLength * clampedDifference;
+        float interpolator;
+
+        if(point.distance2Edge > adjustedSlopeLength/2)
+            interpolator = math.smoothstep(0, adjustedSlopeLength, point.distance2Edge);
+        else
+            interpolator = math.unlerp(0, adjustedSlopeLength, point.distance2Edge);
 
         return math.lerp(halfway, currentHeight, math.clamp(interpolator, 0, 1));
     }
