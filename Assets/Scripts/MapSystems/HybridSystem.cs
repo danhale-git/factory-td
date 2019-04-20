@@ -72,6 +72,7 @@ public class HybridSystem : ComponentSystem
                 CreateCollider(sectorGameObject, mesh);
 
                 NavMeshSurface navMeshComponent = sectorGameObject.GetComponent<NavMeshSurface>();
+                //navMeshComponent.collectObjects = CollectObjects.Children;
 
                 NavMeshBuildSettings settings = NavMesh.GetSettingsByID(0);
                 List<NavMeshBuildSource> sources = GetSourceList(matrix.width, navMeshComponent, mesh, localToWorld);
