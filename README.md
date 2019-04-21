@@ -31,21 +31,23 @@ Terrain generation with no scatter
 ---
 
 Cellular noise, like Perlin/Simplex is deterministic but can be randomised using a seed. It is possible to generate the following information deterministically about worley for any point in world space:
-* Cell the point is inside
-- * Index in un-scattered grid
-- * Cell value (unique float between 0 and 1)
-- * Cell position (fixed ~central point within cell)
-* Closest adjacent cell
-- * Index in un-scattered grid
-- * Cell value
-- * Cell position
+
+* Cell the point is inside info:
+Index
+Value
+Position
+
+* Closest adjacent cell info:
+Index
+Value
+Position
+
 * Distance from the edge of the cell, in the direction of the closest adjacent cell (distance-to-edge)
 
-The final item (distance-to-edge) can be used to blend height between cells. Cell value noise is used to decide if a slope exists.
-Cell value noise is a unique float between 0 and 1. Using the value of two neighbouring cells, a third consistent value can be created to decide if a slope connects them.
+Cell value noise is used to decide if a slope exists. It is a float between 0 and 1 that is unique per cell. Using the value of two neighbouring cells, a third consistent value can be created to decide if a slope connects them.
 This allows sloped to be generated deterministically with each half of the slope owned by a different cell and both cells generated independently.
 ```csharp
-float cellPairValue = (cellValue * adjacentValue)
+float cellPairValue = (cellValue * adjacentValue);
 bool slope = CheckIfSlopedBasedOnValue(cellPairValue);
 ```
 <p align="center">
@@ -54,5 +56,26 @@ bool slope = CheckIfSlopedBasedOnValue(cellPairValue);
 <p align="center">
 Slopes generated using Cellular distance-to-edge noise.
 </p>
+
+---
+
+distance-to-edge can be used to blend height between cells, where the value 0 is the edge of the current cell. The code below sloped the terrain from the cell height, to half way between it's and the adjacent cell's height.
+```csharp
+float slopeLength = 0.5f;
+
+float halfWayHeight = (point.cellHeight + point.adjacentHeight) / 2;
+float interpolator = math.unlerp(0, slopeLength, point.distanceToEdge);
+
+float terrainHeight = math.lerp(halfWayHeight, cellHeight, interpolator);
+```
+<p align="center">
+<img src="https://imgur.com/McWVde3.png">
+</p>
+<p align="center">
+Distance to edge noise visualised using FastNoise Preview.
+</p>
+
+
+
 
 
