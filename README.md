@@ -17,8 +17,10 @@ Worley noise with no scatter, some scatter and high scatter
 
 ---
 
-Worley noise is deterministic but can be randomised using a seed. It is possible to determine the following information about worley for any point in world space:
+Worley noise, like Perlin/Simplex is deterministic but can be randomised using a seed. It is possible to generate the following information deterministically about worley for any point in world space:
 * Cell the point is in
+* * Sub thing
+
 * Closest adjacent cell
 * Distance from the edge of the cell, in the direction of the closest adjacent cell
 
