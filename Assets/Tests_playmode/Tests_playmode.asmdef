@@ -1,18 +1,15 @@
 {
-    "name": "Tests",
+    "name": "Tests_playmode",
     "references": [
         "MyAssembly",
         "Unity.Mathematics",
         "Unity.Entities",
-        "Unity.Collections",
-        "Unity.Entities.Tests"
+        "Unity.Collections"
     ],
     "optionalUnityReferences": [
         "TestAssemblies"
     ],
-    "includePlatforms": [
-        "Editor"
-    ],
+    "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,

@@ -7,6 +7,7 @@ public struct WorleyNoise
 {
 	public enum DistanceFunction {Natural, Manhatten, Euclidean}
 	public enum CellularReturnType {Distance2, Distance2Add, Distance2Sub, Distance2Mul, Distance2Div}
+	public enum Distance2EdgeBorder { Sector, Height }
 
 	int seed;
 	float frequency;
@@ -14,8 +15,9 @@ public struct WorleyNoise
 	float cellularJitter;
 	DistanceFunction distanceFunction;
 	CellularReturnType cellularReturnType;
+	Distance2EdgeBorder distance2EdgeBorder;
 	
-	TopologyUtil biomes;
+	TopologyUtil topologyUtil;
     CELL_2D cell_2D;
 
     int X_PRIME;
@@ -27,7 +29,8 @@ public struct WorleyNoise
 		public int CompareTo(PointData other)
 		{ return currentCellValue.CompareTo(other.currentCellValue); }
 
-		public sbyte isSet;
+		public bool isSet;
+		public float cellGrouping;
 
 		public float3 pointWorldPosition;
 
@@ -49,7 +52,7 @@ public struct WorleyNoise
 		public sbyte discovered;
 	}
 
-	public WorleyNoise(int seed, float frequency, float perterbAmp, float cellularJitter, DistanceFunction distanceFunction, CellularReturnType cellularReturnType)
+	public WorleyNoise(int seed, float frequency, float perterbAmp, float cellularJitter, DistanceFunction distanceFunction, CellularReturnType cellularReturnType, Distance2EdgeBorder distance2EdgeBorder)
 	{
 		this.seed = seed;
 		this.frequency = frequency;
@@ -57,8 +60,9 @@ public struct WorleyNoise
 		this.cellularJitter = cellularJitter;
 		this.distanceFunction = distanceFunction;
 		this.cellularReturnType = cellularReturnType;
+		this.distance2EdgeBorder = distance2EdgeBorder;
 
-		biomes = new TopologyUtil();
+		topologyUtil = new TopologyUtil().Construct();
 		cell_2D = new CELL_2D();
 
 		X_PRIME = 1619;
@@ -81,6 +85,17 @@ public struct WorleyNoise
 		
 		return cell;
     }
+
+	public PointData GetPointData(float x, float y, Distance2EdgeBorder newBorder)
+	{
+		Distance2EdgeBorder oldBorder = distance2EdgeBorder;
+		distance2EdgeBorder = newBorder;
+
+		PointData pointData = GetPointData(x, y);
+
+		distance2EdgeBorder = oldBorder;
+		return pointData;
+	}
 
     public PointData GetPointData(float x, float y)
 	{
@@ -194,7 +209,7 @@ public struct WorleyNoise
 
 		//	Current cell
 		float currentCellValue = To01(ValCoord2D(seed, xc0, yc0));
-		float currentBiome = biomes.CellGrouping(currentCellIndex);
+		float currentBiome = EdgeBorder(currentCellIndex);
 
 		//	Final closest adjacent cell values
 		float distance2Edge = 999999;
@@ -211,7 +226,7 @@ public struct WorleyNoise
 			if(dist2Edge < distance2Edge)
 			{
 				int2 otherCellIndex = new int2(otherX[i], otherY[i]);
-				float otherBiome = biomes.CellGrouping(otherCellIndex);
+				float otherBiome = EdgeBorder(otherCellIndex);
 
 				///	Assign as final value if not current biome
 				if(otherBiome != currentBiome)
@@ -239,8 +254,20 @@ public struct WorleyNoise
 		cell.currentCellIndex = currentCellIndex;
 		cell.adjacentCellIndex = adjacentCellIndex;
 
-		//	Data for use in terrain generation
 		return cell;
+	}
+
+	float EdgeBorder(int2 cellIndex)
+	{
+		switch(distance2EdgeBorder)
+		{
+			case Distance2EdgeBorder.Height:
+				return topologyUtil.CellHeight(cellIndex);
+			case Distance2EdgeBorder.Sector:
+				return topologyUtil.CellGrouping(cellIndex);
+			
+			default: throw new System.Exception("Unrecognised border type");
+		}
 	}
 
 	float ApplyDistanceType(float distance, float otherDistance)

@@ -16,7 +16,8 @@ public class ApplyMeshDataSystem : ComponentSystem
 
     EntityQuery applyMeshGroup;
 
-	public static Material material = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/DefaultMaterial.mat");
+	public static Material terrainMaterial = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/Terrain.mat");
+	public static Material waterMaterial = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/Water.mat");
 
     protected override void OnCreate()
     {
@@ -101,7 +102,11 @@ public class ApplyMeshDataSystem : ComponentSystem
 	{
 		RenderMesh renderer = new RenderMesh();
 		renderer.mesh = mesh;
-		renderer.material = material;
+
+		bool water = entityManager.HasComponent<Tags.WaterEntity>(entity);
+
+		renderer.material = water ? waterMaterial : terrainMaterial;
+		//renderer.material = terrainMaterial;
 
 		commandBuffer.AddSharedComponent(entity, renderer);
 	}

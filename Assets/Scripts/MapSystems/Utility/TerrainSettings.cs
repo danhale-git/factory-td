@@ -14,17 +14,18 @@ public static class TerrainSettings
 	public const int terrainHeight = 16;
 	public const int seed = 5678;
 
-	public const float cellFrequency = 0.04f;
+	public const float cellFrequency = 0.03f;
 	public const float cellEdgeSmoothing = 0;
 	public const float cellularJitter = 0.3f;
 
     public const float cellheightMultiplier = 3f;
 	public const float cellHeightNoiseFrequency = 0.6f;	
 	public const int cellHeightLevelCount = 4;
-	public const float cellGroupNoiseFrequency = 0.3f;	
+	public const float cellGroupNoiseFrequency = 0.4f;	
 	public const int cellGroupCount = 4;
+	public const WorleyNoise.Distance2EdgeBorder cellDistanceBorder = WorleyNoise.Distance2EdgeBorder.Sector;
 
-	public const float slopeLength = 0.55f;
+	public const float slopeLength = 0.45f;
 
 	public const WorleyNoise.DistanceFunction cellDistanceFunction = WorleyNoise.DistanceFunction.Natural;
 	public const WorleyNoise.CellularReturnType cellReturnType = WorleyNoise.CellularReturnType.Distance2Sub;
@@ -39,13 +40,13 @@ public static class TerrainSettings
 		return 0;
 	}
 
-	public static SimplexNoiseGenerator HeightSimplex()
+	public static SimplexNoise HeightSimplex()
 	{
-		return new SimplexNoiseGenerator(TerrainSettings.seed, TerrainSettings.cellHeightNoiseFrequency);
+		return new SimplexNoise(TerrainSettings.seed, TerrainSettings.cellHeightNoiseFrequency);
 	}
-	public static SimplexNoiseGenerator GroupSimplex()
+	public static SimplexNoise GroupSimplex()
 	{
-		return new SimplexNoiseGenerator(TerrainSettings.seed / 2, TerrainSettings.cellGroupNoiseFrequency);
+		return new SimplexNoise(TerrainSettings.seed / 2, TerrainSettings.cellGroupNoiseFrequency);
 	}
 
 	public static WorleyNoise CellWorley()
@@ -56,7 +57,8 @@ public static class TerrainSettings
             cellEdgeSmoothing,
             cellularJitter,
             cellDistanceFunction,
-            cellReturnType
+            cellReturnType,
+			cellDistanceBorder
         );
 	}
 }

@@ -1,8 +1,15 @@
 ﻿using Unity.Mathematics;
 using System.Collections.Generic;
 
-struct TestUtility
+public struct TestUtility
 {
+    public int2 RandomCellIndex(int range = 500)
+    {
+        int x = UnityEngine.Random.Range(-range, range);
+        int z = UnityEngine.Random.Range(-range, range);
+        return new int2(x, z);
+    }
+
     public WorleyNoise.PointData RandomPointData(WorleyNoise cellWorley)
     {
         int x = UnityEngine.Random.Range(-5000, 5000);

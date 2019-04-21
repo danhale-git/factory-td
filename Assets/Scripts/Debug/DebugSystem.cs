@@ -30,7 +30,7 @@ public class DebugSystem : ComponentSystem
         cellSystem = World.Active.GetOrCreateSystem<CellSystem>();
         monoBehaviour = GameObject.FindObjectOfType<DebugMonoBehaviour>();
         debugWorley = TerrainSettings.CellWorley();
-        topologyUtil = new TopologyUtil();
+        topologyUtil = new TopologyUtil().Construct();
 
         worleyCurrentMarker = CreateCube(float3.zero, new float4(0, 1, 0, 1));
         worleyAdjacentMarker = CreateCube(float3.zero, new float4(0, 0, 1, 1));
@@ -83,6 +83,7 @@ public class DebugSystem : ComponentSystem
         Text("distance2Edge", point.distance2Edge.ToString());
 
         Text("group", topologyUtil.CellGrouping(point.currentCellIndex).ToString());
+        Text("cell index", point.currentCellIndex.ToString());
 
         worleyCurrentMarker.transform.position = math.round(point.currentCellPosition) + new float3(0.5f, cellSystem.GetHeightAtPosition(point.currentCellPosition)+1, 0.5f);
 

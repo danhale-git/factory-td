@@ -37,15 +37,18 @@ namespace MapGeneration
 
             WorleyNoise.PointData initialPointData = GetPointData(startCell.position);
             dataToCheck.Enqueue(initialPointData);
-            matrix.AddItem(initialPointData, initialPointData.pointWorldPosition);
 
             float startCellGrouping = topologyUtil.CellGrouping(startCell.index);
+            initialPointData.cellGrouping = startCellGrouping;
+
+            matrix.AddItem(initialPointData, initialPointData.pointWorldPosition);
 
             while(dataToCheck.Count > 0)
             {
+                DebugSystem.Count("Points flood filled");
                 WorleyNoise.PointData data = dataToCheck.Dequeue();
 
-                bool currentPointInCell = topologyUtil.CellGrouping(data.currentCellIndex) == startCellGrouping;
+                bool currentIsOutsideCell = topologyUtil.CellGrouping(data.currentCellIndex) != startCellGrouping;
 
                 for(int x = -1; x <= 1; x++)
                     for(int z = -1; z <= 1; z++)
@@ -53,8 +56,13 @@ namespace MapGeneration
                         float3 adjacentPosition = new float3(x, 0, z) + data.pointWorldPosition;
                         WorleyNoise.PointData adjacentData = GetPointData(adjacentPosition);
 
-                        bool adjacentPointInCell = topologyUtil.CellGrouping(adjacentData.currentCellIndex) == startCellGrouping;
-                        if(matrix.ItemIsSet(adjacentPosition) || (!currentPointInCell && !adjacentPointInCell)) continue;
+                        float grouping = topologyUtil.CellGrouping(adjacentData.currentCellIndex);
+
+                        bool adjacentIsOutsideCell = grouping != startCellGrouping;
+                        if(matrix.ItemIsSet(adjacentPosition) || (currentIsOutsideCell && adjacentIsOutsideCell))
+                            continue;
+
+                        adjacentData.cellGrouping = grouping;
 
                         dataToCheck.Enqueue(adjacentData);
                         matrix.AddItem(adjacentData, adjacentData.pointWorldPosition);
@@ -64,11 +72,24 @@ namespace MapGeneration
 
             ArrayUtil arrayUtil = new ArrayUtil();
 
+            DynamicBuffer<CellSystem.SectorCell> sectorCells = commandBuffer.AddBuffer<CellSystem.SectorCell>(sectorEntity);
+            DynamicBuffer<CellSystem.AdjacentCell> adjacentCells = commandBuffer.AddBuffer<CellSystem.AdjacentCell>(sectorEntity);
+
             NativeArray<WorleyNoise.PointData> cellSet = arrayUtil.Set(matrix.matrix, Allocator.Temp);
-            DynamicBuffer<SectorSystem.CellSet> allCells = commandBuffer.AddBuffer<SectorSystem.CellSet>(sectorEntity);
             for(int i = 0; i < cellSet.Length; i++)
             {
-                allCells.Add(new SectorSystem.CellSet{ data = cellSet[i] });
+                WorleyNoise.CellData cellData = worley.GetCellData(cellSet[i].currentCellIndex);
+
+                if(cellData.value == 0) continue;
+
+                if(topologyUtil.CellGrouping(cellSet[i].currentCellIndex) != startCellGrouping)
+                {
+                    adjacentCells.Add(new CellSystem.AdjacentCell{ data = cellData });
+                }
+                else
+                {
+                    sectorCells.Add(new CellSystem.SectorCell{ data = cellData });
+                }
             }
             cellSet.Dispose();
 
@@ -79,7 +100,7 @@ namespace MapGeneration
         {
             WorleyNoise.PointData data = worley.GetPointData(position.x, position.z);
             data.pointWorldPosition = position;
-            data.isSet = 1;
+            data.isSet = true;
             return data;
         }
 
