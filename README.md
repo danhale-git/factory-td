@@ -15,6 +15,8 @@ Worley noise with no scatter, some scatter and high scatter
 (generated using [FastNoise Preview](https://github.com/Auburns/FastNoise/releases))
 </p>
 
+---
+
 Worley noise is deterministic but can be randomised using a seed. It is possible to determine the following information about worley for any point in world space:
 * Cell the point is in
 * Closest adjacent cell
