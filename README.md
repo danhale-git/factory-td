@@ -4,9 +4,9 @@ other words
 
 
 Inline-style: 
-![alt text](https://i.imgur.com/wGPHJvx.png "Logo Title Text 1")
+![alt text](https://i.imgur.com/0QuGEV6.png "Logo Title Text 1")
 
 Reference-style: 
 ![alt text][logo]
 
-[logo]: https://i.imgur.com/wGPHJvx.png "Logo Title Text 2"
+[logo]: https://i.imgur.com/0QuGEV6.png "Logo Title Text 2"
