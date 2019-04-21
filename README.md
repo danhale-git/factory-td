@@ -7,20 +7,27 @@ other words
 ### Design
 _Procedurally generate deterministic terrain, with an emphasis on gameplay and limited/controlled traversal. Terrain should be broken up by cliffs with slopes providing limited/choked access between areas._
 
-Terrain generation is based on [Worley (Cellular) noise](https://thebookofshaders.com/12/). Worley noise generation is based on [FastNoise.cs](https://assetstore.unity.com/packages/tools/particles-effects/fastnoise-70706).
+Terrain generation is based on [Worley (Cellular) noise](https://thebookofshaders.com/12/). All noise generation is based on [FastNoise.cs](https://assetstore.unity.com/packages/tools/particles-effects/fastnoise-70706).
 
-### Cellular noise terrain generation
+### Worley Cells
 
-Cellular noise (below) is based on an even grid which can be scattered to create more natural shapes. Each cell has with a unique grid index (int2) and unique value noise (float between 0 and 1).
+Cellular noise (below) is based on an even grid which can be scattered to create more natural shapes. Each cell has a unique grid index (int2) and unique value noise (float between 0 and 1).
 <p align="center">
 <img src="https://imgur.com/pszR8ED.png">
 </p>
 <p align="center">
-Cellular noise with no scatter, some scatter and high scatter. All coloured using their value noise - Color(value, value, value).
+Cellular noise with no scatter (left), some scatter (middle) and high scatter (right).
+All coloured using their value noise.
 (generated using [FastNoise Preview](https://github.com/Auburns/FastNoise/releases))
 </p>
 
 ---
+
+### Worley Terrain
+
+---
+
+### Slopes
 
 Cellular noise, like Perlin or Simplex, is deterministic but can be randomised using a seed. It is possible to generate the following (amongst other) information deterministically for any point in world space:
 
@@ -37,11 +44,11 @@ To determine cell height the cell index x and y values are used as the input for
 <img src="https://i.imgur.com/0QuGEV6.png">
 </p>
 <p align="center">
-Terrain generation with no scatter
+Terrain cells with different heights and connecting slopes
 </p>
 
 Cell value noise is used to decide if a slope exists between two neighbouring cells. Using the value of two cells, a third deterministic value can be created to decide if a slope connects them.
-This allows each half of the slope owned by a different cell and both cells generated independently of each other, with no half slopes.
+This allows each cell to own half a slope and be generated independently of each other.
 ```csharp
 float cellPairValue = (cellValue * adjacentValue);
 bool slope = CheckIfSlopedBasedOnValue(cellPairValue);
@@ -55,7 +62,7 @@ Slopes generated using Cellular distance-to-edge noise.
 
 ---
 
-distance-to-edge can be used to blend height between cells, where the value 0 is the edge of the current cell. The code below sloped the terrain from the cell height, to half way between it's and the adjacent cell's height.
+distance-to-edge can be used to blend height between cells and create slopes, where the value 0 is the edge of the current cell. The code below slopes the terrain from the cell height, to the mid point between the two cells.
 ```csharp
 float slopeLength = 0.5f;
 
