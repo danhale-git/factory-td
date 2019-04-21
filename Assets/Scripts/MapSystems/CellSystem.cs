@@ -100,7 +100,21 @@ public class CellSystem : ComponentSystem
         worley = TerrainSettings.CellWorley();
         topologyUtil = new TopologyUtil().Construct();
         
-        previousCellIndex = new int2(100); 
+        previousCellIndex = new int2(100);
+    }
+
+    protected override void OnStartRunning()
+    {
+        UpdateCurrentCellIndex();
+        jobManager.AllJobsCompleted();
+
+        int range = 3;
+
+        for(int x = -range; x < range; x++)
+            for(int z = -range; z < range; z++)
+            {
+                ScheduleFloodFillJobForCellGroup(currentCellIndex + new int2(x, z));
+            }
     }
 
     protected override void OnDestroy()
@@ -117,10 +131,10 @@ public class CellSystem : ComponentSystem
         
         AddNewSectorsToMatrix();
         
-        if(cellMatrix.ItemIsSet(currentCellIndex))
+        /*if(cellMatrix.ItemIsSet(currentCellIndex))
             ScheduleFloodFillJobsForAdjacentGroups();
         else
-            ScheduleFloodFillJobForCellGroup(currentCellIndex);
+            ScheduleFloodFillJobForCellGroup(currentCellIndex); */
     }
 
     bool UpdateCurrentCellIndex()
@@ -241,9 +255,9 @@ public class CellSystem : ComponentSystem
     {
         float3 roundedPosition = math.round(position);
         int2 cellIndex = worley.GetPointData(roundedPosition.x, roundedPosition.z).currentCellIndex;
-        Entity cellEntity = cellMatrix.GetItem(cellIndex);
+        Entity cellEntity;
 
-        if(!entityManager.HasComponent<TopologySystem.Height>(cellEntity))
+        if(!cellMatrix.TryGetItem(cellIndex, out cellEntity) || !entityManager.HasComponent<TopologySystem.Height>(cellEntity))
             return 0;
 
         DynamicBuffer<TopologySystem.Height> heightData = entityManager.GetBuffer<TopologySystem.Height>(cellEntity);
