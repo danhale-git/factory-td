@@ -32,13 +32,13 @@ Terrain generation with no scatter
 
 Cellular noise, like Perlin/Simplex is deterministic but can be randomised using a seed. It is possible to generate the following information deterministically about worley for any point in world space:
 * Cell the point is inside
- * Index in un-scattered grid
- * Cell value (unique float between 0 and 1)
- * Cell position (fixed ~central point within cell)
+- * Index in un-scattered grid
+- * Cell value (unique float between 0 and 1)
+- * Cell position (fixed ~central point within cell)
 * Closest adjacent cell
- * Index in un-scattered grid
- * Cell value
- * Cell position
+- * Index in un-scattered grid
+- * Cell value
+- * Cell position
 * Distance from the edge of the cell, in the direction of the closest adjacent cell (distance-to-edge)
 
 The final item (distance-to-edge) can be used to blend height between cells. Cell value noise is used to decide if a slope exists.
