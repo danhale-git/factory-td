@@ -1,7 +1,7 @@
 ﻿using Unity.Mathematics;
 using Unity.Collections;
 
-public struct SimplexNoiseGenerator
+public struct SimplexNoise
 {
     public enum FractalType { FBM, Billow, RigidMulti };
 
@@ -22,7 +22,7 @@ public struct SimplexNoiseGenerator
     float gain;
 
 
-    public SimplexNoiseGenerator(int seed, float frequency, float lacunarity, FractalType fractalType, int octaves, float gain)
+    public SimplexNoise(int seed, float frequency, float lacunarity, FractalType fractalType, int octaves, float gain)
     {
         this.seed = seed;
         this.frequency = frequency;
@@ -55,7 +55,7 @@ public struct SimplexNoiseGenerator
 		fractalBounding = 1 / ampFractal;
 	}
 
-    public SimplexNoiseGenerator(int seed, float frequency)
+    public SimplexNoise(int seed, float frequency)
     {
         this.seed = seed;
         this.frequency = frequency;

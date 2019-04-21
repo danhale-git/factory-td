@@ -40,13 +40,13 @@ public static class TerrainSettings
 		return 0;
 	}
 
-	public static SimplexNoiseGenerator HeightSimplex()
+	public static SimplexNoise HeightSimplex()
 	{
-		return new SimplexNoiseGenerator(TerrainSettings.seed, TerrainSettings.cellHeightNoiseFrequency);
+		return new SimplexNoise(TerrainSettings.seed, TerrainSettings.cellHeightNoiseFrequency);
 	}
-	public static SimplexNoiseGenerator GroupSimplex()
+	public static SimplexNoise GroupSimplex()
 	{
-		return new SimplexNoiseGenerator(TerrainSettings.seed / 2, TerrainSettings.cellGroupNoiseFrequency);
+		return new SimplexNoise(TerrainSettings.seed / 2, TerrainSettings.cellGroupNoiseFrequency);
 	}
 
 	public static WorleyNoise CellWorley()

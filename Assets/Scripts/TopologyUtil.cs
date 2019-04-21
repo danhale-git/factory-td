@@ -2,15 +2,15 @@
 
 public struct TopologyUtil
 {
-    SimplexNoiseGenerator groupSimplex;
-    SimplexNoiseGenerator heightSimplex;
-    SimplexNoiseGenerator slopeSimplex;
+    SimplexNoise groupSimplex;
+    SimplexNoise heightSimplex;
+    SimplexNoise slopeSimplex;
 
     public TopologyUtil Construct()
     {
         groupSimplex = TerrainSettings.GroupSimplex();
         heightSimplex = TerrainSettings.HeightSimplex();
-        slopeSimplex = new SimplexNoiseGenerator(TerrainSettings.seed, 0.1f);
+        slopeSimplex = new SimplexNoise(TerrainSettings.seed, 0.1f);
 
         return this;
     }
