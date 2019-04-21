@@ -30,8 +30,8 @@ public class TerrainMeshDataSystem : ComponentSystem
         topologyUtil = new TopologyUtil().Construct();
 
         EntityQueryDesc meshDataQuery = new EntityQueryDesc{
-            All = new ComponentType[] { typeof(Tags.TerrainEntity), typeof(WorleyNoise.CellData), typeof(TopologySystem.Height) },
-            None = new ComponentType[] { typeof(Unity.Rendering.RenderMesh), typeof(Vertex) }
+            All = new ComponentType[] { typeof(Tags.TerrainEntity), typeof(WorleyNoise.PointData), typeof(TopologySystem.Height) },
+            None = new ComponentType[] { typeof(Vertex) }
         };
         meshDataGroup = GetEntityQuery(meshDataQuery);
     }

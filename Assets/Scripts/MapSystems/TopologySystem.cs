@@ -28,7 +28,7 @@ public class TopologySystem : ComponentSystem
 
         EntityQueryDesc topologyQuery = new EntityQueryDesc{
             All = new ComponentType[] { typeof(WorleyNoise.CellData), typeof(WorleyNoise.PointData), typeof(SectorSystem.SectorNoiseValue) },
-            None = new ComponentType[] { typeof(Unity.Rendering.RenderMesh), typeof(Height) }
+            None = new ComponentType[] { typeof(Height) }
         };
         topologyGroup = GetEntityQuery(topologyQuery);
     }
