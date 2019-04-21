@@ -42,6 +42,7 @@ To determine cell height the cell index x and y values are used as the input for
 <p align="center">
 Terrain cells with different heights and connecting slopes
 </p>
+
 ---
 
 ### Slopes
