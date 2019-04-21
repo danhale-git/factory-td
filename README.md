@@ -4,6 +4,7 @@ other words
 
 
 <p align="center">
-![alt text](https://i.imgur.com/0QuGEV6.png "Logo Title Text 1")
-  Terrain generation with 0 jitter
+
+<img src="https://i.imgur.com/0QuGEV6.png">
+Terrain generation with 0 jitter
 </p>
