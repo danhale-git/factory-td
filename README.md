@@ -67,14 +67,14 @@ Cell value noise is used to decide if a slope exists between two neighbouring ce
 float cellPairValue = (cellValue * adjacentValue);
 int2 slopedEdge = GetSlopeConnectionBasedOnValue(cellPairValue);
 ```
-The connection is expressed as an int2 describing the direction of the connected adjacent cell (e.g. right adjacent cell: int2(1, 0) ). For the cell with the lowest value of the two, this int2 is 'flipped' to describe the direction of the opposite adjacent cell (e.g. int2(-1, 0)).
+The connection is expressed as an int2 describing the direction of the connected adjacent cell. For the cell with the lowest value of the two, this int2 is 'flipped' to describe the direction of the opposite adjacent cell.
 ```csharp
-//  Slope edge is currently pointing right int2(1, 0)
+//  Slope edge is currently pointing right - int2(1, 0)
 if(cellValue < adjacentValue)   //  This will always return true for the same one of any two cells
     slopeEdge = flipDirection(slopeEdge);
-    //  Now slopeEdge points left int2(-1, 0)
+    //  Now slopeEdge points left - int2(-1, 0)
 ```
-This results in the two cells both having a slope on opposite sides and so being connected. Each cell can be generated independently of any adjacent cells and slopes will always generate correctly.
+This results in two cells with half a slope on 'opposite' sides (the side at which each cell meets the other) and so being connected. Each cell can be generated independently of any adjacent cells and slopes will always connect properly.
 <p align="center">
 <img src="https://imgur.com/VJBkFBq.png">
 </p>
@@ -82,14 +82,13 @@ This results in the two cells both having a slope on opposite sides and so being
 Slopes generated using Cellular distance-to-edge noise.
 </p>
 
-The distance-to-edge value will equal ~0 close to the edge of the cell. Combined with information about the current and adjacent cells, it can be used to blend height between two cell heights. The code below slopes the terrain from the cell height to the mid point between the two cells.
+The distance-to-edge value will equal ~0 close to the edge of the cell. Combined with information about the current and adjacent cells, it can be used to blend between two cell heights. The code below slopes the terrain from the cell height to the mid point between the two cells. The distance-to-edge value is used to create an interpolator which is interpolates between the cell height and the mid point between between it and the adjacent cell.
 ```csharp
 float slopeLength = 0.5f;
-
-float halfWayHeight = (point.cellHeight + point.adjacentHeight) / 2;
 float interpolator = math.unlerp(0, slopeLength, point.distanceToEdge);
 
-float terrainHeight = math.lerp(halfWayHeight, cellHeight, interpolator);
+float halfWayHeight = (point.cellHeight + point.adjacentHeight) / 2;
+float terrainHeight = math.lerp(halfWayHeight, point.cellHeight, interpolator);
 ```
 <p align="center">
 <img src="https://imgur.com/McWVde3.png">
@@ -97,8 +96,6 @@ float terrainHeight = math.lerp(halfWayHeight, cellHeight, interpolator);
 <p align="center">
 Distance to edge noise visualised using FastNoise Preview.
 </p>
-
-### Cell groups
 
 
 
