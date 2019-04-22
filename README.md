@@ -21,10 +21,12 @@ Below, pixels are coloured using their cell value noise - Color(value, value, va
 </p>
 <p align="center">
 Cellular noise with no scatter (left), some scatter (middle) and high scatter (right), coloured by cell value.
+</p>
+<p align="center">
 (generated using [FastNoise Preview](https://github.com/Auburns/FastNoise/releases))
+</p>
 
 A more in-depth explanation of worley implementation can be found [here](https://thebookofshaders.com/12/).
-</p>
 
 ---
 
