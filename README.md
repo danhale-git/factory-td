@@ -49,7 +49,7 @@ Terrain cells with different heights and connecting slopes
 </p>
 
 Scatter can be added. The grid will no longer be distinguishable and some cells may be lost, but each cell still has the same unique int2 index and value noise.
-![](https://i.imgur.com/cP8iCSv.gifv)
+![](https://i.imgur.com/cP8iCSv.gif)
 Animation showing the effect of increase scatter on terrain cells.
 
 
