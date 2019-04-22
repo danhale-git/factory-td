@@ -48,10 +48,13 @@ To determine cell height the cell index x and y values are used as the input for
 Terrain cells with different heights and connecting slopes
 </p>
 
+<p align="left">
 Scatter can be added. The grid will no longer be distinguishable and some cells may be lost, but each cell still has the same unique int2 index and value noise.
+</p>
 <img src="https://i.imgur.com/cP8iCSv.gif"/>
+<p align="center">
 Animation showing the effect of increase scatter on terrain cells.
-
+</p>
 
 ---
 
