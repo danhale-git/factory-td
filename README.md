@@ -15,7 +15,7 @@ Terrain generation uses [Worley (Cellular) noise](https://thebookofshaders.com/1
 ### Worley Cells
 
 Cellular noise (below) is generated using an even grid of points, where a pixel's cell is the closest point in the grid. Each cell has a unique grid index (int2) and unique value noise (float between 0 and 1).
-Below, pixels are coloured using their cell value noise - Color(value, value, value). We also see the change in cell shape between the left and right images, as the grid of points is scattered randomly.
+Below, pixels are coloured using their cell value noise - Color(value, value, value). We also see the change in cell shape between the left and right images, as the grid of points are scattered randomly.
 <p align="center">
 <img src="https://imgur.com/pszR8ED.png">
 </p>
@@ -24,7 +24,7 @@ Cellular noise with no scatter (left), some scatter (middle) and high scatter (r
 </p>
 
 Image generated using [FastNoise Preview](https://github.com/Auburns/FastNoise/releases).
-A more in-depth explanation of worley implementation can be found [here](https://thebookofshaders.com/12/).
+A more in-depth explanation of Worley/Cellular noise implementation can be found [here](https://thebookofshaders.com/12/).
 
 ---
 
@@ -36,7 +36,7 @@ Cellular noise, like Perlin or Simplex, is deterministic but can be randomised u
 
 * Closest adjacent cell to point: Index, value noise
 
-* Distance from the edge of the cell, in the direction of the closest adjacent cell (distance-to-edge)
+* Distance from the point to edge of the cell, in the direction of the closest adjacent cell (distance-to-edge)
 
 Index is an int2 and value noise is a float between 0 and 1. Both are unique to each individual cell.
 
@@ -49,25 +49,32 @@ Terrain cells with different heights and connecting slopes
 </p>
 
 <p align="left">
-Scatter can be added. The grid will no longer be distinguishable and some cells may be lost, but each cell still has the same unique int2 index and value noise.
+Scatter can be addedto make the terrain appear more natural. The grid will no longer be distinguishable and some cells may be lost, but each cell still has the same unique int2 index and value noise.
 </p>
 <p align="center">
 <img src="https://i.imgur.com/cP8iCSv.gif"/>
 </p>
 <p align="center">
-Animation showing the effect of increase scatter on terrain cells.
+Animation showing the effect of increased scatter on terrain cells.
 </p>
 
 ---
 
 ### Slopes
 
-Cell value noise is used to decide if a slope exists between two neighbouring cells. Using the value of two cells, a third deterministic value can be created to decide which adjacent cell is connected. Each cell owns half the slope.
+Cell value noise is used to decide if a slope exists between two neighbouring cells. Using the value of two cells, a third deterministic value can be created and used to choose which adjacent cell is connected. Slopes traverse both cells, with each cell owning half of the slope.
 ```csharp
 float cellPairValue = (cellValue * adjacentValue);
 int2 slopedEdge = GetSlopeConnectionBasedOnValue(cellPairValue);
 ```
-The connection is expressed as an int2 describing the direction of the connected adjacent cell (e.g. right adjacent cell: int2(1, 0) ). For the cell with the lowest value of the two, this int2 is 'flipped' to describe the direction of the opposite adjacent cell (e.g. int2(-1, 0)). This results in the two cells both having a slope on opposite sides and so being connected. Each cell can be generated independently of any adjacent cells.
+The connection is expressed as an int2 describing the direction of the connected adjacent cell (e.g. right adjacent cell: int2(1, 0) ). For the cell with the lowest value of the two, this int2 is 'flipped' to describe the direction of the opposite adjacent cell (e.g. int2(-1, 0)).
+```csharp
+//  Slope edge is currently pointing right int2(1, 0)
+if(cellValue < adjacentValue)   //  This will always return true for the same one of any two cells
+    slopeEdge = flipDirection(slopeEdge);
+    //  Now slopeEdge points left int2(-1, 0)
+```
+This results in the two cells both having a slope on opposite sides and so being connected. Each cell can be generated independently of any adjacent cells and slopes will always generate correctly.
 <p align="center">
 <img src="https://imgur.com/VJBkFBq.png">
 </p>
