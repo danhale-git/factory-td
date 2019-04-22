@@ -22,10 +22,8 @@ Below, pixels are coloured using their cell value noise - Color(value, value, va
 <p align="center">
 Cellular noise with no scatter (left), some scatter (middle) and high scatter (right), coloured by cell value.
 </p>
-<p align="center">
-(generated using [FastNoise Preview](https://github.com/Auburns/FastNoise/releases))
-</p>
 
+Image generated using [FastNoise Preview](https://github.com/Auburns/FastNoise/releases).
 A more in-depth explanation of worley implementation can be found [here](https://thebookofshaders.com/12/).
 
 ---
@@ -54,12 +52,12 @@ Terrain cells with different heights and connecting slopes
 
 ### Slopes
 
-Cell value noise is used to decide if a slope exists between two neighbouring cells. Using the value of two cells, a third deterministic value can be created to decide if a slope connects them.
-This allows each cell to own half a slope and be generated independently of each other.
+Cell value noise is used to decide if a slope exists between two neighbouring cells. Using the value of two cells, a third deterministic value can be created to decide which adjacent cell is connected.
 ```csharp
 float cellPairValue = (cellValue * adjacentValue);
-bool slope = CheckIfSlopedBasedOnValue(cellPairValue);
+int2 slopedEdge = GetSlopeConnectionBasedOnValue(cellPairValue);
 ```
+This is expressed as an int2 describing the adjacency direction of the connected cell (e.g. right adjacent cell: int2(1, 0)). For the cell with the lowest value of the two, this int2 is 'flipped' to describe the directions of the opposite adjacent cell (e.g. int2(-1, 0)). This allows each cell to own half a slope and be generated independently of each other.
 <p align="center">
 <img src="https://imgur.com/VJBkFBq.png">
 </p>
@@ -67,9 +65,7 @@ bool slope = CheckIfSlopedBasedOnValue(cellPairValue);
 Slopes generated using Cellular distance-to-edge noise.
 </p>
 
----
-
-The distance-to-edge value combined with information about both the current and adjacent cells can be used to blend values between two cells, where the value 0 is the edge of the current cell. The code below slopes the terrain from the cell height, to the mid point between the two cells.
+The distance-to-edge value will equal ~0 close to the edge of the cell. Combined with information about the current and adjacent cells, it can be used to blend height between two cells. The code below slopes the terrain from the cell height, to the mid point between the two cells.
 ```csharp
 float slopeLength = 0.5f;
 
