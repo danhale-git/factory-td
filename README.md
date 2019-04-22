@@ -1,7 +1,5 @@
 # Factory Tower Defence
 
-other words
-
 ## Terrain
 
 ### Design
@@ -74,7 +72,7 @@ if(cellValue < adjacentValue)   //  This will always return true for the same on
     slopeEdge = flipDirection(slopeEdge);
     //  Now slopeEdge points left - int2(-1, 0)
 ```
-This results in two cells with half a slope on 'opposite' sides (the side at which each cell meets the other) and so being connected. Each cell can be generated independently of any adjacent cells and slopes will always connect properly.
+This results in two cells with half a slope on 'opposite' sides (the side at which each cell meets the other) and so connected. Each cell can be generated independently of any adjacent cells and slopes will always connect properly.
 <p align="center">
 <img src="https://imgur.com/VJBkFBq.png">
 </p>
@@ -82,7 +80,7 @@ This results in two cells with half a slope on 'opposite' sides (the side at whi
 Slopes generated using Cellular distance-to-edge noise.
 </p>
 
-The distance-to-edge value will equal ~0 close to the edge of the cell. Combined with information about the current and adjacent cells, it can be used to blend between two cell heights. The code below slopes the terrain from the cell height to the mid point between the two cells. The distance-to-edge value is used to create an interpolator which is interpolates between the cell height and the mid point between between it and the adjacent cell.
+The distance-to-edge value will equal ~0 close to the edge of the cell. Combined with information about the current and adjacent cells, it can be used to blend between two cell heights. The code below slopes the terrain from the cell height to the mid point between the two cells. The distance-to-edge value is used to create an interpolator which is interpolates between the cell height and half way to the adjacent cell's height.
 ```csharp
 float slopeLength = 0.5f;
 float interpolator = math.unlerp(0, slopeLength, point.distanceToEdge);
