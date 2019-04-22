@@ -103,7 +103,7 @@ public class CellSystem : ComponentSystem
         previousCellIndex = new int2(100);
     }
 
-    protected override void OnStartRunning()
+    /*protected override void OnStartRunning()
     {
         UpdateCurrentCellIndex();
         jobManager.AllJobsCompleted();
@@ -115,7 +115,7 @@ public class CellSystem : ComponentSystem
             {
                 ScheduleFloodFillJobForCellGroup(currentCellIndex + new int2(x, z));
             }
-    }
+    } */
 
     protected override void OnDestroy()
     {
@@ -131,10 +131,10 @@ public class CellSystem : ComponentSystem
         
         AddNewSectorsToMatrix();
         
-        /*if(cellMatrix.ItemIsSet(currentCellIndex))
+        if(cellMatrix.ItemIsSet(currentCellIndex))
             ScheduleFloodFillJobsForAdjacentGroups();
         else
-            ScheduleFloodFillJobForCellGroup(currentCellIndex); */
+            ScheduleFloodFillJobForCellGroup(currentCellIndex);
     }
 
     bool UpdateCurrentCellIndex()
