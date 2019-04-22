@@ -48,16 +48,24 @@ To determine cell height the cell index x and y values are used as the input for
 Terrain cells with different heights and connecting slopes
 </p>
 
+Scatter can be added. The grid will no longer be distinguishable and some cells may be lost, but each cell still has the same unique int2 index and value noise.
+<p align="center">
+<img src="https://i.imgur.com/cP8iCSv.gifv">
+</p>
+<p align="center">
+Animation showing the effect of increase scatter on terrain cells.
+</p>
+
 ---
 
 ### Slopes
 
-Cell value noise is used to decide if a slope exists between two neighbouring cells. Using the value of two cells, a third deterministic value can be created to decide which adjacent cell is connected.
+Cell value noise is used to decide if a slope exists between two neighbouring cells. Using the value of two cells, a third deterministic value can be created to decide which adjacent cell is connected. Each cell owns half the slope.
 ```csharp
 float cellPairValue = (cellValue * adjacentValue);
 int2 slopedEdge = GetSlopeConnectionBasedOnValue(cellPairValue);
 ```
-This is expressed as an int2 describing the adjacency direction of the connected cell (e.g. right adjacent cell: int2(1, 0)). For the cell with the lowest value of the two, this int2 is 'flipped' to describe the directions of the opposite adjacent cell (e.g. int2(-1, 0)). This allows each cell to own half a slope and be generated independently of each other.
+The connection is expressed as an int2 describing the direction of the connected adjacent cell (e.g. right adjacent cell: int2(1, 0) ). For the cell with the lowest value of the two, this int2 is 'flipped' to describe the direction of the opposite adjacent cell (e.g. int2(-1, 0)). This results in the two cells both having a slope on opposite sides and so being connected. Each cell can be generated independently of any adjacent cells.
 <p align="center">
 <img src="https://imgur.com/VJBkFBq.png">
 </p>
@@ -65,7 +73,7 @@ This is expressed as an int2 describing the adjacency direction of the connected
 Slopes generated using Cellular distance-to-edge noise.
 </p>
 
-The distance-to-edge value will equal ~0 close to the edge of the cell. Combined with information about the current and adjacent cells, it can be used to blend height between two cells. The code below slopes the terrain from the cell height, to the mid point between the two cells.
+The distance-to-edge value will equal ~0 close to the edge of the cell. Combined with information about the current and adjacent cells, it can be used to blend height between two cell heights. The code below slopes the terrain from the cell height to the mid point between the two cells.
 ```csharp
 float slopeLength = 0.5f;
 
@@ -80,6 +88,8 @@ float terrainHeight = math.lerp(halfWayHeight, cellHeight, interpolator);
 <p align="center">
 Distance to edge noise visualised using FastNoise Preview.
 </p>
+
+### Cell groups
 
 
 
