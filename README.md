@@ -5,20 +5,25 @@ other words
 ## Terrain
 
 ### Design
-_Procedurally generate deterministic terrain, with an emphasis on gameplay and limited/controlled traversal. Terrain should be broken up by cliffs with slopes providing limited/choked access between areas._
+##### Procedural terrain with gameplay before visual appearance
+_Procedurally generate deterministic terrain, with an emphasis on limited/controlled traversal to encourage interesting logistical/tactical situations._
 
-Terrain generation is based on [Worley (Cellular) noise](https://thebookofshaders.com/12/). All noise generation is based on [FastNoise.cs](https://assetstore.unity.com/packages/tools/particles-effects/fastnoise-70706).
+Terrain is broken up by un-pathable cliffs separating different heights. Slopes provide limited/choked access between areas, much like an RTS map.
+
+Terrain generation uses [Worley (Cellular) noise](https://thebookofshaders.com/12/). All noise generation code is based on [FastNoise.cs](https://assetstore.unity.com/packages/tools/particles-effects/fastnoise-70706).
 
 ### Worley Cells
 
-Cellular noise (below) is based on an even grid which can be scattered to create more natural shapes. Each cell has a unique grid index (int2) and unique value noise (float between 0 and 1).
+Cellular noise (below) is generated using an even grid of points, where a pixel's cell is the closest point in the grid. Each cell has a unique grid index (int2) and unique value noise (float between 0 and 1).
+Below, pixels are coloured using their cell value noise - Color(value, value, value). We also see the change in cell shape between the left and right images, as the grid of points is scattered randomly.
 <p align="center">
 <img src="https://imgur.com/pszR8ED.png">
 </p>
 <p align="center">
-Cellular noise with no scatter (left), some scatter (middle) and high scatter (right).
-All coloured using their value noise.
+Cellular noise with no scatter (left), some scatter (middle) and high scatter (right), coloured by cell value.
 (generated using [FastNoise Preview](https://github.com/Auburns/FastNoise/releases))
+
+A more in-depth explanation of worley implementation can be found [here](https://thebookofshaders.com/12/).
 </p>
 
 ---
