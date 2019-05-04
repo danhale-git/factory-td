@@ -52,33 +52,29 @@ public class HybridSystem : ComponentSystem
 
         for(int c = 0; c < chunks.Length; c++)
         {
-            ArchetypeChunk chunk = chunks[c];
+            var chunk = chunks[c];
 
-            NativeArray<Entity> entities = chunk.GetNativeArray(entityType);
-            NativeArray<Translation> translations = chunk.GetNativeArray(translationType);
-            NativeArray<CellSystem.MatrixComponent> matrixComponents = chunk.GetNativeArray(matrixType);
-            NativeArray<LocalToWorld> localToWorldComponents = chunk.GetNativeArray(localToWorldType);
+            var entities = chunk.GetNativeArray(entityType);
+            var translations = chunk.GetNativeArray(translationType);
+            var matrixComponents = chunk.GetNativeArray(matrixType);
+            var localToWorldComponents = chunk.GetNativeArray(localToWorldType);
 
             for(int e = 0; e < entities.Length; e++)
             {
                 Entity entity = entities[e];
                 float3 position = translations[e].Value;
                 CellSystem.MatrixComponent matrix = matrixComponents[e];
-                Mesh mesh = chunk.GetSharedComponentData<RenderMesh>(meshType, entityManager).mesh;
                 float4x4 localToWorld = localToWorldComponents[e].Value;
+                Mesh mesh = chunk.GetSharedComponentData<RenderMesh>(meshType, entityManager).mesh;
 
                 GameObject sectorGameObject = GameObject.Instantiate(sectorPrefab, position, Quaternion.identity);
-
-                CreateCollider(sectorGameObject, mesh);
-
+                sectorGameObject.GetComponent<MeshCollider>().sharedMesh = mesh;
                 NavMeshSurface navMeshComponent = sectorGameObject.GetComponent<NavMeshSurface>();
-                //navMeshComponent.collectObjects = CollectObjects.Children;
 
                 NavMeshBuildSettings settings = NavMesh.GetSettingsByID(0);
-                List<NavMeshBuildSource> sources = GetSourceList(matrix.width, navMeshComponent, mesh, localToWorld);
+                List<NavMeshBuildSource> sources = CreateNavMeshSource(matrix.width, navMeshComponent, mesh, localToWorld);
                 Bounds bounds = CalculateWorldBounds(sources, position);
-                
-                var data = NavMeshBuilder.BuildNavMeshData(settings, sources, bounds, position, Quaternion.identity);
+                NavMeshData data = NavMeshBuilder.BuildNavMeshData(settings, sources, bounds, position, Quaternion.identity);
 
                 if(data != null)
                 {
@@ -100,26 +96,17 @@ public class HybridSystem : ComponentSystem
         chunks.Dispose();
     }
 
-    void CreateCollider(GameObject sectorGameObject, Mesh mesh)
+    List<NavMeshBuildSource> CreateNavMeshSource(int matrixWidth, NavMeshSurface component, Mesh mesh, float4x4 localToWorld)
     {
-        MeshCollider collider = sectorGameObject.GetComponent<MeshCollider>();
-        collider.sharedMesh = mesh;
-    }
+        NavMeshBuildSource source = new NavMeshBuildSource(){
+            shape = NavMeshBuildSourceShape.Mesh,
+            size = new Vector3(matrixWidth, 0, matrixWidth),
+            component = component,
+            sourceObject = mesh,
+            transform = localToWorld
+        };
 
-    List<NavMeshBuildSource> GetSourceList(int matrixWidth, NavMeshSurface component, Mesh mesh, float4x4 localToWorld)
-    {
-        NavMeshBuildSource source = new NavMeshBuildSource();
-        source.shape = NavMeshBuildSourceShape.Mesh;
-        source.size = new Vector3(matrixWidth, 0, matrixWidth);
-        source.component = component;
-        source.sourceObject = mesh;
-        source.transform = localToWorld;
-
-        NavMeshBuildSettings settings = NavMesh.GetSettingsByID(0);
-        List<NavMeshBuildSource> sources = new List<NavMeshBuildSource>();
-        sources.Add(source);
-
-        return sources;
+        return new List<NavMeshBuildSource>() { source };
     }
 
     Bounds CalculateWorldBounds(List<NavMeshBuildSource> sources, float3 position)
@@ -158,6 +145,7 @@ public class HybridSystem : ComponentSystem
         result.Expand(0.1f);
         return result;
     }
+
     static Bounds GetWorldBounds(Matrix4x4 mat, Bounds bounds)
     {
         var absAxisX = math.abs(mat.MultiplyVector(Vector3.right));
