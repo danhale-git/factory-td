@@ -86,6 +86,9 @@ namespace MapGeneration
 
             for(int i = 0; i < cellMatrix.Length; i++)
             {
+                if(!cellMatrix.ItemIsSet(i))
+                    continue;
+                    
                 WorleyNoise.CellData cellData = cellMatrix.GetItem(i).data;
 
                 if(cellData.value == 0)
