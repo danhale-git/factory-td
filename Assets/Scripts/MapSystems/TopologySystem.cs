@@ -10,6 +10,7 @@ using Unity.Transforms;
 public class TopologySystem : ComponentSystem
 {
     EntityManager entityManager;
+    CellSystem cellSystem;
 
     EntityQuery topologyGroup;
 
@@ -23,6 +24,7 @@ public class TopologySystem : ComponentSystem
     protected override void OnCreate()
     {
         entityManager = World.Active.EntityManager;
+        cellSystem = World.Active.GetOrCreateSystem<CellSystem>();
 
         topologyUtil = new TopologyUtil().Construct();
 
@@ -89,7 +91,7 @@ public class TopologySystem : ComponentSystem
                     else if(sectorType == SectorSystem.SectorTypes.LAKE)
                         pointHeight.height = Lake(worley[i], sloped);
                     else
-                        pointHeight.height = topologyUtil.CellHeight(worley[i].currentCellIndex);
+                        pointHeight.height = cellSystem.GetCellHeight(worley[i].currentCellIndex);
 
                     topology[i] = pointHeight;
                 }
@@ -104,15 +106,15 @@ public class TopologySystem : ComponentSystem
 
     float Lake(WorleyNoise.PointData point, bool sloped)
     {
-        float cellHeight = sloped ? SmoothSlope(point) : topologyUtil.CellHeight(point.currentCellIndex);
+        float cellHeight = sloped ? SmoothSlope(point) : cellSystem.GetCellHeight(point.currentCellIndex);
         float lakeDepth = math.clamp(point.distance2Edge - 0.3f, 0, 1) * (TerrainSettings.cellheightMultiplier * 3);
         return cellHeight - lakeDepth;
     }
 
     float SmoothSlope(WorleyNoise.PointData point)
     {
-        float currentHeight = topologyUtil.CellHeight(point.currentCellIndex);
-        float adjacentHeight = topologyUtil.CellHeight(point.adjacentCellIndex);
+        float currentHeight = cellSystem.GetCellHeight(point.currentCellIndex);
+        float adjacentHeight = cellSystem.GetCellHeight(point.adjacentCellIndex);
 
         if(currentHeight == adjacentHeight) return currentHeight;
 
