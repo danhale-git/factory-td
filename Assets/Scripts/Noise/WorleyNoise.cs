@@ -48,8 +48,6 @@ public struct WorleyNoise
 		public float value;
 		public int2 index;
 		public float3 position;
-
-		public sbyte discovered;
 	}
 
 	public WorleyNoise(int seed, float frequency, float perterbAmp, float cellularJitter, DistanceFunction distanceFunction, CellularReturnType cellularReturnType, Distance2EdgeBorder distance2EdgeBorder)
