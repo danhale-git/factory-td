@@ -27,6 +27,7 @@ public class CellSystem : ComponentSystem
 
     EntityArchetype sectorArchetype;
     Matrix<Entity> sectorMatrix;
+    Matrix<CellMatrixItem> cellMatrix;
 
     public int2 currentCellIndex;
     int2 previousCellIndex;
@@ -78,17 +79,36 @@ public class CellSystem : ComponentSystem
         public WorleyNoise.CellData data;
     }
 
+    struct CellMatrixItem
+    {
+        public CellMatrixItem(WorleyNoise.CellData data, float grouping, float height)
+        {
+            this.data = data;
+            this.grouping = grouping;
+            this.height = height;
+        }
+        public readonly WorleyNoise.CellData data;
+        public readonly float grouping;
+        public readonly float height;
+    }
+
     protected override void OnCreate()
     {
         entityManager = World.Active.EntityManager;
         playerSystem = World.Active.GetOrCreateSystem<PlayerEntitySystem>();
 
-        sectorMatrix = new Matrix<Entity>(5, Allocator.Persistent, float3.zero);
+        UpdateCurrentCellIndex();
+        previousCellIndex = new int2(100);
+
         sectorArchetype = entityManager.CreateArchetype(
             ComponentType.ReadWrite<LocalToWorld>(),
             ComponentType.ReadWrite<Translation>(),
             ComponentType.ReadWrite<RenderMeshProxy>()
         );
+
+        float3 matrixRoot = new float3(currentCellIndex.x, 0, currentCellIndex.y);
+        sectorMatrix = new Matrix<Entity>(5, Allocator.Persistent, matrixRoot);
+        cellMatrix = new Matrix<CellMatrixItem>(5, Allocator.Persistent, matrixRoot);
 
         EntityQueryDesc sectorSortQueryDesc = new EntityQueryDesc{
             All = new ComponentType[] { typeof(AdjacentCell), typeof(SectorCell), typeof(WorleyNoise.PointData) },
@@ -98,27 +118,12 @@ public class CellSystem : ComponentSystem
 
         worley = TerrainSettings.CellWorley();
         topologyUtil = new TopologyUtil().Construct();
-        
-        previousCellIndex = new int2(100);
     }
-
-    /*protected override void OnStartRunning()
-    {
-        UpdateCurrentCellIndex();
-        jobManager.AllJobsCompleted();
-
-        int range = 3;
-
-        for(int x = -range; x < range; x++)
-            for(int z = -range; z < range; z++)
-            {
-                ScheduleFloodFillJobForCellGroup(currentCellIndex + new int2(x, z));
-            }
-    } */
 
     protected override void OnDestroy()
     {
         sectorMatrix.Dispose();
+        cellMatrix.Dispose();
         jobManager.Dispose();
     }
 
@@ -159,20 +164,31 @@ public class CellSystem : ComponentSystem
 
         var entityType = GetArchetypeChunkEntityType();
         var cellArrayType = GetArchetypeChunkBufferType<SectorCell>(true);
+        var adjacentCellArrayType = GetArchetypeChunkBufferType<AdjacentCell>(true);
 
         for(int c = 0; c < chunks.Length; c++)
         {
-            ArchetypeChunk chunk = chunks[c];
-            NativeArray<Entity> entities = chunk.GetNativeArray(entityType);
-            BufferAccessor<SectorCell> cellArrays = chunk.GetBufferAccessor(cellArrayType);
+            var chunk = chunks[c];
+            
+            var entities = chunk.GetNativeArray(entityType);
+            var cellArrays = chunk.GetBufferAccessor(cellArrayType);
+            var adjacentCellArrays = chunk.GetBufferAccessor(adjacentCellArrayType);
 
             for(int e = 0; e < entities.Length; e++)
             {
                 Entity sectorEntity = entities[e];
                 DynamicBuffer<SectorCell> cells = cellArrays[e];
+                DynamicBuffer<AdjacentCell> adjacentCells = adjacentCellArrays[e];
 
                 for(int i = 0; i < cells.Length; i++)
-                    TrySetSector(sectorEntity, cells[i].data.index);
+                {
+                    TryAddCell(cells[i].data);
+
+                    TryAddSector(sectorEntity, cells[i].data.index);
+                }
+
+                for(int i = 0; i < adjacentCells.Length; i++)
+                    TryAddCell(adjacentCells[i].data);
 
                 commandBuffer.AddComponent<Tags.TerrainEntity>(sectorEntity, new Tags.TerrainEntity());
             }
@@ -229,7 +245,7 @@ public class CellSystem : ComponentSystem
     {
         Entity sectorEntity = entityManager.CreateEntity(sectorArchetype);
         entityManager.AddComponentData<WorleyNoise.CellData>(sectorEntity, worley.GetCellData(cellIndex));
-        TrySetSector(sectorEntity, cellIndex);
+        TryAddSector(sectorEntity, cellIndex);
 
         return sectorEntity;
     }
@@ -266,13 +282,48 @@ public class CellSystem : ComponentSystem
         return matrix.GetItem(roundedPosition, heightData, arrayUtil).height;
     }
 
+    void TryAddCell(WorleyNoise.CellData cellData)
+    {
+        if(!cellMatrix.ItemIsSet(cellData.index))
+        {
+            CellMatrixItem cell = new CellMatrixItem
+            (
+                cellData,
+                topologyUtil.CellGrouping(cellData.index),
+                topologyUtil.CellHeight(cellData.index)
+            );
+
+            cellMatrix.AddItem(cell, cellData.index);
+        }
+    }
+
+    public bool CellIsSet(int2 index)
+    {
+        return cellMatrix.ItemIsSet(index);
+    }
+
+    public WorleyNoise.CellData GetCellData(int2 index)
+    {
+        return cellMatrix.GetItem(index).data;
+    }
+
+    public float GetCellHeight(int2 index)
+    {
+        return cellMatrix.GetItem(index).height;
+    }
+    
+    public float GetCellGrouping(int2 index)
+    {
+        return cellMatrix.GetItem(index).grouping;
+    }
+
     public bool TryGetSector(int2 index, out Entity entity)
     {
         entity = new Entity();
         return sectorMatrix.TryGetItem(index, out entity);
     }
 
-    public bool TrySetSector(Entity sectorEntity, int2 index)
+    public bool TryAddSector(Entity sectorEntity, int2 index)
     {
         if(sectorMatrix.ItemIsSet(index)) return false;
 
