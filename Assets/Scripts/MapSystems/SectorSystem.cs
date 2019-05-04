@@ -76,7 +76,7 @@ public class SectorSystem : ComponentSystem
 
                 WorleyNoise.CellData masterCell = cellSystem.GetCellData(sectorCells[0].index);
 
-                float grouping = topologyUtil.CellGrouping(startCell.index);
+                float grouping = cellSystem.GetCellGrouping(startCell.index);
                 bool pathable = SectorIsPathable(points, grouping);
                 int height = (int)topologyUtil.CellHeight(masterCell.index);
                 
