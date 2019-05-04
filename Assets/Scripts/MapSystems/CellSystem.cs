@@ -79,7 +79,7 @@ public class CellSystem : ComponentSystem
         public WorleyNoise.CellData data;
     }
 
-    struct CellMatrixItem
+    public struct CellMatrixItem
     {
         public CellMatrixItem(WorleyNoise.CellData data, float grouping, float height)
         {
@@ -259,7 +259,7 @@ public class CellSystem : ComponentSystem
             startCell = startCell,
             sectorEntity = cellEntity,
             pointMatrix = new Matrix<WorleyNoise.PointData>(10, Allocator.TempJob, startCell.position, job: true),
-            cellGroupingsMatrix =  new Matrix<float>(1, Allocator.TempJob, new float3(startCell.index.x, 0, startCell.index.y), job: true),
+            cellMatrix =  new Matrix<CellMatrixItem>(1, Allocator.TempJob, new float3(startCell.index.x, 0, startCell.index.y), job: true),
             worley = this.worley,
             topologyUtil = new TopologyUtil().Construct()
         };

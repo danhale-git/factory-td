@@ -12,7 +12,7 @@ namespace MapGeneration
         public EntityCommandBuffer commandBuffer;
 
         public Matrix<WorleyNoise.PointData> pointMatrix;
-        public Matrix<float> cellGroupingsMatrix;
+        public Matrix<CellSystem.CellMatrixItem> cellMatrix;
 
         [ReadOnly] public WorleyNoise.CellData startCell;
 
@@ -79,35 +79,38 @@ namespace MapGeneration
 
         void AddSortedCellArrays()
         {
-            ArrayUtil arrayUtil = new ArrayUtil();
             float startCellGrouping = GetOrGenerateCellGrouping(startCell.index);
 
             DynamicBuffer<CellSystem.SectorCell> sectorCells = commandBuffer.AddBuffer<CellSystem.SectorCell>(sectorEntity);
             DynamicBuffer<CellSystem.AdjacentCell> adjacentCells = commandBuffer.AddBuffer<CellSystem.AdjacentCell>(sectorEntity);
 
-            NativeArray<WorleyNoise.PointData> cellSet = arrayUtil.Set(pointMatrix.matrix, Allocator.Temp);
-            for(int i = 0; i < cellSet.Length; i++)
+            for(int i = 0; i < cellMatrix.Length; i++)
             {
-                WorleyNoise.CellData cellData = worley.GetCellData(cellSet[i].currentCellIndex);
+                WorleyNoise.CellData cellData = cellMatrix.GetItem(i).data;
 
                 if(cellData.value == 0) continue;
 
-                if(GetOrGenerateCellGrouping(cellSet[i].currentCellIndex) != startCellGrouping)
+                if(GetOrGenerateCellGrouping(cellData.index) != startCellGrouping)
                     adjacentCells.Add(new CellSystem.AdjacentCell{ data = cellData });
                 else
                     sectorCells.Add(new CellSystem.SectorCell{ data = cellData });
             }
-            cellSet.Dispose();
         }
 
         float GetOrGenerateCellGrouping(int2 index)
         {
-            if(cellGroupingsMatrix.ItemIsSet(index))
-                return cellGroupingsMatrix.GetItem(index);
+            if(cellMatrix.ItemIsSet(index))
+                return cellMatrix.GetItem(index).grouping;
+
+            var cell = new CellSystem.CellMatrixItem
+            (
+                worley.GetCellData(index),
+                topologyUtil.CellGrouping(index),
+                topologyUtil.CellHeight(index)
+            );
             
-            float grouping = topologyUtil.CellGrouping(index);
-            cellGroupingsMatrix.AddItem(grouping, index);
-            return grouping;
+            cellMatrix.AddItem(cell, index);
+            return cell.grouping;
         }
 
         WorleyNoise.PointData GetPointData(float3 position)
