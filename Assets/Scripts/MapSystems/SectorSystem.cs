@@ -94,7 +94,9 @@ public class SectorSystem : ComponentSystem
                     commandBuffer.AddComponent<Tags.CreateWaterEntity>(sectorEntity, new Tags.CreateWaterEntity());
                 }
 
-                commandBuffer.AddComponent<TypeComponent>(sectorEntity, type); 
+                commandBuffer.AddComponent<TypeComponent>(sectorEntity, type);
+
+                commandBuffer.RemoveComponent<WorleyNoise.CellData>(sectorEntity);
                 commandBuffer.AddComponent<MasterCell>(sectorEntity, new MasterCell{ Value = masterCell }); 
             }
         }
