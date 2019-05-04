@@ -43,7 +43,7 @@ public class WaterMeshDataSystem : ComponentSystem
         );
 
         EntityQueryDesc meshDataQuery = new EntityQueryDesc{
-            All = new ComponentType[] { typeof(Tags.TerrainEntity), typeof(Tags.CreateWaterEntity), typeof(WorleyNoise.CellData), typeof(TopologySystem.Height) },
+            All = new ComponentType[] { typeof(Tags.TerrainEntity), typeof(Tags.CreateWaterEntity), typeof(TopologySystem.Height) },
             None = new ComponentType[] { typeof(Vertex) }
         };
         meshDataGroup = GetEntityQuery(meshDataQuery);
