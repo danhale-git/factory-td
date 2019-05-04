@@ -78,7 +78,7 @@ public class SectorSystem : ComponentSystem
 
                 float grouping = cellSystem.GetCellGrouping(startCell.index);
                 bool pathable = SectorIsPathable(points, grouping);
-                int height = (int)topologyUtil.CellHeight(masterCell.index);
+                int height = (int)cellSystem.GetCellHeight(masterCell.index);
                 
                 TypeComponent type = new TypeComponent();
                 if(!pathable)
