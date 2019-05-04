@@ -11,7 +11,8 @@ namespace MapGeneration
     {
         public EntityCommandBuffer commandBuffer;
 
-        public Matrix<WorleyNoise.PointData> matrix;
+        public Matrix<WorleyNoise.PointData> pointMatrix;
+        public Matrix<float> cellGroupingsMatrix;
 
         [ReadOnly] public WorleyNoise.CellData startCell;
 
@@ -20,15 +21,18 @@ namespace MapGeneration
         [ReadOnly] public WorleyNoise worley;
         [ReadOnly] public TopologyUtil topologyUtil;
 
+
         public void Execute()
         {
             FloodFillCell();
+
+            AddSortedCellArrays();
             
-            AddBufferFromMatrix();
+            AddPointArrayFromMatrix();
 
-            CellSystem.MatrixComponent matrixComponent = AddCellMatrixComponent();
+            float3 matrixRootPosition = AddCellMatrixComponent();
 
-            SetPosition(matrixComponent.root);
+            SetPosition(matrixRootPosition);
         }
 
         public void FloodFillCell()
@@ -38,17 +42,17 @@ namespace MapGeneration
             WorleyNoise.PointData initialPointData = GetPointData(startCell.position);
             dataToCheck.Enqueue(initialPointData);
 
-            float startCellGrouping = topologyUtil.CellGrouping(startCell.index);
+            float startCellGrouping = GetOrGenerateCellGrouping(startCell.index);
             initialPointData.cellGrouping = startCellGrouping;
 
-            matrix.AddItem(initialPointData, initialPointData.pointWorldPosition);
+            pointMatrix.AddItem(initialPointData, initialPointData.pointWorldPosition);
 
             while(dataToCheck.Count > 0)
             {
                 DebugSystem.Count("Points flood filled");
                 WorleyNoise.PointData data = dataToCheck.Dequeue();
 
-                bool currentIsOutsideCell = topologyUtil.CellGrouping(data.currentCellIndex) != startCellGrouping;
+                bool currentIsOutsideCell = GetOrGenerateCellGrouping(data.currentCellIndex) != startCellGrouping;
 
                 for(int x = -1; x <= 1; x++)
                     for(int z = -1; z <= 1; z++)
@@ -56,44 +60,54 @@ namespace MapGeneration
                         float3 adjacentPosition = new float3(x, 0, z) + data.pointWorldPosition;
                         WorleyNoise.PointData adjacentData = GetPointData(adjacentPosition);
 
-                        float grouping = topologyUtil.CellGrouping(adjacentData.currentCellIndex);
+                        float grouping = GetOrGenerateCellGrouping(adjacentData.currentCellIndex);
 
                         bool adjacentIsOutsideCell = grouping != startCellGrouping;
-                        if(matrix.ItemIsSet(adjacentPosition) || (currentIsOutsideCell && adjacentIsOutsideCell))
+                        if(pointMatrix.ItemIsSet(adjacentPosition) || (currentIsOutsideCell && adjacentIsOutsideCell))
                             continue;
 
                         adjacentData.cellGrouping = grouping;
 
                         dataToCheck.Enqueue(adjacentData);
-                        matrix.AddItem(adjacentData, adjacentData.pointWorldPosition);
+                        pointMatrix.AddItem(adjacentData, adjacentData.pointWorldPosition);
                     }
 
             }
 
+            dataToCheck.Dispose();
+        }
+
+        void AddSortedCellArrays()
+        {
             ArrayUtil arrayUtil = new ArrayUtil();
+            float startCellGrouping = GetOrGenerateCellGrouping(startCell.index);
 
             DynamicBuffer<CellSystem.SectorCell> sectorCells = commandBuffer.AddBuffer<CellSystem.SectorCell>(sectorEntity);
             DynamicBuffer<CellSystem.AdjacentCell> adjacentCells = commandBuffer.AddBuffer<CellSystem.AdjacentCell>(sectorEntity);
 
-            NativeArray<WorleyNoise.PointData> cellSet = arrayUtil.Set(matrix.matrix, Allocator.Temp);
+            NativeArray<WorleyNoise.PointData> cellSet = arrayUtil.Set(pointMatrix.matrix, Allocator.Temp);
             for(int i = 0; i < cellSet.Length; i++)
             {
                 WorleyNoise.CellData cellData = worley.GetCellData(cellSet[i].currentCellIndex);
 
                 if(cellData.value == 0) continue;
 
-                if(topologyUtil.CellGrouping(cellSet[i].currentCellIndex) != startCellGrouping)
-                {
+                if(GetOrGenerateCellGrouping(cellSet[i].currentCellIndex) != startCellGrouping)
                     adjacentCells.Add(new CellSystem.AdjacentCell{ data = cellData });
-                }
                 else
-                {
                     sectorCells.Add(new CellSystem.SectorCell{ data = cellData });
-                }
             }
             cellSet.Dispose();
+        }
 
-            dataToCheck.Dispose();
+        float GetOrGenerateCellGrouping(int2 index)
+        {
+            if(cellGroupingsMatrix.ItemIsSet(index))
+                return cellGroupingsMatrix.GetItem(index);
+            
+            float grouping = topologyUtil.CellGrouping(index);
+            cellGroupingsMatrix.AddItem(grouping, index);
+            return grouping;
         }
 
         WorleyNoise.PointData GetPointData(float3 position)
@@ -104,20 +118,20 @@ namespace MapGeneration
             return data;
         }
 
-        void AddBufferFromMatrix()
+        void AddPointArrayFromMatrix()
         {
             DynamicBuffer<WorleyNoise.PointData> worleyBuffer = commandBuffer.AddBuffer<WorleyNoise.PointData>(sectorEntity);
-            worleyBuffer.CopyFrom(matrix.matrix);
+            worleyBuffer.CopyFrom(pointMatrix.matrix);
         }
 
-        CellSystem.MatrixComponent AddCellMatrixComponent()
+        float3 AddCellMatrixComponent()
         {
             CellSystem.MatrixComponent cellMatrix = new CellSystem.MatrixComponent{
-                root = matrix.rootPosition,
-                width = matrix.width
+                root = pointMatrix.rootPosition,
+                width = pointMatrix.width
             };
             commandBuffer.AddComponent<CellSystem.MatrixComponent>(sectorEntity, cellMatrix);
-            return cellMatrix;
+            return cellMatrix.root;
         }
 
         void SetPosition(float3 position)
