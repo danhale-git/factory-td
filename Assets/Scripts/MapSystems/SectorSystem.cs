@@ -13,9 +13,7 @@ namespace Tags
 public class SectorSystem : ComponentSystem
 {
     EntityManager entityManager;
-    CellSystem cellSystem;
 
-    WorleyNoise worley;
     TopologyUtil topologyUtil;
 
     EntityQuery sectorGroup;
@@ -27,16 +25,6 @@ public class SectorSystem : ComponentSystem
         public SectorTypes Value;
     }
 
-    public struct SectorNoiseValue : IComponentData
-    {
-        public float Value;
-    }
-
-    public struct SectorGrouping : IComponentData
-    {
-        public float Value;
-    }
-
     public struct MasterCell : IComponentData
     {
         public WorleyNoise.CellData Value;
@@ -45,9 +33,7 @@ public class SectorSystem : ComponentSystem
     protected override void OnCreate()
     {
         entityManager = World.Active.EntityManager;
-        cellSystem = World.Active.GetOrCreateSystem<CellSystem>();
 
-        worley = TerrainSettings.CellWorley();
         topologyUtil = new TopologyUtil().Construct();
 
         EntityQueryDesc sectorQuery = new EntityQueryDesc{
@@ -70,43 +56,43 @@ public class SectorSystem : ComponentSystem
 
         for(int c = 0; c < chunks.Length; c++)
         {
-            ArchetypeChunk chunk = chunks[c];
-            NativeArray<Entity> entities = chunk.GetNativeArray(entityType);
-            NativeArray<WorleyNoise.CellData> startCells = chunk.GetNativeArray(startCellType);
-            BufferAccessor<WorleyNoise.PointData> pointArrays = chunk.GetBufferAccessor(pointArrayType);
-            BufferAccessor<CellSystem.SectorCell> sectorCellArrays = chunk.GetBufferAccessor(sectorCellType);
-            BufferAccessor<CellSystem.AdjacentCell> adjacentCellArrays = chunk.GetBufferAccessor(adjacentCellType);
+            var chunk = chunks[c];
+
+            var entities = chunk.GetNativeArray(entityType);
+            var startCells = chunk.GetNativeArray(startCellType);
+            var pointArrays = chunk.GetBufferAccessor(pointArrayType);
+            var sectorCellArrays = chunk.GetBufferAccessor(sectorCellType);
+            var adjacentCellArrays = chunk.GetBufferAccessor(adjacentCellType);
 
             for(int e = 0; e < entities.Length; e++)
             {
                 Entity sectorEntity = entities[e];
+                WorleyNoise.CellData startCell = startCells[e];
                 DynamicBuffer<WorleyNoise.PointData> points = pointArrays[e];
+                DynamicBuffer<CellSystem.SectorCell> sectorCells = sectorCellArrays[e];
+                DynamicBuffer<CellSystem.AdjacentCell> adjacentCells = adjacentCellArrays[e];
 
-                float grouping = topologyUtil.CellGrouping(startCells[e].index);
-                
-                WorleyNoise.CellData masterCell = sectorCellArrays[e][0].data;
-                commandBuffer.AddComponent<SectorNoiseValue>(sectorEntity, new SectorNoiseValue{ Value = masterCell.value });
+                WorleyNoise.CellData masterCell = sectorCells[0].data;
 
-                TypeComponent type = new TypeComponent();
-
+                float grouping = topologyUtil.CellGrouping(startCell.index);
                 bool pathable = SectorIsPathable(points, grouping);
                 int height = (int)topologyUtil.CellHeight(masterCell.index);
                 
+                TypeComponent type = new TypeComponent();
                 if(!pathable)
                 {
-                    if(AllAdjacentAreHigher(adjacentCellArrays[e], topologyUtil.CellHeightGroup(masterCell.index)))
+                    if(AllAdjacentAreHigher(adjacentCells, topologyUtil.CellHeightGroup(masterCell.index)))
                         type.Value = SectorTypes.GULLY;
                     else
                         type.Value = SectorTypes.MOUNTAIN;
                 }
-                else if(topologyUtil.CellHeightGroup(masterCell.index) < 2 && sectorCellArrays[e].Length > 2)
+                else if(topologyUtil.CellHeightGroup(masterCell.index) < 2 && sectorCells.Length > 2)
                 {
                     type.Value = SectorTypes.LAKE;
                     commandBuffer.AddComponent<Tags.CreateWaterEntity>(sectorEntity, new Tags.CreateWaterEntity());
                 }
 
                 commandBuffer.AddComponent<TypeComponent>(sectorEntity, type); 
-                commandBuffer.AddComponent<SectorGrouping>(sectorEntity, new SectorGrouping{ Value = grouping }); 
                 commandBuffer.AddComponent<MasterCell>(sectorEntity, new MasterCell{ Value = masterCell }); 
             }
         }
