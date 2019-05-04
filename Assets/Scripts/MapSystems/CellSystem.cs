@@ -298,11 +298,6 @@ public class CellSystem : ComponentSystem
         }
     }
 
-    public bool CellIsSet(int2 index)
-    {
-        return cellMatrix.ItemIsSet(index);
-    }
-
     public WorleyNoise.CellData GetCellData(int2 index)
     {
         return cellMatrix.GetItem(index).data;
