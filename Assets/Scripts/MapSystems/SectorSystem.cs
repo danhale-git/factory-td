@@ -13,6 +13,7 @@ namespace Tags
 public class SectorSystem : ComponentSystem
 {
     EntityManager entityManager;
+    CellSystem cellSystem;
 
     TopologyUtil topologyUtil;
 
@@ -33,6 +34,7 @@ public class SectorSystem : ComponentSystem
     protected override void OnCreate()
     {
         entityManager = World.Active.EntityManager;
+        cellSystem = World.Active.GetOrCreateSystem<CellSystem>();
 
         topologyUtil = new TopologyUtil().Construct();
 
@@ -116,9 +118,9 @@ public class SectorSystem : ComponentSystem
 
     bool SectorIsPathable(DynamicBuffer<WorleyNoise.PointData> points, float grouping)
     {
-        for(int p = 0; p < points.Length; p++)
+        for(int i = 0; i < points.Length; i++)
         {
-            WorleyNoise.PointData point = points[p];
+            WorleyNoise.PointData point = points[i];
             if(PointIsOutsideGroup(point, grouping)) continue;
             if(AdjacentInSameGroup(point)) continue;
 
@@ -130,20 +132,20 @@ public class SectorSystem : ComponentSystem
 
     bool PointIsOutsideGroup(WorleyNoise.PointData point, float grouping)
     {
-        return !point.isSet || (topologyUtil.CellGrouping(point.adjacentCellIndex) != grouping);
+        return !point.isSet || (cellSystem.GetCellGrouping(point.currentCellIndex) != grouping);
     }
 
     bool AdjacentInSameGroup(WorleyNoise.PointData point)
     {
-        float currentCellGroup = topologyUtil.CellGrouping(point.currentCellIndex);
-        float adjacentCellGroup = topologyUtil.CellGrouping(point.adjacentCellIndex);
+        float currentCellGroup = cellSystem.GetCellGrouping(point.currentCellIndex);
+        float adjacentCellGroup = cellSystem.GetCellGrouping(point.adjacentCellIndex);
         return currentCellGroup == adjacentCellGroup;
     }
 
     bool AdjacentIsSameHeight(WorleyNoise.PointData point)
     {
-        float currentCellHeight = topologyUtil.CellHeight(point.currentCellIndex);
-        float adjacentCellHeight = topologyUtil.CellHeight(point.adjacentCellIndex);
+        float currentCellHeight = cellSystem.GetCellHeight(point.currentCellIndex);
+        float adjacentCellHeight = cellSystem.GetCellHeight(point.adjacentCellIndex);
         return currentCellHeight == adjacentCellHeight;
     }
 
