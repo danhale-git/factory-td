@@ -25,9 +25,8 @@ public class CellSystem : ComponentSystem
 
     WorleyNoise worley;
 
-    EntityArchetype cellArchetype;
-    Matrix<Entity> cellMatrix;
     EntityArchetype sectorArchetype;
+    Matrix<Entity> sectorMatrix;
 
     public int2 currentCellIndex;
     int2 previousCellIndex;
@@ -84,8 +83,8 @@ public class CellSystem : ComponentSystem
         entityManager = World.Active.EntityManager;
         playerSystem = World.Active.GetOrCreateSystem<PlayerEntitySystem>();
 
-        cellMatrix = new Matrix<Entity>(5, Allocator.Persistent, float3.zero);
-        cellArchetype = entityManager.CreateArchetype(
+        sectorMatrix = new Matrix<Entity>(5, Allocator.Persistent, float3.zero);
+        sectorArchetype = entityManager.CreateArchetype(
             ComponentType.ReadWrite<LocalToWorld>(),
             ComponentType.ReadWrite<Translation>(),
             ComponentType.ReadWrite<RenderMeshProxy>()
@@ -119,7 +118,7 @@ public class CellSystem : ComponentSystem
 
     protected override void OnDestroy()
     {
-        cellMatrix.Dispose();
+        sectorMatrix.Dispose();
         jobManager.Dispose();
     }
 
@@ -131,7 +130,7 @@ public class CellSystem : ComponentSystem
         
         AddNewSectorsToMatrix();
         
-        if(cellMatrix.ItemIsSet(currentCellIndex))
+        if(sectorMatrix.ItemIsSet(currentCellIndex))
             ScheduleFloodFillJobsForAdjacentGroups();
         else
             ScheduleFloodFillJobForCellGroup(currentCellIndex);
@@ -173,7 +172,7 @@ public class CellSystem : ComponentSystem
                 DynamicBuffer<SectorCell> cells = cellArrays[e];
 
                 for(int i = 0; i < cells.Length; i++)
-                    TrySetCell(sectorEntity, cells[i].data.index);
+                    TrySetSector(sectorEntity, cells[i].data.index);
 
                 commandBuffer.AddComponent<Tags.TerrainEntity>(sectorEntity, new Tags.TerrainEntity());
             }
@@ -187,7 +186,7 @@ public class CellSystem : ComponentSystem
 
     void ScheduleFloodFillJobsForAdjacentGroups()
     {
-        Entity sectorEntity = cellMatrix.GetItem(currentCellIndex);
+        Entity sectorEntity = sectorMatrix.GetItem(currentCellIndex);
         if(!entityManager.HasComponent<AdjacentCell>(sectorEntity))
             return;
 
@@ -220,7 +219,7 @@ public class CellSystem : ComponentSystem
 
     bool ScheduleFloodFillJobForCellGroup(int2 startIndex)
     {
-        if(cellMatrix.ItemIsSet(startIndex)) return false;
+        if(sectorMatrix.ItemIsSet(startIndex)) return false;
         Entity sectorEntity = CreateSectorEntity(startIndex);
         ScheduleCellGroupJob(sectorEntity);
         return true;
@@ -228,9 +227,9 @@ public class CellSystem : ComponentSystem
 
     Entity CreateSectorEntity(int2 cellIndex)
     {
-        Entity sectorEntity = entityManager.CreateEntity(cellArchetype);
+        Entity sectorEntity = entityManager.CreateEntity(sectorArchetype);
         entityManager.AddComponentData<WorleyNoise.CellData>(sectorEntity, worley.GetCellData(cellIndex));
-        TrySetCell(sectorEntity, cellIndex);
+        TrySetSector(sectorEntity, cellIndex);
 
         return sectorEntity;
     }
@@ -258,7 +257,7 @@ public class CellSystem : ComponentSystem
         int2 cellIndex = worley.GetPointData(roundedPosition.x, roundedPosition.z).currentCellIndex;
         Entity cellEntity;
 
-        if(!cellMatrix.TryGetItem(cellIndex, out cellEntity) || !entityManager.HasComponent<TopologySystem.Height>(cellEntity))
+        if(!sectorMatrix.TryGetItem(cellIndex, out cellEntity) || !entityManager.HasComponent<TopologySystem.Height>(cellEntity))
             return 0;
 
         DynamicBuffer<TopologySystem.Height> heightData = entityManager.GetBuffer<TopologySystem.Height>(cellEntity);
@@ -267,17 +266,17 @@ public class CellSystem : ComponentSystem
         return matrix.GetItem(roundedPosition, heightData, arrayUtil).height;
     }
 
-    public bool TryGetCell(int2 index, out Entity entity)
+    public bool TryGetSector(int2 index, out Entity entity)
     {
         entity = new Entity();
-        return cellMatrix.TryGetItem(index, out entity);
+        return sectorMatrix.TryGetItem(index, out entity);
     }
 
-    public bool TrySetCell(Entity sectorEntity, int2 index)
+    public bool TrySetSector(Entity sectorEntity, int2 index)
     {
-        if(cellMatrix.ItemIsSet(index)) return false;
+        if(sectorMatrix.ItemIsSet(index)) return false;
 
-        cellMatrix.AddItem(sectorEntity, index);
+        sectorMatrix.AddItem(sectorEntity, index);
         return true;
     }
 }

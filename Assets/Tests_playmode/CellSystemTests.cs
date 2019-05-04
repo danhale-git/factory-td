@@ -15,7 +15,7 @@ namespace Tests
             CellSystem cellSystem = World.Active.GetOrCreateSystem<CellSystem>();
             
             Entity currentCellEntity;
-            bool currentCellExists = cellSystem.TryGetCell(cellSystem.currentCellIndex, out currentCellEntity);
+            bool currentCellExists = cellSystem.TryGetSector(cellSystem.currentCellIndex, out currentCellEntity);
             Assert.IsTrue(currentCellExists);
         }
 
@@ -37,7 +37,7 @@ namespace Tests
             for(int i = 0; i < adjacentCells.Length; i++)
             {
                 Entity adjacentCellEntity;
-                if(!cellSystem.TryGetCell(adjacentCells[i].data.index, out adjacentCellEntity))
+                if(!cellSystem.TryGetSector(adjacentCells[i].data.index, out adjacentCellEntity))
                 {
                     noCellsMissing = false;
                     break;
@@ -54,7 +54,7 @@ namespace Tests
             CellSystem cellSystem = World.Active.GetOrCreateSystem<CellSystem>();
 
             Entity currentCellEntity;
-            cellSystem.TryGetCell(cellSystem.currentCellIndex, out currentCellEntity);
+            cellSystem.TryGetSector(cellSystem.currentCellIndex, out currentCellEntity);
 
             return currentCellEntity;
         }
