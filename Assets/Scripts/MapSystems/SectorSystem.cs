@@ -74,7 +74,7 @@ public class SectorSystem : ComponentSystem
                 DynamicBuffer<CellSystem.SectorCell> sectorCells = sectorCellArrays[e];
                 DynamicBuffer<CellSystem.AdjacentCell> adjacentCells = adjacentCellArrays[e];
 
-                WorleyNoise.CellData masterCell = sectorCells[0].data;
+                WorleyNoise.CellData masterCell = cellSystem.GetCellData(sectorCells[0].index);
 
                 float grouping = topologyUtil.CellGrouping(startCell.index);
                 bool pathable = SectorIsPathable(points, grouping);
@@ -109,7 +109,7 @@ public class SectorSystem : ComponentSystem
     {
         for(int i = 0; i < adjacentCells.Length; i++)
         {
-            WorleyNoise.CellData cell = adjacentCells[i].data;
+            WorleyNoise.CellData cell = cellSystem.GetCellData(adjacentCells[i].index);
             if(topologyUtil.CellHeightGroup(cell.index) <= heightGrouping)
                 return false;
         }

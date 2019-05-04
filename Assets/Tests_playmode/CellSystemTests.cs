@@ -37,7 +37,7 @@ namespace Tests
             for(int i = 0; i < adjacentCells.Length; i++)
             {
                 Entity adjacentCellEntity;
-                if(!cellSystem.TryGetSector(adjacentCells[i].data.index, out adjacentCellEntity))
+                if(!cellSystem.TryGetSector(adjacentCells[i].index, out adjacentCellEntity))
                 {
                     noCellsMissing = false;
                     break;

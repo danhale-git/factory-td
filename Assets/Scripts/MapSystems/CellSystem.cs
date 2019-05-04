@@ -70,13 +70,13 @@ public class CellSystem : ComponentSystem
     [InternalBufferCapacity(0)]
     public struct AdjacentCell : IBufferElementData
     {
-        public WorleyNoise.CellData data;
+        public int2 index;
     }
 
     [InternalBufferCapacity(0)]
     public struct SectorCell : IBufferElementData
     {
-        public WorleyNoise.CellData data;
+        public int2 index;
     }
 
     public struct CellMatrixItem
@@ -182,13 +182,13 @@ public class CellSystem : ComponentSystem
 
                 for(int i = 0; i < cells.Length; i++)
                 {
-                    TryAddCell(cells[i].data);
+                    TryAddCell(cells[i].index);
 
-                    TryAddSector(sectorEntity, cells[i].data.index);
+                    TryAddSector(sectorEntity, cells[i].index);
                 }
 
                 for(int i = 0; i < adjacentCells.Length; i++)
-                    TryAddCell(adjacentCells[i].data);
+                    TryAddCell(adjacentCells[i].index);
 
                 commandBuffer.AddComponent<Tags.TerrainEntity>(sectorEntity, new Tags.TerrainEntity());
             }
@@ -211,7 +211,7 @@ public class CellSystem : ComponentSystem
         
         for(int i = 0; i < adjacentCells.Length; i++)
         {
-            int2 cellIndex = adjacentCells[i].data.index;
+            int2 cellIndex = adjacentCells[i].index;
             float grouping = topologyUtil.CellGrouping(cellIndex);
 
             if(alreadyCreatedCellGroups.Contains(grouping))
@@ -282,15 +282,16 @@ public class CellSystem : ComponentSystem
         return matrix.GetItem(roundedPosition, heightData, arrayUtil).height;
     }
 
-    void TryAddCell(WorleyNoise.CellData cellData)
+    void TryAddCell(int2 index)
     {
-        if(!cellMatrix.ItemIsSet(cellData.index))
+        if(!cellMatrix.ItemIsSet(index))
         {
+            WorleyNoise.CellData cellData = worley.GetCellData(index);
             CellMatrixItem cell = new CellMatrixItem
             (
                 cellData,
-                topologyUtil.CellGrouping(cellData.index),
-                topologyUtil.CellHeight(cellData.index)
+                topologyUtil.CellGrouping(index),
+                topologyUtil.CellHeight(index)
             );
 
             cellMatrix.AddItem(cell, cellData.index);

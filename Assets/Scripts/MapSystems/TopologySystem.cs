@@ -140,7 +140,7 @@ public class TopologySystem : ComponentSystem
         float largest = 0;
         for(int i = 0; i < adjacent.Length; i++)
         {
-            float height = topologyUtil.CellHeight(adjacent[i].data.index);
+            float height = topologyUtil.CellHeight(adjacent[i].index);
             if(height > largest)
                 largest = height;
         }

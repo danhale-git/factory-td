@@ -88,12 +88,13 @@ namespace MapGeneration
             {
                 WorleyNoise.CellData cellData = cellMatrix.GetItem(i).data;
 
-                if(cellData.value == 0) continue;
+                if(cellData.value == 0)
+                    continue;
 
                 if(GetOrGenerateCellGrouping(cellData.index) != startCellGrouping)
-                    adjacentCells.Add(new CellSystem.AdjacentCell{ data = cellData });
+                    adjacentCells.Add(new CellSystem.AdjacentCell{ index = cellData.index });
                 else
-                    sectorCells.Add(new CellSystem.SectorCell{ data = cellData });
+                    sectorCells.Add(new CellSystem.SectorCell{ index = cellData.index });
             }
         }
 
