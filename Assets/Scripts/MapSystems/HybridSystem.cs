@@ -20,6 +20,7 @@ namespace Tags
 public class HybridSystem : ComponentSystem
 {
     EntityManager entityManager = World.Active.EntityManager;
+    
     EntityQuery hybridQuery;
 
     GameObject sectorPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Sector.prefab");
@@ -31,12 +32,11 @@ public class HybridSystem : ComponentSystem
 
     protected override void OnCreate()
     {
-        hybridQuery = GetEntityQuery(
-            new EntityQueryDesc{
+        EntityQueryDesc hybridQueryDesc = new EntityQueryDesc{
                 All = new ComponentType[] { typeof(RenderMesh), typeof(Tags.TerrainEntity) },
                 None = new ComponentType[] { typeof(Tags.HybridGameObjectCreated) }
-            }
-        );
+            };
+        hybridQuery = GetEntityQuery(hybridQueryDesc);
     }
 
     protected override void OnUpdate()

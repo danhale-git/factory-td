@@ -42,27 +42,24 @@ public class TopologySystem : ComponentSystem
 
     void ScheduleTopologyJobs()
     {
-        EntityCommandBuffer commandBuffer = new EntityCommandBuffer(Allocator.TempJob);
-
-        NativeArray<ArchetypeChunk> chunks = topologyGroup.CreateArchetypeChunkArray(Allocator.TempJob);
+        var commandBuffer = new EntityCommandBuffer(Allocator.TempJob);
+        var chunks = topologyGroup.CreateArchetypeChunkArray(Allocator.TempJob);
 
         var entityType = GetArchetypeChunkEntityType();
         var sectorTypeType = GetArchetypeChunkComponentType<SectorSystem.TypeComponent>(true);
         var worleyType = GetArchetypeChunkBufferType<WorleyNoise.PointData>(true);
-
         var sectorCellArrayType = GetArchetypeChunkBufferType<CellSystem.SectorCell>(true);
         var sectorAdjacentCellArrayType = GetArchetypeChunkBufferType<CellSystem.AdjacentCell>(true);
 
         for(int c = 0; c < chunks.Length; c++)
         {
-            ArchetypeChunk chunk = chunks[c];
+            var chunk = chunks[c];
 
-            NativeArray<Entity> entities = chunk.GetNativeArray(entityType);
-            NativeArray<SectorSystem.TypeComponent> sectorTypes = chunk.GetNativeArray(sectorTypeType);
-            BufferAccessor<WorleyNoise.PointData> worleyArrays = chunk.GetBufferAccessor(worleyType);
-
-            BufferAccessor<CellSystem.SectorCell> sectorCellArrays = chunk.GetBufferAccessor(sectorCellArrayType);
-            BufferAccessor<CellSystem.AdjacentCell> sectorAdjacentCellArrays = chunk.GetBufferAccessor(sectorAdjacentCellArrayType);
+            var entities = chunk.GetNativeArray(entityType);
+            var sectorTypes = chunk.GetNativeArray(sectorTypeType);
+            var worleyArrays = chunk.GetBufferAccessor(worleyType);
+            var sectorCellArrays = chunk.GetBufferAccessor(sectorCellArrayType);
+            var sectorAdjacentCellArrays = chunk.GetBufferAccessor(sectorAdjacentCellArrayType);
 
             for(int e = 0; e < entities.Length; e++)
             {

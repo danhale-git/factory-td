@@ -32,36 +32,33 @@ public class ApplyMeshDataSystem : ComponentSystem
 
     protected override void OnUpdate()
     {
-        EntityCommandBuffer commandBuffer = new EntityCommandBuffer(Allocator.Temp);
-		NativeArray<ArchetypeChunk> chunks = applyMeshGroup.CreateArchetypeChunkArray(Allocator.TempJob);
+        var commandBuffer = new EntityCommandBuffer(Allocator.Temp);
+		var chunks = applyMeshGroup.CreateArchetypeChunkArray(Allocator.TempJob);
 
-		ArchetypeChunkEntityType entityType = GetArchetypeChunkEntityType();
-        ArchetypeChunkBufferType<Vertex> vertType = GetArchetypeChunkBufferType<Vertex>(true);
-        ArchetypeChunkBufferType<Triangle> triType = GetArchetypeChunkBufferType<Triangle>(true);
-        ArchetypeChunkBufferType<VertColor> colorType = GetArchetypeChunkBufferType<VertColor>(true);
-
+		var entityType = GetArchetypeChunkEntityType();
+        var vertType = GetArchetypeChunkBufferType<Vertex>(true);
+        var triType = GetArchetypeChunkBufferType<Triangle>(true);
+        var colorType = GetArchetypeChunkBufferType<VertColor>(true);
 
 		for(int c = 0; c < chunks.Length; c++)
 		{
-			ArchetypeChunk chunk = chunks[c];
+			var chunk = chunks[c];
 
-			NativeArray<Entity> entities = chunk.GetNativeArray(entityType);
-
-            BufferAccessor<Vertex> vertBuffers = chunk.GetBufferAccessor<Vertex>(vertType);
-            BufferAccessor<Triangle> triBuffers = chunk.GetBufferAccessor<Triangle>(triType);
-            BufferAccessor<VertColor> colorBuffers = chunk.GetBufferAccessor<VertColor>(colorType);
+			var entities = chunk.GetNativeArray(entityType);
+            var vertArrays = chunk.GetBufferAccessor<Vertex>(vertType);
+            var triArrays = chunk.GetBufferAccessor<Triangle>(triType);
+            var colorArrays = chunk.GetBufferAccessor<VertColor>(colorType);
 		    
             for(int e = 0; e < entities.Length; e++)
 			{
 				Entity entity = entities[e];
 
-                Mesh mesh = MakeMesh(vertBuffers[e], triBuffers[e], colorBuffers[e]);
+                Mesh mesh = MakeMesh(vertArrays[e], triArrays[e], colorArrays[e]);
                 SetMeshComponent(mesh, entity, commandBuffer);
 
 				commandBuffer.RemoveComponent(entity, typeof(Vertex));
 				commandBuffer.RemoveComponent(entity, typeof(Triangle));
 				commandBuffer.RemoveComponent(entity, typeof(VertColor));
-
 				commandBuffer.RemoveComponent(entity, typeof(WorleyNoise.PointData));
             }
         }
@@ -106,7 +103,6 @@ public class ApplyMeshDataSystem : ComponentSystem
 		bool water = entityManager.HasComponent<Tags.WaterEntity>(entity);
 
 		renderer.material = water ? waterMaterial : terrainMaterial;
-		//renderer.material = terrainMaterial;
 
 		commandBuffer.AddSharedComponent(entity, renderer);
 	}

@@ -64,8 +64,8 @@ public class WaterMeshDataSystem : ComponentSystem
 
     void ScheduleMeshDataJobs()
     {
-        EntityCommandBuffer commandBuffer = new EntityCommandBuffer(Allocator.Temp);
-        NativeArray<ArchetypeChunk> chunks = meshDataGroup.CreateArchetypeChunkArray(Allocator.TempJob);
+        var commandBuffer = new EntityCommandBuffer(Allocator.Temp);
+        var chunks = meshDataGroup.CreateArchetypeChunkArray(Allocator.TempJob);
 
         var entityType = GetArchetypeChunkEntityType();
         var matrixType = GetArchetypeChunkComponentType<CellSystem.MatrixComponent>(true);
@@ -74,12 +74,12 @@ public class WaterMeshDataSystem : ComponentSystem
 
         for(int c = 0; c < chunks.Length; c++)
         {
-            ArchetypeChunk chunk = chunks[c];
+            var chunk = chunks[c];
 
-            NativeArray<Entity> entities = chunk.GetNativeArray(entityType);
-            NativeArray<CellSystem.MatrixComponent> matrices = chunk.GetNativeArray(matrixType);
-            NativeArray<SectorSystem.MasterCell> sectorMasterCells = chunk.GetNativeArray(sectorMasterCellType);
-            BufferAccessor<WorleyNoise.PointData> worleyArrays = chunk.GetBufferAccessor(worleyType);
+            var entities = chunk.GetNativeArray(entityType);
+            var matrices = chunk.GetNativeArray(matrixType);
+            var sectorMasterCells = chunk.GetNativeArray(sectorMasterCellType);
+            var worleyArrays = chunk.GetBufferAccessor(worleyType);
 
             for(int e = 0; e < entities.Length; e++)
             {
