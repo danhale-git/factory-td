@@ -6,22 +6,23 @@
 ##### Procedural terrain with gameplay before visual appearance
 _Procedurally generate deterministic terrain, with an emphasis on limited/controlled traversal to encourage interesting logistical/tactical situations._
 
-Terrain is broken up by un-pathable cliffs separating different heights. Slopes provide limited/choked access between areas, much like an RTS map.
+Terrain is broken up by un-pathable cliffs separating different heights. Slopes provide limited/choked access between areas, like an RTS map.
 
-Terrain generation uses [Worley (Cellular) noise](https://thebookofshaders.com/12/). All noise generation code is based on [FastNoise.cs](https://assetstore.unity.com/packages/tools/particles-effects/fastnoise-70706).
+Terrain generation uses [Worley (Cellular) noise](https://thebookofshaders.com/12/). All noise generation code is based on (sometimes edited) parts of [FastNoise.cs](https://assetstore.unity.com/packages/tools/particles-effects/fastnoise-70706).
 
 ### Worley Cells
 
-Cellular noise (below) is generated using an even grid of points, where a pixel's cell is the closest point in the grid. Each cell has a unique grid index (int2) and unique value noise (float between 0 and 1).
-Below, pixels are coloured using their cell value noise - Color(value, value, value). We also see the change in cell shape between the left and right images, as the grid of points are scattered randomly.
+Cellular noise (below) is generated using an even grid of points, where a pixel's cell is the closest point in the grid. Each cell has a unique grid index (int2) and unique value noise (float between 0 and 1). Below:
+* Pixels are coloured using their cell value noise where 0=black and 1=white
+* Cell shapes change between the left and right images, as the grid of points are scattered randomly.
 <p align="center">
 <img src="https://imgur.com/pszR8ED.png">
 </p>
 <p align="center">
-Cellular noise with no scatter (left), some scatter (middle) and high scatter (right), coloured by cell value.
+Cellular noise with increasing scatter from left to right, coloured by cell value.
 </p>
 
-Image generated using [FastNoise Preview](https://github.com/Auburns/FastNoise/releases).
+The images above were generated using [FastNoise Preview](https://github.com/Auburns/FastNoise/releases).
 A more in-depth explanation of Worley/Cellular noise implementation can be found [here](https://thebookofshaders.com/12/).
 
 ---
@@ -65,7 +66,7 @@ Cell value noise is used to decide if a slope exists between two neighbouring ce
 float cellPairValue = (cellValue * adjacentValue);
 int2 slopedEdge = GetSlopeConnectionBasedOnValue(cellPairValue);
 ```
-The connection is expressed as an int2 describing the direction of the connected adjacent cell. For the cell with the lowest value of the two, this int2 is 'flipped' to describe the direction of the opposite adjacent cell.
+The connection is an int2 describing the direction of the connected adjacent cell. For the cell with the lowest value of the two, this int2 is 'flipped' to the direction of the opposite adjacent cell.
 ```csharp
 //  Slope edge is currently pointing right - int2(1, 0)
 if(cellValue < adjacentValue)   //  This will always return true for the same one of any two cells
@@ -80,13 +81,17 @@ This results in two cells with half a slope on 'opposite' sides (the side at whi
 Slopes generated using Cellular distance-to-edge noise.
 </p>
 
-The distance-to-edge value will equal ~0 close to the edge of the cell. Combined with information about the current and adjacent cells, it can be used to blend between two cell heights. The code below slopes the terrain from the cell height to the mid point between the two cells. The distance-to-edge value is used to create an interpolator which is interpolates between the cell height and half way to the adjacent cell's height.
+The distance-to-edge value will equal ~0 near the edge of the cell and ~1 near the center. It can be used with linear interpolation to 'smooth' any value between two cells. In this case, interpolating between a cell's height and it's neighbour's height creates a slope. (The interpolation is actually to the half way point between the cells, as each cell generates half the slope and meets the other in the middle.)
+
+The distance-to-edge value is used to create an interpolator which is interpolates between the cell height and half way to the adjacent cell's height.
 ```csharp
 float slopeLength = 0.5f;
 float interpolator = math.unlerp(0, slopeLength, point.distanceToEdge);
 
 float halfWayHeight = (point.cellHeight + point.adjacentHeight) / 2;
-float terrainHeight = math.lerp(halfWayHeight, point.cellHeight, interpolator);
+float cellHeight = point.cellHeight;
+
+float terrainHeight = math.lerp(halfWayHeight, cellHeight, interpolator);
 ```
 <p align="center">
 <img src="https://imgur.com/McWVde3.png">
@@ -95,7 +100,11 @@ float terrainHeight = math.lerp(halfWayHeight, point.cellHeight, interpolator);
 Distance to edge noise visualised using FastNoise Preview.
 </p>
 
+---
 
+### Simple Terrain
+
+https://streamable.com/rkrb3
 
 
 
