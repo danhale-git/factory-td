@@ -102,7 +102,7 @@ Distance to edge noise visualised using FastNoise Preview.
 
 ---
 
-### Simple Terrain
+### Video
 
 https://streamable.com/rkrb3
 
