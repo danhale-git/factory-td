@@ -29,7 +29,7 @@ A more in-depth explanation of Worley/Cellular noise implementation can be found
 
 ### Worley Terrain
 
-Cellular noise, like Perlin or Simplex, is deterministic but can be randomised using a seed. It is possible to generate the following (amongst other) information deterministically for any point in world space:
+Cellular noise, like Perlin or Simplex, is deterministic but can be randomised using a seed. It is possible to generate the following (amongst other) information for any point in world space:
 
 * Cell containing the point: Index, value noise
 
