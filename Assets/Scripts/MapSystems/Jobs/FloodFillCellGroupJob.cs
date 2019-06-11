@@ -7,7 +7,7 @@ using Unity.Burst;
 
 namespace MapGeneration
 {
-    public struct FloodFillCellGroupJob : IJob
+    public struct FloodFillSectorJob : IJob
     {
         public EntityCommandBuffer commandBuffer;
 

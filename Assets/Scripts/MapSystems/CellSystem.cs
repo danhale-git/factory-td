@@ -136,9 +136,9 @@ public class CellSystem : ComponentSystem
         AddNewSectorsToMatrix();
         
         if(sectorMatrix.ItemIsSet(currentCellIndex))
-            ScheduleFloodFillJobsForAdjacentGroups();
+            ScheduleFloodFillJobsForAdjacentSectors();
         else
-            ScheduleFloodFillJobForCellGroup(currentCellIndex);
+            ScheduleFloodFillJobForSector(currentCellIndex);
     }
 
     bool UpdateCurrentCellIndex()
@@ -200,31 +200,31 @@ public class CellSystem : ComponentSystem
         chunks.Dispose();
     }
 
-    void ScheduleFloodFillJobsForAdjacentGroups()
+    void ScheduleFloodFillJobsForAdjacentSectors()
     {
         Entity sectorEntity = sectorMatrix.GetItem(currentCellIndex);
         if(!entityManager.HasComponent<AdjacentCell>(sectorEntity))
             return;
 
         NativeArray<AdjacentCell> adjacentCells = GetAdjacentCellArray(sectorEntity);
-        NativeList<float> alreadyCreatedCellGroups = new NativeList<float>(Allocator.Temp);
+        NativeList<float> alreadyCreatedSectors = new NativeList<float>(Allocator.Temp);
         
         for(int i = 0; i < adjacentCells.Length; i++)
         {
             int2 cellIndex = adjacentCells[i].index;
             float grouping = topologyUtil.CellGrouping(cellIndex);
 
-            if(alreadyCreatedCellGroups.Contains(grouping))
+            if(alreadyCreatedSectors.Contains(grouping))
                 continue;
 
-            bool groupWasCreated = ScheduleFloodFillJobForCellGroup(cellIndex);
+            bool sectorWasCreated = ScheduleFloodFillJobForSector(cellIndex);
             
-            if(groupWasCreated)
-                alreadyCreatedCellGroups.Add(grouping);
+            if(sectorWasCreated)
+                alreadyCreatedSectors.Add(grouping);
         }
         
         adjacentCells.Dispose();
-        alreadyCreatedCellGroups.Dispose();
+        alreadyCreatedSectors.Dispose();
     }
 
     NativeArray<AdjacentCell> GetAdjacentCellArray(Entity sectorEntity)
@@ -233,11 +233,11 @@ public class CellSystem : ComponentSystem
         return new NativeArray<AdjacentCell>(adjacentCells.AsNativeArray(), Allocator.Temp);
     }
 
-    bool ScheduleFloodFillJobForCellGroup(int2 startIndex)
+    bool ScheduleFloodFillJobForSector(int2 startIndex)
     {
         if(sectorMatrix.ItemIsSet(startIndex)) return false;
         Entity sectorEntity = CreateSectorEntity(startIndex);
-        ScheduleCellGroupJob(sectorEntity);
+        ScheduleSectorJob(sectorEntity);
         return true;
     }
 
@@ -250,11 +250,11 @@ public class CellSystem : ComponentSystem
         return sectorEntity;
     }
 
-    void ScheduleCellGroupJob(Entity cellEntity)
+    void ScheduleSectorJob(Entity cellEntity)
     { 
         WorleyNoise.CellData startCell = entityManager.GetComponentData<WorleyNoise.CellData>(cellEntity);
 
-        FloodFillCellGroupJob job = new FloodFillCellGroupJob{
+        FloodFillSectorJob job = new FloodFillSectorJob{
             commandBuffer = jobManager.commandBuffer,
             startCell = startCell,
             sectorEntity = cellEntity,
