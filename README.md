@@ -1,6 +1,4 @@
-# Factory Tower Defence
-
-## Terrain
+# Worley cell based procedural terrain
 
 ### Design
 ##### Procedural terrain with gameplay before visual appearance
